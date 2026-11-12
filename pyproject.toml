@@ -1,0 +1,19 @@
+[project]
+name = "camctl"
+version = "0.1.0"
+description = "Let Claude control cameras (Sony over Wi-Fi first) through MCP"
+requires-python = ">=3.10"
+dependencies = ["mcp>=2", "pyusb>=1.2", "libusb-package>=1.0", "pillow>=10"]
+
+[project.scripts]
+camctl = "camctl.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["camctl", "camctl.drivers"]
+
+[tool.setuptools.package-data]
+camctl = ["presets.json", "studio_pro.html"]

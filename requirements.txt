@@ -1,0 +1,14 @@
+# Everything camctl Studio needs, in one list (the "Install or repair camctl Studio" step and Studio's start check
+# both read this file). Pinned to the versions installed and working on the owner's laptop on 12 Nov 2026.
+# Format: package==version  # module=<import name> <required|optional> <what needs it>
+anyio==4.16.0                       # module=anyio required Studio itself
+starlette==1.10.0                   # module=starlette required Studio itself
+uvicorn==0.54.0                     # module=uvicorn required Studio itself
+pillow==13.0.0                      # module=PIL required pictures
+numpy==2.5.4                        # module=numpy required saved setups, Match this shot, the light check
+opencv-python-headless==4.14.0.94   # module=cv2 required face detection, Match this shot, the outline
+imageio-ffmpeg==0.8.1               # module=imageio_ffmpeg optional cutting pauses and the quick draft of a clip (brings ffmpeg)
+pyusb==1.3.1                        # module=usb optional the USB cable connection
+libusb-package==1.0.30.1            # module=libusb_package optional the USB cable connection
+mcp==2.3.0                          # module=mcp optional the Claude Code bridge (camctl.server)
+websockets==15.0.1                  # module=websockets optional the page check (tools\check_page.py)

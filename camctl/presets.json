@@ -1,0 +1,691 @@
+{
+ "photo": [
+  {
+   "key": "portrait",
+   "name": "Portrait",
+   "icon": "◐",
+   "blurb": "Soft background, sharp eyes",
+   "aperture": "wide",
+   "shutter_pref": 0.008,
+   "shutter_min": 0.0167,
+   "iso_soft_max": 3200,
+   "focus": "AF-S",
+   "tips": [
+    "Zoom to 35-50 mm and step back: flattering proportions, more background blur.",
+    "Turn the face toward a window or lamp at 45° for soft modelling light."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "lowlight",
+   "name": "Low light handheld",
+   "icon": "☾",
+   "blurb": "Brightest clean image in the dark",
+   "aperture": "wide",
+   "shutter_pref": 0.0167,
+   "shutter_min": 0.0333,
+   "iso_soft_max": 6400,
+   "focus": "AF-S",
+   "tips": [
+    "Brace your elbows or rest the camera on something solid.",
+    "Switch on every lamp in the room; it helps more than ISO."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "landscape",
+   "name": "Landscape",
+   "icon": "▲",
+   "blurb": "Everything sharp, lowest noise",
+   "aperture": "f/8",
+   "shutter_pref": 0.008,
+   "shutter_min": 0.0333,
+   "iso_soft_max": 800,
+   "focus": "AF-S",
+   "tips": [
+    "Use 16 mm, put the horizon on a third line and something interesting in the foreground."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "product",
+   "name": "Product / Studio",
+   "icon": "◆",
+   "blurb": "Crisp detail, controlled depth",
+   "aperture": "f/5.6",
+   "shutter_pref": 0.008,
+   "shutter_min": 0.0333,
+   "iso_soft_max": 1600,
+   "focus": "AF-S",
+   "tips": [
+    "Plain background, one big soft light from the side, a white card opposite as fill."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "action",
+   "name": "Action / Sports",
+   "icon": "➤",
+   "blurb": "Freeze fast movement",
+   "aperture": "wide",
+   "shutter_pref": 0.001,
+   "shutter_min": 0.002,
+   "iso_soft_max": 6400,
+   "focus": "AF-C",
+   "tips": [
+    "Follow the subject with the camera before you shoot.",
+    "More light = faster shutter = sharper."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "golden",
+   "name": "Golden hour",
+   "icon": "☀",
+   "blurb": "Warm, glowing light",
+   "aperture": "wide",
+   "shutter_pref": 0.004,
+   "shutter_min": 0.0167,
+   "iso_soft_max": 1600,
+   "focus": "AF-S",
+   "wb": "kelvin",
+   "kelvin": 6500,
+   "ev_bias": -0.3,
+   "tips": [
+    "Shoot towards the sun for a rim glow; expose for the face."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "bw",
+   "name": "Black & white",
+   "icon": "◑",
+   "blurb": "Timeless monochrome, strong contrast",
+   "aperture": "wide",
+   "shutter_pref": 0.008,
+   "shutter_min": 0.0167,
+   "iso_soft_max": 3200,
+   "focus": "AF-S",
+   "grade": {
+    "mono": true,
+    "contrast": 1.25,
+    "crush": 0.03
+   },
+   "tips": [
+    "Look for texture and hard side light; colour no longer separates things, light does."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "night",
+   "name": "Night handheld",
+   "icon": "✦",
+   "blurb": "City lights and night scenes",
+   "aperture": "wide",
+   "shutter_pref": 0.0333,
+   "shutter_min": 0.0667,
+   "iso_soft_max": 6400,
+   "focus": "AF-S",
+   "ev_bias": -0.7,
+   "tips": [
+    "Keep it a bit dark: night should look like night.",
+    "Lean on a wall and exhale slowly as you press."
+   ],
+   "picture_profile": 0
+  }
+ ],
+ "video": [
+  {
+   "key": "log",
+   "name": "LOG · S-Log3",
+   "icon": "◎",
+   "blurb": "Pro grading workflow: S-Log3.Cine, 1/50, +1.5 stops",
+   "aperture": "wide",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 6400,
+   "focus": "AF-C",
+   "movie": true,
+   "picture_profile": 8,
+   "log_over": 1.5,
+   "tips": [
+    "S-Log3 looks flat on purpose. Turn on 'View Rec.709' to monitor; grade later with the downloaded LUT.",
+    "Expose 1-2 stops over mid-grey (the meter does this) but keep zebras off faces and skies.",
+    "The ZV-E10 records 8-bit: avoid extreme grades and don't under-expose log, or it will band and get noisy."
+   ]
+  },
+  {
+   "key": "log_hlg",
+   "name": "HLG (HDR)",
+   "icon": "◑",
+   "blurb": "HLG2 profile: wide range, little grading needed",
+   "aperture": "wide",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 3200,
+   "focus": "AF-C",
+   "movie": true,
+   "picture_profile": 10,
+   "tips": [
+    "HLG looks good on HDR TVs and phones straight away and grades more gently than S-Log."
+   ]
+  },
+  {
+   "key": "vlog",
+   "name": "Vlog",
+   "icon": "●",
+   "blurb": "Face in focus, natural motion",
+   "aperture": "wide",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 6400,
+   "focus": "AF-C",
+   "movie": true,
+   "tips": [
+    "Arm's length at 16 mm, eyes in the top third, window in front of you."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "cinematic",
+   "name": "Cinematic",
+   "icon": "▭",
+   "blurb": "180° shutter, shallow depth, moody",
+   "aperture": "wide",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 3200,
+   "ev_bias": -0.5,
+   "focus": "AF-C",
+   "movie": true,
+   "tips": [
+    "Slow, steady moves. Side light on the subject, darker background."
+   ]
+  },
+  {
+   "key": "interview",
+   "name": "Interview",
+   "icon": "◧",
+   "blurb": "Clean, neutral, steady",
+   "aperture": "f/4",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 1600,
+   "focus": "AF-C",
+   "movie": true,
+   "tips": [
+    "Subject a third into the frame looking across it; key light at 45° on the far side."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "lowlight_video",
+   "name": "Low-light video",
+   "icon": "☾",
+   "blurb": "Bright video in dim rooms",
+   "aperture": "wide",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 12800,
+   "focus": "AF-C",
+   "movie": true,
+   "tips": [
+    "A single desk lamp bounced off a wall beats any ISO setting."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "broll",
+   "name": "B-roll / Product",
+   "icon": "◇",
+   "blurb": "Detail shots with depth",
+   "aperture": "f/4",
+   "shutter_fixed": 0.02,
+   "iso_soft_max": 3200,
+   "focus": "AF-C",
+   "movie": true,
+   "tips": [
+    "Move slowly past the object; foreground elements add depth."
+   ],
+   "picture_profile": 0
+  },
+  {
+   "key": "slowmo",
+   "name": "Slow motion",
+   "icon": "◷",
+   "blurb": "S&Q mode, smooth slow-mo (shutter 1/100)",
+   "aperture": "wide",
+   "shutter_fixed": 0.01,
+   "iso_soft_max": 6400,
+   "focus": "AF-C",
+   "movie": true,
+   "mode": 622684,
+   "tips": [
+    "Slow motion needs lots of light: shoot near a window or outside.",
+    "Set the S&Q frame rate (e.g. 100/120 fps) in the camera menu; recording is silent."
+   ],
+   "picture_profile": 0
+  }
+ ],
+ "looks": [
+  {
+   "key": "blockbuster",
+   "name": "Blockbuster",
+   "blurb": "Teal shadows, orange skin",
+   "kelvin": 5200,
+   "ev_bias": 0.0,
+   "grade": {
+    "temp": 0.15,
+    "sat": 1.15,
+    "contrast": 1.2,
+    "split": 0.35,
+    "shadows": [
+     -0.25,
+     0.05,
+     0.3
+    ],
+    "highlights": [
+     0.3,
+     0.12,
+     -0.15
+    ]
+   },
+   "lighting": {
+    "key": "Warm key (tungsten lamp) at 45° in front of the subject",
+    "fill": "Little or none; let shadows go teal",
+    "back": "Cool rim from behind (window or blue LED)",
+    "practicals": "Warm lamps in the background, out of focus"
+   },
+   "wb_shift": {
+    "ab": 4,
+    "gm": 0
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "neonoir",
+   "name": "Neo-Noir",
+   "blurb": "Low-key, hard contrast, cool shadows",
+   "kelvin": 4300,
+   "ev_bias": -0.8,
+   "grade": {
+    "temp": -0.2,
+    "sat": 0.75,
+    "contrast": 1.4,
+    "crush": 0.06,
+    "split": 0.25,
+    "shadows": [
+     -0.1,
+     0.0,
+     0.25
+    ],
+    "highlights": [
+     0.05,
+     0.05,
+     0.0
+    ]
+   },
+   "lighting": {
+    "key": "One hard light from the side at 90°: half the face in shadow",
+    "fill": "None",
+    "back": "Hard edge light or light through blinds for stripes",
+    "practicals": "Neon signs, a single bulb, rain on a window"
+   },
+   "wb_shift": {
+    "ab": -6,
+    "gm": 0
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "desert",
+   "name": "Desert Epic",
+   "blurb": "Sun-baked warmth, deep blacks",
+   "kelvin": 6800,
+   "ev_bias": 0.0,
+   "grade": {
+    "temp": 0.45,
+    "sat": 1.1,
+    "contrast": 1.25,
+    "crush": 0.05,
+    "split": 0.2,
+    "shadows": [
+     0.1,
+     0.0,
+     -0.1
+    ],
+    "highlights": [
+     0.25,
+     0.12,
+     -0.15
+    ]
+   },
+   "lighting": {
+    "key": "Strong warm sunlight or a bare bulb from high up",
+    "fill": "Bounce off a warm-coloured wall",
+    "back": "Backlight through dust or haze",
+    "practicals": "Sand, stone, warm textures"
+   },
+   "wb_shift": {
+    "ab": 8,
+    "gm": 0
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "scifi",
+   "name": "Sci-Fi Cold",
+   "blurb": "Steel cyan, clean highlights",
+   "kelvin": 4000,
+   "ev_bias": 0.0,
+   "grade": {
+    "temp": -0.4,
+    "tint": -0.1,
+    "sat": 0.85,
+    "contrast": 1.15,
+    "split": 0.3,
+    "shadows": [
+     -0.2,
+     0.1,
+     0.3
+    ],
+    "highlights": [
+     -0.05,
+     0.05,
+     0.1
+    ]
+   },
+   "lighting": {
+    "key": "Cool, soft light from a screen or LED panel",
+    "fill": "Low, cool",
+    "back": "Bright white or cyan edge light",
+    "practicals": "Screens, LED strips, glossy surfaces"
+   },
+   "wb_shift": {
+    "ab": -8,
+    "gm": 2
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "romantic",
+   "name": "Romantic Glow",
+   "blurb": "Warm, soft, lifted shadows",
+   "kelvin": 6000,
+   "ev_bias": 0.4,
+   "grade": {
+    "temp": 0.25,
+    "tint": 0.08,
+    "sat": 0.95,
+    "contrast": 0.85,
+    "lift": 0.08,
+    "split": 0.15,
+    "shadows": [
+     0.1,
+     0.0,
+     0.05
+    ],
+    "highlights": [
+     0.15,
+     0.08,
+     0.0
+    ]
+   },
+   "lighting": {
+    "key": "Big soft window light or a diffused lamp, close to the subject",
+    "fill": "Generous; white sheet or wall",
+    "back": "Warm backlight for a hair glow",
+    "practicals": "Candles, fairy lights, warm bokeh"
+   },
+   "wb_shift": {
+    "ab": 4,
+    "gm": -3
+   },
+   "picture_profile_video": 6
+  },
+  {
+   "key": "thriller",
+   "name": "Gritty Thriller",
+   "blurb": "Sickly green, harsh contrast",
+   "kelvin": 4800,
+   "ev_bias": -0.4,
+   "grade": {
+    "temp": -0.05,
+    "tint": -0.35,
+    "sat": 0.65,
+    "contrast": 1.35,
+    "crush": 0.04,
+    "split": 0.2,
+    "shadows": [
+     -0.05,
+     0.12,
+     0.0
+    ],
+    "highlights": [
+     0.05,
+     0.1,
+     -0.05
+    ],
+    "grain": 0.35
+   },
+   "lighting": {
+    "key": "Overhead fluorescent or a single top light",
+    "fill": "None",
+    "back": "Dirty practical light behind",
+    "practicals": "Fluorescent tubes, a desk lamp, monitors"
+   },
+   "wb_shift": {
+    "ab": 0,
+    "gm": 6
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "bleach",
+   "name": "Bleach Bypass",
+   "blurb": "Silvery, low saturation, punchy",
+   "kelvin": 5200,
+   "ev_bias": 0.0,
+   "grade": {
+    "sat": 0.45,
+    "contrast": 1.45,
+    "crush": 0.03,
+    "gain": 1.05
+   },
+   "lighting": {
+    "key": "Hard light with texture",
+    "fill": "Little",
+    "back": "Strong edge light",
+    "practicals": "Metal, concrete, overcast skies"
+   },
+   "wb_shift": {
+    "ab": 0,
+    "gm": 0
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "seventies",
+   "name": "70s Film",
+   "blurb": "Warm, faded, grainy",
+   "kelvin": 5800,
+   "ev_bias": 0.2,
+   "grade": {
+    "temp": 0.3,
+    "tint": 0.05,
+    "sat": 0.85,
+    "contrast": 0.9,
+    "lift": 0.1,
+    "split": 0.15,
+    "shadows": [
+     0.05,
+     0.05,
+     -0.05
+    ],
+    "highlights": [
+     0.15,
+     0.1,
+     -0.05
+    ],
+    "grain": 0.5
+   },
+   "lighting": {
+    "key": "Warm, soft tungsten from the side",
+    "fill": "Medium, warm",
+    "back": "Golden backlight",
+    "practicals": "Table lamps, orange and brown tones"
+   },
+   "wb_shift": {
+    "ab": 6,
+    "gm": -2
+   },
+   "picture_profile_video": 6
+  },
+  {
+   "key": "goldendrama",
+   "name": "Golden Hour Drama",
+   "blurb": "Low sun, glowing rim, rich shadows",
+   "kelvin": 7000,
+   "ev_bias": -0.3,
+   "grade": {
+    "temp": 0.4,
+    "sat": 1.15,
+    "contrast": 1.2,
+    "split": 0.25,
+    "shadows": [
+     0.0,
+     -0.02,
+     0.08
+    ],
+    "highlights": [
+     0.3,
+     0.15,
+     -0.1
+    ]
+   },
+   "lighting": {
+    "key": "Low sun or a warm lamp behind and to the side (rim)",
+    "fill": "Bounce a little warm light back into the face",
+    "back": "The sun / lamp itself, flaring slightly",
+    "practicals": "Shoot towards the light"
+   },
+   "wb_shift": {
+    "ab": 8,
+    "gm": -2
+   },
+   "picture_profile_video": 5
+  },
+  {
+   "key": "moonlight",
+   "name": "Moonlight Blue",
+   "blurb": "Day-for-night, deep blue",
+   "kelvin": 3200,
+   "ev_bias": -1.0,
+   "grade": {
+    "temp": -0.6,
+    "sat": 0.7,
+    "contrast": 1.15,
+    "crush": 0.04,
+    "gain": 0.9,
+    "split": 0.3,
+    "shadows": [
+     -0.1,
+     0.0,
+     0.3
+    ],
+    "highlights": [
+     -0.05,
+     0.05,
+     0.15
+    ]
+   },
+   "lighting": {
+    "key": "Single soft cool source from high and behind (the 'moon')",
+    "fill": "None",
+    "back": "Cool rim to separate from the dark",
+    "practicals": "Keep the frame mostly dark; a warm window adds contrast"
+   },
+   "wb_shift": {
+    "ab": -10,
+    "gm": 0
+   },
+   "picture_profile_video": 5
+  }
+ ],
+ "effects": [
+  {
+   "key": "bw",
+   "name": "Black & white",
+   "grade": {
+    "mono": true,
+    "contrast": 1.2
+   }
+  },
+  {
+   "key": "filmwarm",
+   "name": "Film warm",
+   "grade": {
+    "temp": 0.3,
+    "sat": 0.95,
+    "contrast": 0.95,
+    "lift": 0.05,
+    "grain": 0.3
+   }
+  },
+  {
+   "key": "tealorange",
+   "name": "Teal & orange",
+   "grade": {
+    "temp": 0.1,
+    "sat": 1.1,
+    "contrast": 1.15,
+    "split": 0.35,
+    "shadows": [
+     -0.25,
+     0.05,
+     0.3
+    ],
+    "highlights": [
+     0.3,
+     0.12,
+     -0.15
+    ]
+   }
+  },
+  {
+   "key": "matte",
+   "name": "Matte",
+   "grade": {
+    "sat": 0.9,
+    "contrast": 0.9,
+    "lift": 0.12
+   }
+  },
+  {
+   "key": "punch",
+   "name": "High contrast",
+   "grade": {
+    "sat": 1.15,
+    "contrast": 1.35,
+    "crush": 0.03
+   }
+  },
+  {
+   "key": "vintage",
+   "name": "Vintage",
+   "grade": {
+    "temp": 0.25,
+    "tint": 0.05,
+    "sat": 0.75,
+    "contrast": 0.9,
+    "lift": 0.1,
+    "split": 0.2,
+    "shadows": [
+     0.0,
+     0.05,
+     0.1
+    ],
+    "highlights": [
+     0.15,
+     0.1,
+     -0.05
+    ],
+    "grain": 0.5
+   }
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+# Never published: personal, machine-specific or generated (see tools/publish.py, the one place that decides)
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+logs/
+captures/
+screenshots/
+*.bak
+*.r[0-9]*.bak
+*.log
+*.out
+*.err
+AUDIT.md
+publish_list.txt
+LICENSE.draft
+start_bridge.ps1
+set_api_key.ps1
+.env

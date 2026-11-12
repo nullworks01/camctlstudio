@@ -1,0 +1,2275 @@
+[
+ {
+  "code": "0x5005",
+  "name": "White balance",
+  "value": 32786,
+  "label": "Color temp",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 2,
+    "label": "Auto"
+   },
+   {
+    "value": 4,
+    "label": "Daylight"
+   },
+   {
+    "value": 32785,
+    "label": "Shade"
+   },
+   {
+    "value": 32784,
+    "label": "Cloudy"
+   },
+   {
+    "value": 6,
+    "label": "Incandescent"
+   },
+   {
+    "value": 32769,
+    "label": "Fluor. warm white"
+   },
+   {
+    "value": 32770,
+    "label": "Fluor. cool white"
+   },
+   {
+    "value": 32771,
+    "label": "Fluor. day white"
+   },
+   {
+    "value": 32772,
+    "label": "Fluor. daylight"
+   },
+   {
+    "value": 7,
+    "label": "Flash"
+   },
+   {
+    "value": 32816,
+    "label": "Underwater auto"
+   },
+   {
+    "value": 32786,
+    "label": "Color temp"
+   },
+   {
+    "value": 32800,
+    "label": "Custom 1"
+   },
+   {
+    "value": 32801,
+    "label": "Custom 2"
+   },
+   {
+    "value": 32802,
+    "label": "Custom 3"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0x5007",
+  "name": "Aperture",
+  "value": 350,
+  "label": "f/3.5",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 350,
+    "label": "f/3.5"
+   },
+   {
+    "value": 400,
+    "label": "f/4"
+   },
+   {
+    "value": 450,
+    "label": "f/4.5"
+   },
+   {
+    "value": 500,
+    "label": "f/5"
+   },
+   {
+    "value": 560,
+    "label": "f/5.6"
+   },
+   {
+    "value": 630,
+    "label": "f/6.3"
+   },
+   {
+    "value": 710,
+    "label": "f/7.1"
+   },
+   {
+    "value": 800,
+    "label": "f/8"
+   },
+   {
+    "value": 900,
+    "label": "f/9"
+   },
+   {
+    "value": 1000,
+    "label": "f/10"
+   },
+   {
+    "value": 1100,
+    "label": "f/11"
+   },
+   {
+    "value": 1300,
+    "label": "f/13"
+   },
+   {
+    "value": 1400,
+    "label": "f/14"
+   },
+   {
+    "value": 1600,
+    "label": "f/16"
+   },
+   {
+    "value": 1800,
+    "label": "f/18"
+   },
+   {
+    "value": 2000,
+    "label": "f/20"
+   },
+   {
+    "value": 2200,
+    "label": "f/22"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0x500A",
+  "name": "Focus mode",
+  "value": 1,
+  "label": "MF",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 2,
+    "label": "AF-S"
+   },
+   {
+    "value": 32773,
+    "label": "AF-A"
+   },
+   {
+    "value": 32772,
+    "label": "AF-C"
+   },
+   {
+    "value": 32774,
+    "label": "DMF"
+   },
+   {
+    "value": 1,
+    "label": "MF"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0x500B",
+  "name": "Metering mode (?)",
+  "value": 32770,
+  "label": "32770",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 32769,
+    "label": "32769"
+   },
+   {
+    "value": 32770,
+    "label": "32770"
+   },
+   {
+    "value": 32772,
+    "label": "32772"
+   },
+   {
+    "value": 32773,
+    "label": "32773"
+   },
+   {
+    "value": 32771,
+    "label": "32771"
+   },
+   {
+    "value": 32774,
+    "label": "32774"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0x500C",
+  "name": "Flash mode (?)",
+  "value": 3,
+  "label": "3",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 3,
+    "label": "3"
+   },
+   {
+    "value": 32769,
+    "label": "32769"
+   },
+   {
+    "value": 32771,
+    "label": "32771"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0x500E",
+  "name": "Exposure / shooting mode",
+  "value": 1,
+  "label": "Manual (M)",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 65538,
+    "label": "Program (P)"
+   },
+   {
+    "value": 131075,
+    "label": "Aperture (A)"
+   },
+   {
+    "value": 196612,
+    "label": "Shutter (S)"
+   },
+   {
+    "value": 1,
+    "label": "Manual (M)"
+   },
+   {
+    "value": 491600,
+    "label": "Movie P"
+   },
+   {
+    "value": 491601,
+    "label": "Movie A"
+   },
+   {
+    "value": 491602,
+    "label": "Movie S"
+   },
+   {
+    "value": 491603,
+    "label": "Movie M"
+   },
+   {
+    "value": 491604,
+    "label": "491604"
+   },
+   {
+    "value": 622681,
+    "label": "S&Q P"
+   },
+   {
+    "value": 622682,
+    "label": "S&Q A"
+   },
+   {
+    "value": 622683,
+    "label": "S&Q S"
+   },
+   {
+    "value": 622684,
+    "label": "S&Q M"
+   },
+   {
+    "value": 294912,
+    "label": "294912"
+   },
+   {
+    "value": 294913,
+    "label": "294913"
+   },
+   {
+    "value": 426049,
+    "label": "426049"
+   },
+   {
+    "value": 7,
+    "label": "7"
+   },
+   {
+    "value": 360465,
+    "label": "360465"
+   },
+   {
+    "value": 360469,
+    "label": "360469"
+   },
+   {
+    "value": 360468,
+    "label": "360468"
+   },
+   {
+    "value": 360466,
+    "label": "360466"
+   },
+   {
+    "value": 360467,
+    "label": "360467"
+   },
+   {
+    "value": 360470,
+    "label": "360470"
+   },
+   {
+    "value": 360471,
+    "label": "360471"
+   },
+   {
+    "value": 360472,
+    "label": "360472"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0x5010",
+  "name": "Exposure compensation",
+  "value": 0,
+  "label": "+0 EV",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0x5013",
+  "name": "Drive mode",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 98322,
+    "label": "98322"
+   },
+   {
+    "value": 98325,
+    "label": "98325"
+   },
+   {
+    "value": 65538,
+    "label": "65538"
+   },
+   {
+    "value": 98320,
+    "label": "98320"
+   },
+   {
+    "value": 229380,
+    "label": "229380"
+   },
+   {
+    "value": 229379,
+    "label": "229379"
+   },
+   {
+    "value": 229381,
+    "label": "229381"
+   },
+   {
+    "value": 557064,
+    "label": "557064"
+   },
+   {
+    "value": 557065,
+    "label": "557065"
+   },
+   {
+    "value": 557068,
+    "label": "557068"
+   },
+   {
+    "value": 557069,
+    "label": "557069"
+   },
+   {
+    "value": 557070,
+    "label": "557070"
+   },
+   {
+    "value": 557071,
+    "label": "557071"
+   },
+   {
+    "value": 295735,
+    "label": "295735"
+   },
+   {
+    "value": 296247,
+    "label": "296247"
+   },
+   {
+    "value": 295767,
+    "label": "295767"
+   },
+   {
+    "value": 296279,
+    "label": "296279"
+   },
+   {
+    "value": 295799,
+    "label": "295799"
+   },
+   {
+    "value": 296311,
+    "label": "296311"
+   },
+   {
+    "value": 295697,
+    "label": "295697"
+   },
+   {
+    "value": 295713,
+    "label": "295713"
+   },
+   {
+    "value": 295729,
+    "label": "295729"
+   },
+   {
+    "value": 361270,
+    "label": "361270"
+   },
+   {
+    "value": 361782,
+    "label": "361782"
+   },
+   {
+    "value": 361302,
+    "label": "361302"
+   },
+   {
+    "value": 361814,
+    "label": "361814"
+   },
+   {
+    "value": 361334,
+    "label": "361334"
+   },
+   {
+    "value": 361846,
+    "label": "361846"
+   },
+   {
+    "value": 361232,
+    "label": "361232"
+   },
+   {
+    "value": 361248,
+    "label": "361248"
+   },
+   {
+    "value": 361264,
+    "label": "361264"
+   },
+   {
+    "value": 426024,
+    "label": "426024"
+   },
+   {
+    "value": 426008,
+    "label": "426008"
+   },
+   {
+    "value": 491561,
+    "label": "491561"
+   },
+   {
+    "value": 491545,
+    "label": "491545"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD200",
+  "name": "Flash compensation (?)",
+  "value": 0,
+  "label": "0",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 3000,
+    "label": "3000"
+   },
+   {
+    "value": 2700,
+    "label": "2700"
+   },
+   {
+    "value": 2300,
+    "label": "2300"
+   },
+   {
+    "value": 2000,
+    "label": "2000"
+   },
+   {
+    "value": 1700,
+    "label": "1700"
+   },
+   {
+    "value": 1300,
+    "label": "1300"
+   },
+   {
+    "value": 1000,
+    "label": "1000"
+   },
+   {
+    "value": 700,
+    "label": "700"
+   },
+   {
+    "value": 300,
+    "label": "300"
+   },
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": -300,
+    "label": "-300"
+   },
+   {
+    "value": -700,
+    "label": "-700"
+   },
+   {
+    "value": -1000,
+    "label": "-1000"
+   },
+   {
+    "value": -1300,
+    "label": "-1300"
+   },
+   {
+    "value": -1700,
+    "label": "-1700"
+   },
+   {
+    "value": -2000,
+    "label": "-2000"
+   },
+   {
+    "value": -2300,
+    "label": "-2300"
+   },
+   {
+    "value": -2700,
+    "label": "-2700"
+   },
+   {
+    "value": -3000,
+    "label": "-3000"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD201",
+  "name": "DRO / Auto HDR (?)",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 31,
+    "label": "31"
+   },
+   {
+    "value": 17,
+    "label": "17"
+   },
+   {
+    "value": 18,
+    "label": "18"
+   },
+   {
+    "value": 19,
+    "label": "19"
+   },
+   {
+    "value": 20,
+    "label": "20"
+   },
+   {
+    "value": 21,
+    "label": "21"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD203",
+  "name": "Image size (L/M/S)",
+  "value": 1,
+  "label": "L",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "L"
+   },
+   {
+    "value": 2,
+    "label": "M"
+   },
+   {
+    "value": 3,
+    "label": "S"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD20D",
+  "name": "Shutter speed",
+  "value": 65661,
+  "label": "1/125s",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 0,
+    "label": "bulb"
+   },
+   {
+    "value": 19660810,
+    "label": "300/10s"
+   },
+   {
+    "value": 16384010,
+    "label": "250/10s"
+   },
+   {
+    "value": 13107210,
+    "label": "200/10s"
+   },
+   {
+    "value": 9830410,
+    "label": "150/10s"
+   },
+   {
+    "value": 8519690,
+    "label": "130/10s"
+   },
+   {
+    "value": 6553610,
+    "label": "100/10s"
+   },
+   {
+    "value": 5242890,
+    "label": "80/10s"
+   },
+   {
+    "value": 3932170,
+    "label": "60/10s"
+   },
+   {
+    "value": 3276810,
+    "label": "50/10s"
+   },
+   {
+    "value": 2621450,
+    "label": "40/10s"
+   },
+   {
+    "value": 2097162,
+    "label": "32/10s"
+   },
+   {
+    "value": 1638410,
+    "label": "25/10s"
+   },
+   {
+    "value": 1310730,
+    "label": "20/10s"
+   },
+   {
+    "value": 1048586,
+    "label": "16/10s"
+   },
+   {
+    "value": 851978,
+    "label": "13/10s"
+   },
+   {
+    "value": 655370,
+    "label": "10/10s"
+   },
+   {
+    "value": 524298,
+    "label": "8/10s"
+   },
+   {
+    "value": 393226,
+    "label": "6/10s"
+   },
+   {
+    "value": 327690,
+    "label": "5/10s"
+   },
+   {
+    "value": 262154,
+    "label": "4/10s"
+   },
+   {
+    "value": 65539,
+    "label": "1/3s"
+   },
+   {
+    "value": 65540,
+    "label": "1/4s"
+   },
+   {
+    "value": 65541,
+    "label": "1/5s"
+   },
+   {
+    "value": 65542,
+    "label": "1/6s"
+   },
+   {
+    "value": 65544,
+    "label": "1/8s"
+   },
+   {
+    "value": 65546,
+    "label": "1/10s"
+   },
+   {
+    "value": 65549,
+    "label": "1/13s"
+   },
+   {
+    "value": 65551,
+    "label": "1/15s"
+   },
+   {
+    "value": 65556,
+    "label": "1/20s"
+   },
+   {
+    "value": 65561,
+    "label": "1/25s"
+   },
+   {
+    "value": 65566,
+    "label": "1/30s"
+   },
+   {
+    "value": 65576,
+    "label": "1/40s"
+   },
+   {
+    "value": 65586,
+    "label": "1/50s"
+   },
+   {
+    "value": 65596,
+    "label": "1/60s"
+   },
+   {
+    "value": 65616,
+    "label": "1/80s"
+   },
+   {
+    "value": 65636,
+    "label": "1/100s"
+   },
+   {
+    "value": 65661,
+    "label": "1/125s"
+   },
+   {
+    "value": 65696,
+    "label": "1/160s"
+   },
+   {
+    "value": 65736,
+    "label": "1/200s"
+   },
+   {
+    "value": 65786,
+    "label": "1/250s"
+   },
+   {
+    "value": 65856,
+    "label": "1/320s"
+   },
+   {
+    "value": 65936,
+    "label": "1/400s"
+   },
+   {
+    "value": 66036,
+    "label": "1/500s"
+   },
+   {
+    "value": 66176,
+    "label": "1/640s"
+   },
+   {
+    "value": 66336,
+    "label": "1/800s"
+   },
+   {
+    "value": 66536,
+    "label": "1/1000s"
+   },
+   {
+    "value": 66786,
+    "label": "1/1250s"
+   },
+   {
+    "value": 67136,
+    "label": "1/1600s"
+   },
+   {
+    "value": 67536,
+    "label": "1/2000s"
+   },
+   {
+    "value": 68036,
+    "label": "1/2500s"
+   },
+   {
+    "value": 68736,
+    "label": "1/3200s"
+   },
+   {
+    "value": 69536,
+    "label": "1/4000s"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD20E",
+  "name": "Status (?)",
+  "value": 7,
+  "label": "7",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD20F",
+  "name": "Colour temperature",
+  "value": 2700,
+  "label": "2700 K",
+  "writable": true,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   2500,
+   9900,
+   100
+  ]
+ },
+ {
+  "code": "0xD210",
+  "name": "WB shift green/magenta",
+  "value": 192,
+  "label": "192",
+  "writable": true,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   164,
+   220,
+   1
+  ]
+ },
+ {
+  "code": "0xD211",
+  "name": "Aspect ratio (?)",
+  "value": 2,
+  "label": "2",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 3,
+    "label": "3"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   },
+   {
+    "value": 4,
+    "label": "4"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD213",
+  "name": "Focus indication (?)",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD214",
+  "name": "0xD214",
+  "value": 25960448,
+  "label": "25960448",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   0,
+   4294967295,
+   1
+  ]
+ },
+ {
+  "code": "0xD215",
+  "name": "Pending images",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   0,
+   65535,
+   1
+  ]
+ },
+ {
+  "code": "0xD217",
+  "name": "AF lock state (?)",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD218",
+  "name": "Battery level",
+  "value": 100,
+  "label": "100",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   -1,
+   100,
+   1
+  ]
+ },
+ {
+  "code": "0xD21B",
+  "name": "Picture effect",
+  "value": 32768,
+  "label": "32768",
+  "writable": true,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 32768,
+    "label": "32768"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD21C",
+  "name": "WB shift amber/blue",
+  "value": 192,
+  "label": "192",
+  "writable": true,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   164,
+   220,
+   2
+  ]
+ },
+ {
+  "code": "0xD21D",
+  "name": "Recording state (?)",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   2,
+   1
+  ]
+ },
+ {
+  "code": "0xD21E",
+  "name": "ISO",
+  "value": 12800,
+  "label": "12800",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 16777215,
+    "label": "auto"
+   },
+   {
+    "value": 268435506,
+    "label": "268435506"
+   },
+   {
+    "value": 268435520,
+    "label": "268435520"
+   },
+   {
+    "value": 268435536,
+    "label": "268435536"
+   },
+   {
+    "value": 100,
+    "label": "100"
+   },
+   {
+    "value": 125,
+    "label": "125"
+   },
+   {
+    "value": 160,
+    "label": "160"
+   },
+   {
+    "value": 200,
+    "label": "200"
+   },
+   {
+    "value": 250,
+    "label": "250"
+   },
+   {
+    "value": 320,
+    "label": "320"
+   },
+   {
+    "value": 400,
+    "label": "400"
+   },
+   {
+    "value": 500,
+    "label": "500"
+   },
+   {
+    "value": 640,
+    "label": "640"
+   },
+   {
+    "value": 800,
+    "label": "800"
+   },
+   {
+    "value": 1000,
+    "label": "1000"
+   },
+   {
+    "value": 1250,
+    "label": "1250"
+   },
+   {
+    "value": 1600,
+    "label": "1600"
+   },
+   {
+    "value": 2000,
+    "label": "2000"
+   },
+   {
+    "value": 2500,
+    "label": "2500"
+   },
+   {
+    "value": 3200,
+    "label": "3200"
+   },
+   {
+    "value": 4000,
+    "label": "4000"
+   },
+   {
+    "value": 5000,
+    "label": "5000"
+   },
+   {
+    "value": 6400,
+    "label": "6400"
+   },
+   {
+    "value": 8000,
+    "label": "8000"
+   },
+   {
+    "value": 10000,
+    "label": "10000"
+   },
+   {
+    "value": 12800,
+    "label": "12800"
+   },
+   {
+    "value": 16000,
+    "label": "16000"
+   },
+   {
+    "value": 20000,
+    "label": "20000"
+   },
+   {
+    "value": 25600,
+    "label": "25600"
+   },
+   {
+    "value": 32000,
+    "label": "32000"
+   },
+   {
+    "value": 268475456,
+    "label": "268475456"
+   },
+   {
+    "value": 268486656,
+    "label": "268486656"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD21F",
+  "name": "0xD21F",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD221",
+  "name": "0xD221",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD222",
+  "name": "Photo save destination",
+  "value": 1,
+  "label": "PC only",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "PC only"
+   },
+   {
+    "value": 17,
+    "label": "PC + card"
+   },
+   {
+    "value": 16,
+    "label": "Card only"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD223",
+  "name": "0xD223",
+  "value": "",
+  "label": "",
+  "writable": true,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD22A",
+  "name": "0xD22A",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD22C",
+  "name": "Focus area",
+  "value": 259,
+  "label": "Spot L",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "Wide"
+   },
+   {
+    "value": 2,
+    "label": "Zone"
+   },
+   {
+    "value": 259,
+    "label": "Spot L"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD231",
+  "name": "0xD231",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD235",
+  "name": "0xD235",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD236",
+  "name": "0xD236",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD23D",
+  "name": "0xD23D",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD23E",
+  "name": "0xD23E",
+  "value": 0,
+  "label": "0",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD23F",
+  "name": "Picture Profile",
+  "value": 0,
+  "label": "Off",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 0,
+    "label": "Off"
+   },
+   {
+    "value": 1,
+    "label": "PP1 Movie"
+   },
+   {
+    "value": 2,
+    "label": "PP2 Still"
+   },
+   {
+    "value": 3,
+    "label": "PP3 ITU709"
+   },
+   {
+    "value": 4,
+    "label": "PP4 ITU709 800%"
+   },
+   {
+    "value": 5,
+    "label": "PP5 Cine1"
+   },
+   {
+    "value": 6,
+    "label": "PP6 Cine2"
+   },
+   {
+    "value": 7,
+    "label": "PP7 S-Log2"
+   },
+   {
+    "value": 8,
+    "label": "PP8 S-Log3.Cine"
+   },
+   {
+    "value": 9,
+    "label": "PP9 S-Log3"
+   },
+   {
+    "value": 10,
+    "label": "PP10 HLG2"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD240",
+  "name": "0xD240",
+  "value": 3,
+  "label": "3",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   },
+   {
+    "value": 3,
+    "label": "3"
+   },
+   {
+    "value": 4,
+    "label": "4"
+   },
+   {
+    "value": 5,
+    "label": "5"
+   },
+   {
+    "value": 6,
+    "label": "6"
+   },
+   {
+    "value": 13,
+    "label": "13"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD241",
+  "name": "Movie file format (?)",
+  "value": 8,
+  "label": "XAVC S 4K",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 8,
+    "label": "XAVC S 4K"
+   },
+   {
+    "value": 9,
+    "label": "XAVC S HD"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD242",
+  "name": "Movie record setting (?)",
+  "value": 33,
+  "label": "4K 25p 100M",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 33,
+    "label": "4K 25p 100M"
+   },
+   {
+    "value": 36,
+    "label": "4K 25p 60M"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD243",
+  "name": "0xD243",
+  "value": 2,
+  "label": "2",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD244",
+  "name": "0xD244",
+  "value": 2,
+  "label": "2",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD245",
+  "name": "0xD245",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD246",
+  "name": "0xD246",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD247",
+  "name": "Shooting mode class (Still/Movie/S&Q)",
+  "value": 0,
+  "label": "0",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   },
+   {
+    "value": 3,
+    "label": "3"
+   },
+   {
+    "value": 17,
+    "label": "17"
+   },
+   {
+    "value": 18,
+    "label": "18"
+   },
+   {
+    "value": 19,
+    "label": "19"
+   },
+   {
+    "value": 20,
+    "label": "20"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD248",
+  "name": "Media status (?)",
+  "value": 4,
+  "label": "4",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD249",
+  "name": "Remaining shots (?)",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   4294967295,
+   1
+  ]
+ },
+ {
+  "code": "0xD24A",
+  "name": "Remaining record time (?)",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   4294967295,
+   1
+  ]
+ },
+ {
+  "code": "0xD24C",
+  "name": "0xD24C",
+  "value": 53,
+  "label": "53",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   0,
+   1
+  ]
+ },
+ {
+  "code": "0xD24E",
+  "name": "0xD24E",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD24F",
+  "name": "0xD24F",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD250",
+  "name": "0xD250",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD251",
+  "name": "0xD251",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   2,
+   1
+  ]
+ },
+ {
+  "code": "0xD252",
+  "name": "0xD252",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   },
+   {
+    "value": 3,
+    "label": "3"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD253",
+  "name": "Photo file format",
+  "value": 2,
+  "label": "RAW + JPEG",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "RAW"
+   },
+   {
+    "value": 2,
+    "label": "RAW + JPEG"
+   },
+   {
+    "value": 3,
+    "label": "JPEG"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD254",
+  "name": "0xD254",
+  "value": 20971760,
+  "label": "20971760",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 4294967295,
+    "label": "4294967295"
+   },
+   {
+    "value": 47244640255,
+    "label": "47244640255"
+   },
+   {
+    "value": 257698037759,
+    "label": "257698037759"
+   },
+   {
+    "value": 506806140927,
+    "label": "506806140927"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD259",
+  "name": "0xD259",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD25B",
+  "name": "0xD25B",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD25C",
+  "name": "0xD25C",
+  "value": 1000,
+  "label": "1000",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   1000,
+   1000,
+   100
+  ]
+ },
+ {
+  "code": "0xD25D",
+  "name": "0xD25D",
+  "value": 16777216,
+  "label": "16777216",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD25F",
+  "name": "JPEG quality",
+  "value": 1,
+  "label": "Standard",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD260",
+  "name": "0xD260",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD261",
+  "name": "0xD261",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   4294967295,
+   1
+  ]
+ },
+ {
+  "code": "0xD262",
+  "name": "0xD262",
+  "value": 0,
+  "label": "0",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 0,
+    "label": "0"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD263",
+  "name": "0xD263",
+  "value": 0,
+  "label": "0",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD264",
+  "name": "0xD264",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD267",
+  "name": "0xD267",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": [
+   0,
+   41943520,
+   1
+  ]
+ },
+ {
+  "code": "0xD268",
+  "name": "0xD268",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD269",
+  "name": "0xD269",
+  "value": 3,
+  "label": "3",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD26A",
+  "name": "0xD26A",
+  "value": 2,
+  "label": "2",
+  "writable": true,
+  "enabled": true,
+  "choices": [
+   {
+    "value": 1,
+    "label": "1"
+   },
+   {
+    "value": 2,
+    "label": "2"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD26B",
+  "name": "0xD26B",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   65457,
+   65457,
+   1
+  ]
+ },
+ {
+  "code": "0xD26C",
+  "name": "0xD26C",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": [
+   0,
+   0,
+   1
+  ]
+ },
+ {
+  "code": "0xD26D",
+  "name": "0xD26D",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD26E",
+  "name": "0xD26E",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD26F",
+  "name": "0xD26F",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD270",
+  "name": "0xD270",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": true,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD271",
+  "name": "0xD271",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD272",
+  "name": "0xD272",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD273",
+  "name": "0xD273",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD274",
+  "name": "0xD274",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD275",
+  "name": "0xD275",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD276",
+  "name": "0xD276",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD278",
+  "name": "0xD278",
+  "value": "http://10.0.0.25:60152/liveviewstream?<removed>",
+  "label": "http://10.0.0.25:60152/liveviewstream?<removed>",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD27C",
+  "name": "0xD27C",
+  "value": 1,
+  "label": "1",
+  "writable": true,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD27D",
+  "name": "0xD27D",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD27E",
+  "name": "0xD27E",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD27F",
+  "name": "0xD27F",
+  "value": 1,
+  "label": "1",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD280",
+  "name": "0xD280",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [],
+  "range": null
+ },
+ {
+  "code": "0xD283",
+  "name": "0xD283",
+  "value": 3,
+  "label": "3",
+  "writable": true,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 3,
+    "label": "3"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD284",
+  "name": "0xD284",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD285",
+  "name": "0xD285",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD295",
+  "name": "0xD295",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ },
+ {
+  "code": "0xD296",
+  "name": "0xD296",
+  "value": 0,
+  "label": "0",
+  "writable": false,
+  "enabled": false,
+  "choices": [
+   {
+    "value": 0,
+    "label": "0"
+   },
+   {
+    "value": 1,
+    "label": "1"
+   }
+  ],
+  "range": null
+ }
+]
