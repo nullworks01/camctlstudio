@@ -35,7 +35,8 @@ def test_skin_highlights_in_range_are_not_clipped():
 
 
 def test_view_is_applied_once_and_float_path():
-    assert PAGE.count("applyLog709(d,LUTPP") == 1                   # exactly one place draws the 709 view
+    assert PAGE.count("applyLog709(d,curPP()") == 1                 # exactly one place draws the 709 view
+    assert "const v709 = S.overlays.has(\"view709\") && isLog3()" in PAGE   # and only for a log profile
     assert "VIEW_COMP" in PAGE and "709 VIEW · FILE IS S-LOG3" in PAGE
     # page and grade.py share the roll-off start
     assert re.search(r"const SH=0\.4;", PAGE) and grade.SHOULDER_START == 0.4

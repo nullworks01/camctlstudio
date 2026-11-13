@@ -57,7 +57,15 @@ class ZVE10:
         "SIM-FX": {"name": "SIM-FX (simulated)", "pp": None, "iso": (800, 102400), "zoom": True, "lv": (480, 270)},
         "SIM-B": {"name": "SIM-B (simulated)", "pp": list(range(0, 11)), "iso": None, "zoom": False, "lv": (320, 180),
                   "focus_indicator": True},
+        # other FORMATS: JPEG / RAW + JPEG only, the aspect ratio readable but not settable, profiles 0-3 only,
+        # HD video only at 30p and 60p
+        "SIM-C": {"name": "SIM-C (simulated)", "pp": [0, 1, 2, 3], "iso": (100, 25600), "zoom": False, "lv": (320, 180),
+                  "still": [2, 3], "aspect_fixed": True, "movie_formats": [9], "hd_settings": [1, 2, 0x18, 0x1A]},
     }
+    # Movie record settings per file format. 4K: recorded on his camera (4K 25p 100M / 60M). HD: ASSUMED for the
+    # simulator (the PAL list in Sony's numbering); to confirm on the camera.
+    MOVIE_SETTINGS = {8: [0x21, 0x24], 9: [4, 5, 0x19, 0x1B, 0x1D, 0x1F]}
+    ASPECT_CODE = 0xD211
 
     def __init__(self, ev=10.0, person=True, highlight=0.0, backlight=0.0, mode="photo", battery=80, model=None):
         self.ev = ev                   # scene brightness at the subject, EV100 (sun 15, shade 12, room 6...)
@@ -101,6 +109,8 @@ class ZVE10:
         self.p_mode = e(PROPS["exposure_mode"], MOVIE_M if mode == "video" else PHOTO_M,
                         [65538, 131075, 196612, 1, 0x78050, 0x78051, 0x78052, MOVIE_M])
         self.iso_range = None
+        self.refuse: dict = {}            # code -> values the camera answers "not now" to although it lists them
+        self.common[self.ASPECT_CODE] = e(self.ASPECT_CODE, 2, [1, 3, 2, 4])     # recorded: 16:9 set, 3:2 / 4:3 / 1:1
         if model:
             spec = self.SIM_MODELS[model]
             self.name = spec["name"]
@@ -108,6 +118,15 @@ class ZVE10:
             self.iso_range = spec["iso"]
             if not spec["zoom"]:
                 self.common.pop(0xD25D, None)
+            if spec.get("still"):
+                self.common[0xD253] = e(0xD253, spec["still"][0], spec["still"])
+            if spec.get("aspect_fixed"):
+                self.common[self.ASPECT_CODE] = PropInfo(self.ASPECT_CODE, 2, False, True, 1, choices=[1])
+            if spec.get("movie_formats"):
+                mf = spec["movie_formats"]
+                self.common[0xD241] = e(0xD241, mf[0], mf)
+                self.MOVIE_SETTINGS = {**self.MOVIE_SETTINGS, 9: spec.get("hd_settings") or self.MOVIE_SETTINGS[9]}
+                self.common[0xD242].value = self.MOVIE_SETTINGS[mf[0]][0]
             for m in self.mem.values():
                 if spec["pp"] is None:
                     m.pop(PP, None)
@@ -159,9 +178,18 @@ class ZVE10:
     def p(self) -> dict:
         self._zoom_tick()
         d = {PROPS["exposure_mode"]: self.p_mode, **self.common, **self.mem[self.mode]}
+        if getattr(self, "focus_at_moves", False):         # focus position 0 near .. 100 far (only for the pull tests)
+            d[0xD24C] = PropInfo(0xD24C, 2, False, True, int(getattr(self, "focus_pos", 0)))
+        ms, mf = d.get(0xD242), d.get(0xD241)
+        if ms is not None and mf is not None:                    # the rate list follows the file format
+            ms.choices = list(self.MOVIE_SETTINGS.get(mf.value, ms.choices))
+            if ms.value not in ms.choices:
+                ms.value = ms.choices[0]
         iso = d[PROPS["iso"]]
         log = PP in d and d[PP].value in (7, 8, 9)
-        iso.choices = (ISO_PP if log else (ISO_STD_ALL if self.mode == "photo" else ISO_PP)) + [0xFFFFFF]
+        # recorded: log 500 and up (both modes), photo without log 100 and up. ASSUMED: video without a log profile
+        # (Off, HLG, Cine) also from 100 (not measured on his camera yet)
+        iso.choices = (ISO_PP if log else (ISO_STD_ALL if self.mode == "photo" else ISO_STD)) + [0xFFFFFF]
         if getattr(self, "iso_range", None):
             lo, hi = self.iso_range
             iso.choices = sorted({v for v in iso.choices if lo <= v <= hi or v == 0xFFFFFF} | {lo, hi})
@@ -201,6 +229,8 @@ class ZVE10:
         if p is None:
             raise ValueError(f"unknown property 0x{code:04X}")
         ok = (value in p.choices) if p.choices else (p.range and p.range[0] <= value <= p.range[1])
+        if not p.writable or value in self.refuse.get(code, ()):
+            ok = False
         if not ok:
             self.refused.append((code, value))
             raise ValueError(f"camera refused 0x{code:04X}={value}")
@@ -222,6 +252,8 @@ class ZVE10:
 
     def focus_at(self, x, y, max_wait=3.0, lock_in_s1=False):
         self.focused = (x, y)
+        if getattr(self, "focus_at_moves", False):                # INVENTED (focus pull tests): left = near, right = far
+            self.focus_pos = int(round(min(max(x, 0), 1) * 100))
         return {"acquired": self.p[PROPS["focus_mode"]].value != 1, "indication": [1, 2, 2], "ms_af": 600}
 
     def capture(self, timeout=20.0, af=True):
@@ -256,6 +288,7 @@ class ZVE10:
 
     def focus_step(self, step):
         self.focus_pos = getattr(self, "focus_pos", 0) + int(step)
+        self.focus_steps = getattr(self, "focus_steps", []) + [int(step)]
 
     def movie_record(self, start):
         import time as _t
@@ -281,6 +314,9 @@ class ZVE10:
 
     def _encode(self, lin: float) -> int:
         pp = self.p.get(PP)
+        if pp is not None and pp.value == 7 and self.name.startswith("ZV-E10"):     # S-Log2 (Sony's formula)
+            y = 0.432699 * math.log10(155 * max(lin, 0.0) / 219 + 0.037584) + 0.646596
+            return int(max(0, min(1, y * 0.8563 + 0.0626)) * 255 + 0.5)
         if pp is not None and pp.value in (7, 8, 9):            # S-Log3
             v = (420 + 261.5 * math.log10((lin + 0.01) / 0.19)) / 1023 if lin >= 0.01125 \
                 else (lin * (171.2102946929 - 95) / 0.01125 + 95) / 1023
@@ -295,6 +331,11 @@ class ZVE10:
         self.frames += 1
         k = 2 ** self.stops()
         W, H = getattr(self, "lv_size", (320, 180))
+        asp = self.common.get(self.ASPECT_CODE)
+        if self.mode == "photo" and asp is not None and asp.value in (1, 3):
+            # ASSUMED (never seen on his camera, it stays on 16:9): in 3:2 and 4:3 the live view arrives in the
+            # recorded shape; in 1:1 it stays 16:9 and the camera's screen masks the sides
+            W = int(round(H * (1.5 if asp.value == 1 else 4 / 3)))
         im = Image.new("RGB", (W, H), (self._encode(0.18 * k * 2 ** self.backlight),) * 3)
         d = ImageDraw.Draw(im)
         if self.highlight:

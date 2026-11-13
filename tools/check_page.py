@@ -29,6 +29,19 @@ STEPS = [
     ("Shot picker", "openTray('shot'); true", "TR.k==='shot' && document.querySelectorAll('#trBody2 .card').length >= 3"),
     ("ISO numbers", "openTray('iso'); true", "TR.k==='iso' && document.querySelectorAll('#trBody2 .stop').length > 3"),
     ("Claude panel", "clOpen(); true", "typeof clIsOpen==='function' && clIsOpen()"),
+    ("All settings › Camera › Format", "asOpen('camera'); true",
+     "new Promise(r=>setTimeout(()=>r(!!document.querySelector('#asFormat .as-grp')),2500))"),
+    ("All settings › Camera › Picture source", "asOpen('camera'); true",
+     "new Promise(r=>setTimeout(()=>r(!!document.querySelector('#asCard .as-grp') && document.querySelectorAll('[data-recto]').length===2),3000))"),
+    ("All settings › Studio › Claude model", "asOpen('studio'); true", "!!document.querySelector('#asClaudeModelT')"),
+    ("More › Frame guide", "document.querySelector('#moreSheet').classList.add('on'); renderMore(); fgDraw(); openSub('Frame guide',['#fgBox']); true",
+     "document.querySelectorAll('#fgBox [data-fg]').length===6"),
+    ("More › Looks", "document.querySelector('#moreSheet').classList.add('on'); renderMore(); lkDraw(); openSub('Looks',['#lkBox']); lkLoad(); true",
+     "new Promise(r=>setTimeout(()=>r(document.querySelectorAll('#lkBox [data-lk]').length===6 && !!document.querySelector('#lkSw')),2500))"),
+    ("More › Playground", "document.querySelector('#moreSheet').classList.add('on'); renderMore(); pgDraw(); openSub('Playground',['#pgBox']); true",
+     "new Promise(r=>setTimeout(()=>r(!!document.querySelector('#pgReelSw') && !!document.querySelector('#pgMake') && !!document.querySelector('#pxDbl') && !!document.querySelector('#pxMoodGo') && document.querySelectorAll('#pgBox [data-pick]').length===2 && !!document.querySelector('#pxPrac')),1500))"),
+    ("More › Sound check", "document.querySelector('#moreSheet').classList.add('on'); renderMore(); scDraw(); openSub('Sound check',['#scBox']); true",
+     "!!document.querySelector('#scGo')"),
     ("Analyse again button", "true", "(()=>{ const b=document.querySelector('#dzAgain'); return !!b && b.offsetParent!==null && !b.disabled; })()"),
 ]
 PRESS_AGAIN = ("Analyse again pressed (simulator only)",
@@ -39,9 +52,13 @@ CLOSE = ("(()=>{ try{closeTray()}catch(e){} try{asClose()}catch(e){} try{clClose
          "document.querySelector('#moreSheet').classList.remove('on'); return true; })()")
 
 
-async def run(port: int, press_again: bool = False) -> list[str]:
+SIZES = [(1366, 768), (1180, 820), (820, 1180)]          # laptop, iPad landscape, iPad upright
+
+
+async def run(port: int, press_again: bool = False, size: tuple[int, int] = (1366, 768)) -> list[str]:
     import websockets
-    dport = 9361
+    import socket
+    s = socket.socket(); s.bind(("127.0.0.1", 0)); dport = s.getsockname()[1]; s.close()     # a free port per run
     proc = subprocess.Popen([EDGE, "--headless=new", "--disable-gpu", f"--remote-debugging-port={dport}",
                              f"--user-data-dir={tempfile.mkdtemp()}", "about:blank"])
     problems: list[str] = []
@@ -76,7 +93,7 @@ async def run(port: int, press_again: bool = False) -> list[str]:
                 return r.get("result", {}).get("value")
 
             await cmd("Runtime.enable")
-            await cmd("Emulation.setDeviceMetricsOverride", width=1366, height=768, deviceScaleFactor=1, mobile=False)
+            await cmd("Emulation.setDeviceMetricsOverride", width=size[0], height=size[1], deviceScaleFactor=1, mobile=False)
             await cmd("Page.navigate", url=f"http://127.0.0.1:{port}/")
             await asyncio.sleep(5)
             await js("try{ sessionStorage.setItem('camctl.ready','1'); rdClose && rdClose(); }catch(e){} true")
@@ -98,6 +115,10 @@ async def run(port: int, press_again: bool = False) -> list[str]:
                 await asyncio.sleep(0.3)
     finally:
         proc.terminate()
+        try:
+            proc.wait(15)
+        except Exception:  # noqa: BLE001
+            proc.kill()
     return problems
 
 
@@ -105,11 +126,15 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8770)
     ap.add_argument("--press-again", action="store_true", help="also press Analyse again (simulator only: it runs a setup)")
+    ap.add_argument("--size", help="one size only, e.g. 1366x768 (default: 1366x768, 1180x820 and 820x1180)")
     a = ap.parse_args()
     if not EDGE:
         print("Edge was not found: the page check cannot run.")
         return 1
-    problems = asyncio.run(run(a.port, a.press_again))
+    problems = []
+    for i, size in enumerate(SIZES if not a.size else [tuple(int(x) for x in a.size.lower().split("x"))]):
+        print(f"--- {size[0]}x{size[1]}")
+        problems += [f"{size[0]}x{size[1]}: {p}" for p in asyncio.run(run(a.port, a.press_again and i == 0, size))]
     for p in problems:
         print("FAIL " + p)
     print("The page works: every main control opened, no page errors." if not problems else

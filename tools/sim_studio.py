@@ -21,6 +21,12 @@ os.environ["APPDATA"] = str(SIM_HOME)
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "tests")]
+# the libraries Studio installs "for this Windows user" live under the real profile's Roaming folder; with APPDATA
+# pointed at a temp folder Python would not find them, so add that one library folder back (code only, no data)
+_user_site = Path(os.environ.get("USERPROFILE", "")) / "AppData" / "Roaming" / "Python" / \
+    f"Python{sys.version_info[0]}{sys.version_info[1]}" / "site-packages"
+if _user_site.is_dir() and str(_user_site) not in sys.path:
+    sys.path.append(str(_user_site))
 
 import uvicorn  # noqa: E402
 

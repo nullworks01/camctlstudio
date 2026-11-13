@@ -1,6 +1,8 @@
 """Usage meter: token counts per feature/day/shoot from the API's usage field; nothing else stored."""
 import json
 
+import pytest
+
 from camctl import assistant
 
 
@@ -25,7 +27,8 @@ def test_records_tokens_per_feature(monkeypatch, tmp_path):
         assistant._post({"x": 1}, "k")
     assistant._post({"x": 1}, "k")
     t = assistant.usage.today()
-    assert t["total"] == {"calls": 2, "input": 2500, "output": 600}
+    assert {k: t["total"][k] for k in ("calls", "input", "output")} == {"calls": 2, "input": 2500, "output": 600}
+    assert t["total"]["cost"] == pytest.approx(2500 / 1e6 * 4 + 600 / 1e6 * 20)        # Opus 5.5 list price (Studio's choice)
     assert t["features"]["shot list"]["calls"] == 1 and t["features"]["other"]["input"] == 1250
     text = (tmp_path / "usage.json").read_text()
     assert '"k"' not in text and "x-api-key" not in text                     # only counts are stored

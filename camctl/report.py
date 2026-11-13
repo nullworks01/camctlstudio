@@ -79,7 +79,7 @@ def clean(full: dict) -> dict:
         if k == "properties":
             out[k] = [{**p, "value": p["value"] if not isinstance(p.get("value"), str) else REMOVED,
                        "allowed": [a for a in (p.get("allowed") or []) if not isinstance(a, str)]} for p in v]
-        elif k == "checks":
+        elif k in ("checks", "formats"):
             out[k] = v                                          # Studio's own words and codes, nothing from the owner
         elif k == "device_info":
             out[k] = {kk: _clean_value(kk, vv) for kk, vv in v.items() if kk not in drop}
@@ -99,14 +99,18 @@ def properties_table(props: dict) -> list[dict]:
 
 
 def build(brand: str, device_info: dict | None, props: dict, checks: list[dict], connection: str,
-          usb: dict | None = None) -> tuple[dict, str]:
-    """(full report already cleaned, summary text). checks: [{name, ok, detail, ms, command}]"""
+          usb: dict | None = None, formats: dict | None = None) -> tuple[dict, str]:
+    """(full report already cleaned, summary text). checks: [{name, ok, detail, ms, command}]
+    formats: {"photo"|"video": [{title, offered: [names], now, chosen}]} (what the camera offers per mode)."""
     di = device_info or {}
     full = {"app_version": APP_VERSION, "brand": brand, "model": di.get("model") or "", "firmware": di.get("firmware") or "",
             "connection": connection, "device_info": di or {"note": "could not be read"},
             "properties": properties_table(props or {}), "checks": checks,
+            "formats": formats or {},
             "usb": {k: v for k, v in (usb or {}).items() if k in ("vendor_id", "product_id", "class")}}
     full = clean(full)
+    flines = [f"{r['title']}: {', '.join(r['offered']) or 'not reported'}" + (f" (in use: {r['now']})" if r.get("now") else "")
+              for m in ("photo", "video") for r in (formats or {}).get(m, [])]
     ok = [c["name"] for c in checks if c.get("ok") is True]
     bad = [c["name"] for c in checks if c.get("ok") is False]
     na = [c["name"] for c in checks if c.get("ok") is None]
@@ -117,6 +121,7 @@ def build(brand: str, device_info: dict | None, props: dict, checks: list[dict],
         "Works: " + (", ".join(ok) or "nothing yet"),
         "Does not work: " + (", ".join(bad) or "nothing"),
         "Not available on this camera: " + (", ".join(na) or "nothing"),
+        *(["Formats the camera offers:"] + ["  " + x for x in flines] if flines else []),
         "(Studio removed: serial number, names, network details. The full file is attached separately.)"])
     return full, summary
 

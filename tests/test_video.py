@@ -39,3 +39,14 @@ def test_speech_segments_cut_silence(tmp_path):
     assert r.returncode == 0, r.stderr
     segs = video.speech_segments(f, min_silence=0.6, pad=0.05)
     assert len(segs) == 2 and segs[0][1] < 1.3 and segs[1][0] > 2.2
+
+
+def test_an_old_saved_quick_draft_does_nothing(monkeypatch, tmp_path):
+    """The automatic clip draft was removed: a stale quick_draft=true in an old prefs file is ignored quietly."""
+    monkeypatch.setattr(handoff, "SHOOTS", tmp_path / "Shoots")
+    monkeypatch.setattr(handoff, "STATE", tmp_path / "shoot.json")
+    jobs = video.VideoJobs()
+    clip = tmp_path / "C0009.MP4"
+    clip.write_bytes(b"\0" * 1024)
+    jobs._imported(clip, {"quick_draft": True, "log": True})
+    assert jobs.status["state"] == "imported" and not hasattr(video, "finish") and not hasattr(jobs, "_process")

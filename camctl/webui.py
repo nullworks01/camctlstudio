@@ -34,7 +34,7 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Redire
 from starlette.routing import Route
 
 from .drivers.sony import (SP_FLASH_COMP, SP_DRO, SP_IMAGE_SIZE, SP_SHUTTER, SP_STATUS, SP_COLOR_TEMP, SP_WB_SHIFT_GM, SP_ASPECT, SP_FOCUS_INDICATION, SP_PENDING_IMAGES, SP_AF_LOCK, SP_BATTERY, SP_PICTURE_EFFECT, SP_WB_SHIFT_AB, SP_REC_STATE, SP_ISO, SP_SAVE_TO, SP_FOCUS_AREA, SP_PICTURE_PROFILE, SP_MOVIE_FORMAT, SP_MOVIE_SETTING, SP_SHOOT_CLASS, SP_MEDIA_STATUS, SP_SHOTS_LEFT, SP_REC_TIME_LEFT, SP_FOCUS_POSITION, SP_STILL_FORMAT, SP_ZOOM_POSITION, SP_JPEG_QUALITY, SP_LIVE_VIEW_QUALITY, SC_STILL_D2C7)  # noqa: E402,F401  Sony codes by name
-from . import assistant, autofix, camprofile, automation, capture, coach, director, followlight, grade, handoff, importer, lut, measure, presets, scene, setups, shotplan, smartphoto, video, wbauto, wifi
+from . import assistant, audiocheck, autofix, capture_card, looks, playground, reel, camprofile, automation, capture, coach, director, followlight, formats, handoff, importer, lut, measure, presets, scene, setups, shotplan, smartphoto, video, wbauto, wifi
 from .drivers.sony import PROPS, SonyCamera, format_value
 from .ptpip import PTPError
 
@@ -433,8 +433,20 @@ class Studio:
             if wait > 0:
                 _real_sleep(wait)
             last_req = time.time()
+            card = getattr(self, "card", None)
+            if card is not None:                 # the capture card is the picture source (camera control stays)
+                jpg, s = card.next_frame(getattr(self, "_card_seq", 0), timeout=0.5)
+                if s == getattr(self, "_card_seq", 0) or jpg is None:
+                    if card.stalled() and not getattr(self, "card_recording", False):
+                        self.card_fallback("The capture card stopped sending a picture, so Studio shows the "
+                                           "camera cable picture again.")
+                    continue
+                self._card_seq = s
+            else:
+                jpg = None
             try:
-                jpg = self.run(lambda c: c.live_view(), keep_cache=True)
+                if jpg is None:
+                    jpg = self.run(lambda c: c.live_view(), keep_cache=True)
             except Exception as exc:  # noqa: BLE001
                 self.frame_error = str(exc) or exc.__class__.__name__
                 with self.frame_cond:
@@ -456,6 +468,18 @@ class Studio:
                 self.frame_t = now                       # when it arrived from the camera (for latency measuring)
                 self.frame_seq += 1
                 self.frame_cond.notify_all()
+            rb = getattr(self, "reel", None)             # Playground › Day reel: the frame as received, memory only
+            if rb is not None and rb.on:
+                rb.pause(bool(self.recording))
+                rb.feed(jpg, now)
+
+    def card_fallback(self, note: str) -> None:
+        """Back to the camera cable picture (the card unplugged or silent), said in words."""
+        card, self.card = getattr(self, "card", None), None
+        self.card_note = note
+        self._card_seq = 0
+        if card is not None:
+            threading.Thread(target=card.stop, daemon=True).start()
 
     def latest_frame(self, after: int, timeout: float = 2.0) -> tuple[bytes | None, int]:
         """Newest frame newer than `after` (waits up to `timeout` for one)."""
@@ -531,13 +555,17 @@ COLOUR_LOCKED = {SP_PICTURE_EFFECT, SP_DRO, SP_WB_SHIFT_AB, SP_WB_SHIFT_GM}     
 def director_settings_view(props) -> list[dict]:
     """The main controls plus every other writable property the camera reports (friendly names
     where known), for the Director, undo and every automatic change. Colour-changing properties are
-    left out (they stay neutral), and the formats are fixed: photos RAW+JPEG, video S-Log3 or Off."""
+    left out (they stay neutral), and the formats are his (All settings › Camera › Format): only Studio's choice,
+    his own picks and the value the camera has now are offered, never anything else."""
     out = settings_view(props)
+    made = formats.choices_made()
     for s in out:
         if s["name"] == "picture_profile":
-            s["choices"] = [c for c in s["choices"] if c["value"] in (0, 8)] or s["choices"]
+            keep = {0, 8, s["value"], made["photo"].get("picture_profile"), made["video"].get("picture_profile")}
+            s["choices"] = [c for c in s["choices"] if c["value"] in keep] or s["choices"]
         if s["name"] == "still_format":
-            s["choices"] = [c for c in s["choices"] if c["value"] == 2] or s["choices"]
+            keep = {2, s["value"], made["photo"].get("still_format")}
+            s["choices"] = [c for c in s["choices"] if c["value"] in keep] or s["choices"]
     have = {code_of(s["name"]) for s in out} | COLOUR_LOCKED
     for name, (code, friendly, *_rest) in ({} if True else WB_SHIFT).items():
         p = props.get(code)
@@ -626,7 +654,12 @@ def neutral_preset(c, key: str, look=None) -> dict:
     rep = presets.apply_preset(c, key, None, label=label)
     video = presets.PRESETS[key].section == "video"
     props = c.refresh()
-    want = [(presets.PROP_PICTURE_PROFILE, 8 if video else 0)] + ([] if video else [(SP_STILL_FORMAT, 2)]) + \
+    m = "video" if video else "photo"
+    prof = camprofile.for_model(getattr(c, "name", None))
+    pp = formats.wanted(m, "picture_profile", props, prof, label)[0]
+    pp = 0 if pp is None and not video else pp
+    sf = None if video else formats.wanted("photo", "still_format", props, prof, label)[0]
+    want = ([(presets.PROP_PICTURE_PROFILE, pp)] if pp is not None else []) + ([(SP_STILL_FORMAT, sf)] if sf else []) + \
         [(presets.PROP_WB_SHIFT_AB, 192), (presets.PROP_WB_SHIFT_GM, 192)]
     for code, v in want:
         p = props.get(code)
@@ -708,9 +741,11 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
 
     def prefs() -> dict:
         try:
-            return {"post": True, "quick_draft": False, **json.loads(prefs_file.read_text(encoding="utf-8"))}
+            p = {"post": True, **json.loads(prefs_file.read_text(encoding="utf-8"))}
+            p.pop("quick_draft", None)            # the removed automatic draft: an old saved value is ignored
+            return p
         except (OSError, ValueError):
-            return {"post": True, "quick_draft": False}
+            return {"post": True}
 
     def save_prefs(**kw) -> dict:
         p = {**prefs(), **kw}
@@ -718,41 +753,65 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         prefs_file.write_text(json.dumps(p), encoding="utf-8")
         return p
 
-    POST_GOAL = (" Professional neutral capture for grading: photos RAW (+JPEG reference), video S-Log3 (PP8). "
-                 "No looks, no colour settings, WB shift centred. Noise guard: ISO at most 6400 video / 3200 photo; "
-                 "if the light is not enough, say what light to add instead of pushing ISO.")
+    def _migrate_photo_log() -> None:
+        """The old "Photo preview like video" switch is now the Photo picture profile row: if it was on, his photo
+        choice becomes the log profile (once), and the switch is cleared. Off: nothing changes."""
+        try:
+            if not prefs().get("photo_log") or studio.cam is None:
+                return
+            lp = formats._log_pp(camprofile.of(studio))
+            if lp is not None and formats.chosen("photo", "picture_profile") is None:
+                formats.set_choice("photo", "picture_profile", lp)
+            save_prefs(photo_log=False)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def post_goal() -> str:
+        """The format rule for Claude's prompts: the format he chose (Studio's choice by default), never changed."""
+        try:
+            props = studio.props(max_age=5)
+            prof = camprofile.of(studio)
+            m = "video" if (props.get(PROPS["exposure_mode"]) and props[PROPS["exposure_mode"]].value in autofix.MOVIE_MODES) else "photo"
+            fmt = formats.summary(m, props, prof, label)["name"] or ("RAW + JPEG" if m == "photo" else "the camera's video format")
+        except Exception:  # noqa: BLE001
+            fmt = "the format set in Studio"
+        return (f" Neutral capture in the file format he chose ({fmt}); never change the file format or picture profile. "
+                "No looks, no colour settings, WB shift centred. Noise guard: ISO at most 6400 video / 3200 photo; "
+                "if the light is not enough, say what light to add instead of pushing ISO.")
 
     def apply_post(mode: str) -> dict:
-        """Put the camera in the 'shoot for post' format for this mode (logged, undoable)."""
-        vals = {s["name"]: s for s in settings_view(studio.props(max_age=0))}
+        """Put the camera in this mode's format (his choice, else Studio's choice), logged and undoable."""
+        props = studio.props(max_age=0)
+        vals = {s["name"]: s for s in settings_view(props)}
+        prof = camprofile.of(studio)
+        photo_log = bool(prefs().get("photo_log", False))
         ch = []
-        if mode == "video":
-            pp = vals.get("picture_profile")
-            if pp and any(c["value"] == 8 for c in pp["choices"]) and pp["value"] != 8:
-                ch.append({"name": "picture_profile", "value": 8})
-        else:
-            sf = vals.get("still_format")
-            if sf and any(c["value"] == 2 for c in sf["choices"]) and sf["value"] != 2:
-                ch.append({"name": "still_format", "value": 2})
-            # photo picture profile: only by his "Match video (S-Log3)" choice (preview / JPEG only, RAW untouched)
+        keys = ("picture_profile",) if mode == "video" else ("still_format",) + \
+            (("picture_profile",) if formats.chosen("photo", "picture_profile") is not None else ())
+        for key in keys:
+            v = formats.wanted(mode, key, props, prof, label, photo_log)[0]
+            s = vals.get(key)
+            if v is not None and s and any(c["value"] == v for c in s["choices"]) and s["value"] != v:
+                ch.append({"name": key, "value": v})
         if not ch:
             return {"applied": [], "failed": []}
-        return changelog.apply(ch, "post", "Shoot for post: " + ("S-Log3 for grading" if mode == "video" else "RAW+JPEG"))
+        return changelog.apply(ch, "post", "Format for " + mode + ": " +
+                               ", ".join(formats.value_name(c["name"], c["value"], prof, label) for c in ch))
 
     mode_lock = threading.RLock()                      # one Photo/Video setup at a time: never two writing at once
     mode_req = {"n": 0}                                 # the newest request wins; an older one waiting is dropped
 
-    def mode_setup(m: str, who: str = "You") -> dict:
+    def mode_setup(m: str, who: str = "You", event: str | None = None) -> dict:
         with mode_lock:
-            return _mode_setup(m, who)
+            return _mode_setup(m, who, event)
 
-    def _mode_setup(m: str, who: str = "You") -> dict:
+    def _mode_setup(m: str, who: str = "You", event: str | None = None) -> dict:
         """He switched Photo <-> Video: one complete fresh setup for the new mode, like the first one.
         The camera keeps separate exposure / focus memories per mode, so nothing is carried over: format,
         neutral colour, shutter from frame rate + mains, measured exposure for this format, focus acquired
         once and locked, new brightness reference. Built-in rules (no Claude call)."""
         autof.studio_busy(120)
-        autof._event(f"{who} switched to {m}", kind="you" if who == "You" else "setup")
+        autof._event(event or f"{who} switched to {m}", kind="you" if who == "You" else "setup")
         autof.phase, autof.state = "deciding", f"Setting up for {m}…"
         try:
             time.sleep(1.0)                                     # let the mode change and the live view settle
@@ -793,7 +852,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
     async def post_view(request: Request):
         if request.method == "POST":
             body = await request.json()
-            p = save_prefs(**{k: bool(body[k]) for k in ("post", "quick_draft", "photo_log") if k in body},
+            p = save_prefs(**{k: bool(body[k]) for k in ("post", "photo_log") if k in body},
                            **{k: int(body[k]) for k in ("mains_hz", "raw_people_iso", "iso_ceiling_photo", "iso_ceiling_video") if k in body and int(body[k]) > 0})
             if body.get("mode"):
                 m = "video" if body["mode"] == "video" else "photo"
@@ -832,6 +891,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         """Run a capture profile (neutral, RAW / S-Log3, exposure by measurement). Returns (entry, verdict, exposure)."""
         key = key if key in capture.PROFILES else ("interview" if mode == "video" else "portrait")
         prof = capture.PROFILES[key]
+        _migrate_photo_log()
         before = changelog.snapshot()
         follower.pause(60)
         try:
@@ -848,8 +908,13 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             mf = measure.analyze(studio.frame) if studio.frame else {}
             face_box = (mf.get("face") or {}).get("box") if (mf.get("face") or {}).get("method") == "face detection" else None
             run.focus(prof, mode, face_box, moving)
-            ppv = (studio.props(max_age=0).get(presets.PROP_PICTURE_PROFILE))
-            exp = run.expose(prof, mode, bool(ppv and camprofile.is_log(camprofile.of(studio), ppv.value)))   # measure on the curve in use
+            p_now = studio.props(max_age=0)
+            ppv = p_now.get(presets.PROP_PICTURE_PROFILE)
+            cprof = camprofile.of(studio)
+            run.curve = camprofile.log_kind(cprof, ppv.value) if ppv else None      # S-Log3 / S-Log2 targets
+            sfv = p_now.get(SP_STILL_FORMAT)
+            run.jpeg_only = mode == "photo" and sfv is not None and sfv.value == 3   # no RAW: protect highlights
+            exp = run.expose(prof, mode, bool(ppv and camprofile.is_log(cprof, ppv.value)))   # measure on the curve in use
             frame = live_frame()
             a = coach.analyze(frame, {s["name"]: s["value"] for s in settings_view(studio.props(max_age=0))},
                               status_view(studio.props()))
@@ -863,12 +928,21 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             follower.pause(2)
         props = studio.props(max_age=0)
         fps = capture.fps_of(label("movie_setting", props[SP_MOVIE_SETTING].value)) if props.get(SP_MOVIE_SETTING) else 25
-        v = capture.verdict(mode, exp, props, wb_locked, focus_ok, notes, mismatch, label, shot=key, profile=camprofile.of(studio),
-                            gear=setups.get_gear(), fps=fps, iso_cap=getattr(run, "cap_override", None))
+        cprof = camprofile.of(studio)
+        want = {}
+        for k in (("picture_profile",) if mode == "video" else ("still_format",)):
+            wv = formats.wanted(mode, k, props, cprof, label, bool(prefs().get("photo_log", False)))[0]
+            if wv is not None:
+                want[k] = wv
+        if mode == "video" and getattr(run, "flicker_safe", True) is False:
+            notes = notes + [f"At {fps}p no shutter is free of flicker under {run.mains_hz} Hz lights: daylight or "
+                             "flicker-free lamps, or a lower frame rate"]
+        v = capture.verdict(mode, exp, props, wb_locked, focus_ok, notes, mismatch, label, shot=key, profile=cprof,
+                            gear=setups.get_gear(), fps=fps, iso_cap=getattr(run, "cap_override", None), want=want)
         after = changelog.snapshot()
         undo = {n: val for n, val in before.items() if after.get(n) != val}
-        e = changelog.add("capture", "preset", f"Clean capture: {prof['name']} ({'S-Log3' if mode == 'video' else 'RAW'})",
-                          v["todo"], undo)
+        fname = formats.summary(mode, props, cprof, label)["name"] or mode
+        e = changelog.add("capture", "preset", f"Clean capture: {prof['name']} ({fname})", v["todo"], undo)
         last_verdict.update(v, mode=mode, profile=key, t=time.time())
         focus_state.update(text=getattr(run, "focus_text", ""), point=None if getattr(run, "track", False) else getattr(run, "target", None),
                            tracking=bool(getattr(run, "track", False)), t=time.time())
@@ -1079,18 +1153,29 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
     dirx.run_profile = run_profile
 
     def enforce_format(mode: str) -> list[str]:
-        """RAW for photos, S-Log3 for video, neutral colour: set back if the camera is on anything else."""
+        """The format he chose for this mode (Studio's choice by default: RAW + JPEG photos, S-Log3 video) and neutral
+        colour: set back if the camera is on anything else."""
         changed = []
-        run = capture.CaptureRun(studio, lambda code, v: (studio.run(lambda c: c.set(code, v)), changed.append(hex(code))),
+        run = capture.CaptureRun(studio, lambda code, v: (studio.run(lambda c: c.set(code, v)), changed.append((code, v))),
                                  lambda: studio.props(max_age=0), label)
+        run.photo_log = bool(prefs().get("photo_log", False))
         run.formats(mode)
         run.neutral_colour()
-        names = {SP_STILL_FORMAT: "file format → RAW+JPEG", capture.presets.PROP_PICTURE_PROFILE: "picture profile → " +
-                 ("S-Log3" if mode == "video" else "neutral (photo)"), SP_MOVIE_SETTING: "movie quality → best bitrate",
-                 SP_MOVIE_FORMAT: "movie format → 4K", capture.presets.PROP_WB_SHIFT_AB: "WB shift → neutral",
+        prof = camprofile.of(studio)
+        by_code = {c: k for k, c in formats.CODES.items()}
+        names = {capture.presets.PROP_WB_SHIFT_AB: "WB shift → neutral",
                  capture.presets.PROP_WB_SHIFT_GM: "WB shift → neutral", SP_JPEG_QUALITY: "JPEG quality → best",
                  SP_IMAGE_SIZE: "image size → L", capture.PROP_DRO: "DRO → off", capture.PROP_PICTURE_EFFECT: "picture effect → off"}
-        out = [names.get(int(c, 16), c) for c in dict.fromkeys(changed) if int(c, 16) != PROPS["exposure_mode"]]
+        titles = {"still_format": "file format", "jpeg_quality": "JPEG quality", "image_size": "image size",
+                  "aspect": "aspect ratio", "picture_profile": "picture profile",
+                  "movie_format": "video file", "movie_setting": "frame rate and quality"}
+        out = []
+        for code, v in dict.fromkeys(changed):
+            if code == PROPS["exposure_mode"]:
+                continue
+            k = by_code.get(code)
+            out.append(f"{titles[k]} → {formats.value_name(k, v, prof, label)}" if k else names.get(code, hex(code)))
+        out = list(dict.fromkeys(out))
         if out:
             autof._event("Set back for a pro capture: " + ", ".join(out), kind="setup")
         return out
@@ -1147,7 +1232,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
 
     DECIDE_SYSTEM = (
         "You are a cinematographer deciding how to shoot what the camera sees, for a professional who grades "
-        "it himself (RAW photos / S-Log3 video, always neutral). From the frame and the measurements choose the "
+        "it himself, in the format he chose (given below), always neutral. From the frame and the measurements choose the "
         "shot type, write at most four short cinematographer's notes on why (subject, what must be sharp, the "
         "light, depth of field, shutter), and at most three concrete physical directions for what the camera "
         "cannot fix (move the light or the subject, turn away from the window, add fill on the shadow side, "
@@ -1164,7 +1249,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 "output_config": {"effort": "low", "format": {"type": "json_schema", "schema": schema}}, "fallbacks": "default",
                 "messages": [{"role": "user", "content": [
                     {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": _b64.standard_b64encode(frame).decode()}},
-                    {"type": "text", "text": f"Mode: {mode} ({'S-Log3' if mode == 'video' else 'RAW'}). Measurements: {json.dumps(meas)}"}]}]}
+                    {"type": "text", "text": f"Mode: {mode}. Measurements: {json.dumps(meas)}"}]}]}
         with assistant.feature("operator decision"):
             out = assistant._json_answer(assistant.call(body, assistant._key()))
         return out if out.get("shot") in capture.PROFILES else None
@@ -1256,7 +1341,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
     autof = autofix.AutoFix(studio, changelog, _analyze, _values, follower, dirx,
                            setup=lambda mode: builtin_setup(mode)[0],
                            has_key=lambda: assistant.has_key() and prefs().get("claude_on_connect", True),
-                           goal_extra=lambda: POST_GOAL, scene_fn=_scene, decide_fn=_decide,
+                           goal_extra=post_goal, scene_fn=_scene, decide_fn=_decide,
                            apply_fn=_apply_proposal, prefs=prefs,
                            labels_fn=lambda: {s["name"]: s["label"] for s in settings_view(studio.props(max_age=3))})
     autof.plan_text = _light_plan_text
@@ -1347,7 +1432,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         look = body.get("look") if body.get("look") in presets.LOOKS else None
         if assistant.has_key() and not body.get("local"):
             try:
-                dirx.start((goal or "Set the camera up for a technically perfect, neutral capture of this scene.") + POST_GOAL, mode,
+                dirx.start((goal or "Set the camera up for a technically perfect, neutral capture of this scene.") + post_goal(), mode,
                            feature="clean capture")
                 return JSONResponse({"via": "director", "run": dirx.status["run"]})
             except RuntimeError as exc:
@@ -1391,6 +1476,8 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             with assistant.feature("teleprompter"):
                 data = assistant.call({"model": assistant.MODEL, "max_tokens": 4000, "output_config": {"effort": "low"},
                                    "fallbacks": "default", "messages": [{"role": "user", "content": text}]}, key)
+            if data.get("stop_reason") == "refusal":
+                raise assistant.AskError("Claude declined this topic. Try wording it differently.")
             return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
         try:
             return JSONResponse({"script": await anyio.to_thread.run_sync(work)})
@@ -1400,9 +1487,16 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             return err(exc)
 
     # -- TAKES: log, automatic card import, shot list, take review -------------
+    sjobs = audiocheck.SoundJobs()          # a sound report per imported clip (on the copy; never Claude)
+
     def _on_imported(dst, take):
+        if dst.suffix.lower() in importer.VIDEO_EXT:
+            try:
+                sjobs.add(dst, Path(dst).parent.parent)       # <shoot>\VIDEO\clip -> <shoot>
+            except Exception:  # noqa: BLE001
+                pass
         if dst.suffix.lower() in importer.VIDEO_EXT and vjobs.status["state"] == "waiting_clip":
-            vjobs._imported(dst, {"quick_draft": prefs().get("quick_draft", False), "log": True})
+            vjobs._imported(dst, {"log": True})
     imp = importer.Importer(on_imported=_on_imported)
     vjobs.external_import = True
     if start_auto:
@@ -1454,8 +1548,41 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
     def takes_view(_: Request):
         sh = handoff.current()
         items = importer.takes(sh) if sh else []
-        return JSONResponse({"takes": list(reversed(items[-40:])), "importer": imp.status,
+        sound = audiocheck.load(Path(sh["path"])) if sh else {}
+        out = []
+        for t in reversed(items[-40:]):
+            names = [Path(f).name for f in (t.get("files") or [])] + ([t["card_file"]] if t.get("card_file") else [])
+            rep = next((sound[n] for n in names if n in sound), None)
+            out.append({**t, "sound": rep} if rep else t)
+        return JSONResponse({"takes": out, "importer": imp.status, "sound": sjobs.status,
                              "pending": [t["id"] for t in items if not t.get("imported")]})
+
+    async def claude_model(request: Request):
+        """All settings › Studio › Claude › Model: his choice (null = Studio's choice, Claude Opus 5.5)."""
+        body = await request.json()
+        m = body.get("model")
+        if m is not None and m not in assistant.MODELS:
+            return JSONResponse({"error": "That model isn't offered here."}, status_code=400)
+        now = assistant.choose_model(m)
+        autof._event(f"You chose {assistant.MODELS[now]} for Claude", kind="you")
+        return JSONResponse(assistant.usage.today())
+
+    def sound_cancel(_: Request):
+        sjobs.cancel()
+        return JSONResponse({"ok": True, **sjobs.status})
+
+    def take_sound(request: Request):
+        """His press in a take's Sound block: make (or make again) the sound report of that take's clip."""
+        tid = int(request.path_params["tid"])
+        sh = handoff.current()
+        t = next((x for x in (importer.takes(sh) if sh else []) if x["id"] == tid), None)
+        clips = [Path(f) for f in ((t or {}).get("files") or []) if Path(f).suffix.lower() in importer.VIDEO_EXT]
+        clips = [c for c in clips if c.exists()]
+        if not clips:
+            return JSONResponse({"error": "This take's clip isn't in the shoot folder yet. It is checked once it is imported."},
+                                status_code=400)
+        sjobs.add(clips[0], Path(sh["path"]), again=True)
+        return JSONResponse({"ok": True, "message": f"Listening to {clips[0].name}…"})
 
     async def take_match(request: Request):
         tid = int(request.path_params["tid"])
@@ -1903,8 +2030,13 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 line("OK" if vals.get("focus_mode") == "MF" or "MF" in str(vals.get("focus_mode")) else "FAIL",
                      f"{m.title()} focus locked after setup: {vals.get('focus_mode')}")
                 pp = vals.get("picture_profile", "")
-                want_log = m == "video" or bool(prefs().get("photo_log"))
-                line("OK" if ("S-Log3" in str(pp)) == want_log else "FAIL", f"{m.title()} picture profile: {pp}")
+                mine = formats.chosen(m, "picture_profile")
+                if mine is not None:                              # his own format choice: that profile, whatever it is
+                    ppv = (studio.props(max_age=0).get(presets.PROP_PICTURE_PROFILE) or None)
+                    line("OK" if ppv is not None and ppv.value == mine else "FAIL", f"{m.title()} picture profile: {pp}")
+                else:
+                    want_log = m == "video" or bool(prefs().get("photo_log"))
+                    line("OK" if ("S-Log3" in str(pp)) == want_log else "FAIL", f"{m.title()} picture profile: {pp}")
                 iso_c = next((d for d in dump if d["code"] == "SP_ISO"), {})
                 isos = [c["value"] for c in iso_c.get("choices", []) if 0 < c["value"] < 0xFFFFFF]
                 sh = next((d for d in dump if d["code"] == "SP_SHUTTER"), {})
@@ -2072,6 +2204,12 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         x["shoot"] = {"name": sh.get("name"), "path": sh.get("path")} if sh else None
         x["focus"] = {"text": focus_state.get("text") or "", "position": focus_pos_now(), "distance": None}
         x["nd"] = {"on": nd_state["on"], "variable": True, "strength": nd_state["strength"] if nd_state["on"] else None}
+        try:                                                  # the format: his choices and what the camera records
+            m = "video" if body.get("mode") == "video" else "photo"
+            x["formats"] = {"mode": m, "chosen": formats.choices_made()[m],
+                            "name": formats.summary(m, studio.props(max_age=0), prof, label)["name"]}
+        except Exception:  # noqa: BLE001
+            x["formats"] = None
         if frame:
             x["frame"] = resume.b64(resume.jpeg_q(frame, 1024, 90))       # the clean camera picture, no overlays
             try:
@@ -2166,7 +2304,19 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             if "exposure_mode" in saved:                      # the mode decides what the rest allow
                 r = changelog.apply([{"name": "exposure_mode", "value": saved["exposure_mode"]}], "setup", why)
                 applied += r["applied"]; failed += r["failed"]
-            if d.get("mode") in ("photo", "video") and d["mode"] != mode_now:
+            fsaved = d.get("formats") or {}
+            if d.get("mode") in ("photo", "video") and isinstance(fsaved.get("chosen"), dict):
+                # the setup's own format (his choices then; empty = Studio's choice), before the exposure values
+                if d["mode"] != mode_now:
+                    time.sleep(1.0)
+                formats.set_mode_choices(d["mode"], fsaved["chosen"])
+                try:
+                    fixed = enforce_format(d["mode"])
+                    if fixed:
+                        applied.append("format")
+                except Exception:  # noqa: BLE001
+                    failed.append("format")
+            elif d.get("mode") in ("photo", "video") and d["mode"] != mode_now:
                 time.sleep(1.0)
                 r = apply_post(d["mode"])                     # the file-format rules of that mode
                 applied += r["applied"]; failed += r["failed"]
@@ -2432,34 +2582,6 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             else:
                 follower.stop()
         return JSONResponse({**follower.status, **follower.params})
-
-    async def make_grade(request: Request):
-        body = await request.json()
-        src = (CAPTURE_DIR / str(body.get("file", ""))).resolve()
-        if src.parent != CAPTURE_DIR.resolve() or not src.is_file() or src.suffix.lower() != ".jpg":
-            return JSONResponse({"error": "unknown photo"}, status_code=400)
-        key = str(body.get("key", ""))
-        kind = body.get("kind")
-        strength = min(max(float(body.get("strength", 1.0)), 0.0), 1.0)
-        stem = src.stem.split("__")[0]
-        out = CAPTURE_DIR / f"{stem}__{key}.jpg"
-        if kind == "user":
-            d = lut.user_luts().get(key)
-            if d is None:
-                return JSONResponse({"error": "unknown LUT"}, status_code=400)
-
-            def work():
-                out.write_bytes(lut.apply_table_to_jpeg(src.read_bytes(), d["size"], d["table"], strength))
-            await anyio.to_thread.run_sync(work)
-            return JSONResponse({"file": out.name})
-        table = presets.LOOKS if kind == "look" else presets.EFFECTS
-        if key not in table:
-            return JSONResponse({"error": "unknown effect"}, status_code=400)
-
-        def work():
-            out.write_bytes(grade.apply_to_jpeg(src.read_bytes(), table[key]["grade"], strength))
-        await anyio.to_thread.run_sync(work)
-        return JSONResponse({"file": out.name})
 
     async def auto_start(request: Request):
         body = await request.json()
@@ -2735,7 +2857,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             view = [s for s in settings_view(studio.props(max_age=0)) if s["name"] not in CLAUDE_PROTECTED]
             with assistant.feature("claude: direct"):
                 r = assistant.ask(jpg, view, (req or "Direct this shot: the best professional result for this scene.")
-                                  + f" Mode: {mode}." + POST_GOAL + " Explain in two or three plain sentences.")
+                                  + f" Mode: {mode}." + post_goal() + " Explain in two or three plain sentences.")
             ch = [c for c in r.get("changes", []) if c["name"] not in CLAUDE_PROTECTED]
             return {"kind": "direct", "say": r.get("explanation", ""), "tips": r.get("tips", ""), "changes": ch}
         try:
@@ -2770,6 +2892,8 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         def work():
             sh = handoff.current()
             items = importer.takes(sh) if sh else []
+            kind = _situation()["mode"]                      # Photo: the best photo; Video: the best take
+            items = [t for t in items if t.get("kind", "photo") == kind]
             folder = Path(sh["path"]) / "NOTES" / "takes" if sh else None
             frames = []
             for t in items[-24:]:
@@ -2783,6 +2907,12 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             _need_key()
             top = ranked[:4]
             jpg = dict(frames)
+            sound = audiocheck.load(Path(sh["path"])) if sh else {}     # the sound numbers, when the clip was imported
+            for r in top:
+                t = next((x for x in items if x["id"] == r["id"]), {})
+                rep = next((sound[Path(f).name] for f in (t.get("files") or []) if Path(f).name in sound), None)
+                if rep and rep.get("summary"):
+                    r["words"] = f"{r.get('words', '')}; {rep['summary']}".strip("; ")
             with assistant.feature("claude: best take"):
                 pick = bestpick.ask_claude([(r["id"], jpg[r["id"]], r) for r in top])
             for tid in pick["best"]:
@@ -3091,8 +3221,17 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             brand = other["brand"] if other else "Sony"
             checks = list(check_state.get("steps") or []) if not other else [
                 {"name": "Connect", "ok": False, "detail": f"Studio has no driver for {brand} cameras yet", "ms": 0, "command": ""}]
+            fm = None
+            if studio.cam is not None:
+                try:
+                    rows = _format_rows()
+                    fm = {m: [{"title": r["title"], "offered": [c["label"] for c in r["choices"]] or [r["value_name"]],
+                               "now": r["value_name"], "chosen": r["chosen_name"], "settable": r["settable"]}
+                              for r in rows[m]] for m in ("photo", "video")}
+                except Exception:  # noqa: BLE001
+                    fm = None
             full, summary = report.build(brand, di, props, checks, "Wi-Fi" if studio.host not in ("usb", None) else "USB",
-                                         usb=other)
+                                         usb=other, formats=fm)
             if not full.get("model"):
                 full["model"] = prof.get("model") or ""
             j, t = report.save(setups.BASE / "reports", full, summary)
@@ -3199,21 +3338,10 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 return Response(status_code=400)
             text = lut.export_cube(None, f"camctl {lut.INPUTS[source]} to Rec709", source=source)
             fname = f"camctl_{source}_to_rec709.cube"
-        else:
-            item = presets.LOOKS.get(key) or presets.EFFECTS.get(key)
-            if item is None:
-                return Response(status_code=404)
-            text = lut.export_cube(item["grade"], f"camctl {item['name']}", source=source)
-            fname = f"camctl_{key}{'' if source == 'rec709' else '_' + source}.cube"
+        else:                                    # looks have one home now (More › Looks): no old look LUTs here
+            return Response(status_code=404)
         return Response(text, media_type="text/plain",
                         headers={"Content-Disposition": f'attachment; filename="{fname}"'})
-
-    def lut_data(request: Request):
-        d = lut.user_luts().get(request.path_params["key"])
-        if d is None:
-            return Response(status_code=404)
-        table = lut.resample(d["size"], d["table"], 33)
-        return JSONResponse({"size": 33, "data": [int(v * 255 + 0.5) for v in table]})
 
     REC_EVIDENCE_S = 6.0
 
@@ -3222,6 +3350,11 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         disagrees is never enough by itself (12 Nov 2026 it read "not recording" 8 s into a take): Studio only
         follows the camera when the flag disagrees steadily for 6 s AND the card's remaining record time agrees
         (counting down = recording, standing still = not). Until then the state is "checking" and no start is taken."""
+        if card_rec["state"] in ("starting", "recording", "finishing") or getattr(studio, "card_recording", False):
+            # recording on the laptop (capture card): the camera's own flag is not about this recording
+            return JSONResponse({"recording": card_rec["state"] == "recording", "checking": False,
+                                 "note": card_rec["say"], "laptop": card_rec["state"],
+                                 "elapsed": time.time() - card_rec["t0"] if card_rec["state"] == "recording" else 0})
         try:
             props = studio.props(max_age=0)
             st = status_view(props)
@@ -3269,6 +3402,861 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                         headers={"Cache-Control": "no-store", "X-Frame-Seq": str(seq), "X-Frame-T": f"{getattr(studio, 'frame_t', 0):.3f}",
                                  "X-FPS": f"{studio.fps:.1f}"})
 
+    # -- PLAYGROUND › DAY REEL: the moment before each photo, from the live picture (memory until a photo) ---------
+    studio.reel = reel.Buffer()
+    try:
+        _sh0 = handoff.current()
+        studio.reel.set_on(reel.pref(Path(_sh0["path"])) if _sh0 else False)
+    except Exception:  # noqa: BLE001
+        pass
+    reel_job: dict = {"busy": False, "step": 0, "of": 0, "message": "", "out": None, "stop": threading.Event()}
+
+    def _reel_clip_later(frames, photos):
+        sh = handoff.current()
+        if not sh:
+            return
+
+        def work():
+            try:
+                reel.write_clip(frames, Path(sh["path"]), photos)
+            except Exception as exc:  # noqa: BLE001 - a missing moment never touches the photo
+                autof._event("The moment before this photo could not be saved: " +
+                             ("the disk is full." if getattr(exc, "errno", None) == 28 else "Studio's video tool is missing."
+                              if "ffmpeg" in str(exc).lower() else "something went wrong while writing it."), kind="note")
+        threading.Thread(target=work, daemon=True, name="reel-clip").start()
+
+    def _reel_state() -> dict:
+        sh = handoff.current()
+        folder = Path(sh["path"]) if sh else None
+        want = reel.pref(folder) if folder else False         # remembered per shoot: a new shoot starts off
+        if want != studio.reel.on:
+            studio.reel.set_on(want)
+        n = len(reel.today(folder)) if folder else 0
+        size = reel.size_today(folder) if folder else 0
+        return {"on": studio.reel.on, "paused": bool(studio.recording) or studio.cam is None, "moments": n,
+                "size_mb": round(size / 1e6, 1), "shoot": bool(folder and folder.exists()),
+                "job": {k: v for k, v in reel_job.items() if k != "stop"},
+                "folder": str(reel.folder(folder)) if folder else None}
+
+    async def reel_view(request: Request):
+        """GET the day reel's state; POST {on} his switch (remembered per shoot; off = buffer emptied at once)."""
+        if request.method == "POST":
+            body = await request.json()
+            sh = handoff.ensure_shoot()
+            on = bool(body.get("on"))
+            reel.save_pref(Path(sh["path"]), on)
+            studio.reel.set_on(on)
+            autof._event("You switched the day reel " + ("on: Studio keeps the last 3 seconds of the live picture"
+                                                         if on else "off: the kept frames were dropped"), kind="you")
+        return JSONResponse(_reel_state())
+
+    async def reel_make(request: Request):
+        """"Make today's reel": in the background, with a progress line and Stop. Reads clips and photos only."""
+        sh = handoff.current()
+        if not sh or not Path(sh["path"]).exists():
+            return JSONResponse({"error": "The shoot folder is missing, so there is nothing to make a reel from."}, status_code=400)
+        if reel_job["busy"]:
+            return JSONResponse(_reel_state())
+        if video.find_ffmpeg() is None:
+            return JSONResponse({"error": "Studio's video tool (ffmpeg) is missing, so the reel can't be made. "
+                                          "Run \"Install or repair camctl Studio\" once."}, status_code=400)
+        folder = Path(sh["path"])
+        if not reel.today(folder):
+            return JSONResponse({"error": "No moments yet today. Switch the day reel on, then take photos with Studio."},
+                                status_code=400)
+        reel_job.update(busy=True, step=0, of=0, message="Making today's reel…", out=None)
+        reel_job["stop"].clear()
+
+        def prog(i, n):
+            reel_job.update(step=i, of=n, message=f"Making today's reel… {i} of {n}")
+
+        def work():
+            try:
+                out = reel.make(folder, reel_job["stop"], prog)
+                reel_job.update(out=str(out), message=f"Done: {out.name} is in the REEL folder of your shoot.")
+            except InterruptedError:
+                reel_job.update(message="Stopped. Nothing was changed; your photos and clips are as they were.")
+            except OSError as exc:
+                reel_job.update(message="The disk is full, so the reel could not be saved. Free some space and try again."
+                                if getattr(exc, "errno", None) == 28 else "The reel could not be saved in the shoot folder.")
+            except Exception:  # noqa: BLE001
+                reel_job.update(message="The reel could not be made this time. Your photos and clips are unchanged.")
+            finally:
+                reel_job["busy"] = False
+        threading.Thread(target=work, daemon=True, name="day-reel").start()
+        return JSONResponse(_reel_state())
+
+    def reel_stop(_: Request):
+        reel_job["stop"].set()
+        return JSONResponse(_reel_state())
+
+    async def reel_delete(request: Request):
+        """Today's CLIPS only, after his confirm naming the count; never photos, never the reel."""
+        body = await request.json()
+        sh = handoff.current()
+        if not sh:
+            return JSONResponse({"error": "There is no shoot open."}, status_code=400)
+        folder = Path(sh["path"])
+        n = len(reel.today(folder))
+        if int(body.get("count", -1)) != n:
+            return JSONResponse({"error": f"Today has {n} clips now. Press Delete again to confirm that number."},
+                                status_code=409)
+        gone = reel.delete_today(folder)
+        autof._event(f"You deleted today's {gone} reel clips (the photos are kept)", kind="you")
+        return JSONResponse({**_reel_state(), "deleted": gone})
+
+    def reel_show(request: Request):
+        """Opens the REEL folder in Explorer: laptop only."""
+        if not (request.client and (request.client.host or "").startswith("127.")):
+            return JSONResponse({"error": "Open the folder on the laptop."}, status_code=403)
+        sh = handoff.current()
+        if not sh:
+            return JSONResponse({"error": "There is no shoot open."}, status_code=400)
+        f = reel.folder(Path(sh["path"]))
+        f.mkdir(parents=True, exist_ok=True)
+        try:
+            os.startfile(str(f))  # noqa: S606 - his press: show the folder
+        except Exception:  # noqa: BLE001
+            return JSONResponse({"error": "Windows didn't open the folder."}, status_code=500)
+        return JSONResponse({"ok": True})
+
+    # -- LOOKS (More › Looks): by his press only; copies of finished files, and a marked live preview in the page ----
+    look_job: dict = {"busy": False, "message": "", "out": None, "stop": threading.Event()}
+
+    def _shoot_file(rel: str) -> Path:
+        """A finished photo or clip of the CURRENT shoot (nothing outside it, never the card)."""
+        sh = handoff.current()
+        if not sh:
+            raise ValueError("There is no shoot open.")
+        root = Path(sh["path"]).resolve()
+        p = (root / rel).resolve()
+        if root not in p.parents or not p.is_file() or p.suffix.lower() not in (".jpg", ".jpeg", *importer.VIDEO_EXT):
+            raise ValueError("Choose a photo or clip from this shoot.")
+        if "LOOKS" in p.relative_to(root).parts:
+            raise ValueError("Choose an original photo or clip, not a copy with a look.")
+        return p
+
+    def _clip_is_log(p: Path) -> bool:
+        for t in importer.takes(handoff.current()):
+            if any(Path(f).name == p.name for f in (t.get("files") or [])):
+                return "log" in str((t.get("settings") or {}).get("picture_profile", "")).lower()
+        return False
+
+    def looks_list(_: Request):
+        sh = handoff.current()
+        files = []
+        if sh:
+            root = Path(sh["path"])
+            for sub, kind in (("PHOTO JPEG", "photo"), ("VIDEO", "clip")):
+                d = root / sub
+                if d.is_dir():
+                    files += [{"file": f"{sub}/{p.name}", "name": p.name, "kind": kind, "t": p.stat().st_mtime}
+                              for p in d.iterdir() if p.is_file() and p.suffix.lower() in (".jpg", ".jpeg", *importer.VIDEO_EXT)]
+        files.sort(key=lambda f: -f["t"])
+        return JSONResponse({"looks": [{"key": lk["key"], "name": lk["name"], "for": lk["for"]} for lk in looks.LOOKS],
+                             "files": files[:60], "job": {k: v for k, v in look_job.items() if k != "stop"},
+                             "ffmpeg": video.find_ffmpeg() is not None})
+
+    _sample_cache: dict = {}
+
+    def looks_sample(request: Request):
+        """The six looks on the same DRAWN sample picture (never a photo of anyone)."""
+        key = request.path_params["key"]
+        if key != "original" and key not in looks.BY_KEY:
+            return JSONResponse({"error": "unknown look"}, status_code=404)
+        if key not in _sample_cache:
+            base = looks.sample_picture()
+            _sample_cache[key] = base if key == "original" else looks.apply_jpeg(base, key, 1.0, quality=90)
+        return Response(_sample_cache[key], media_type="image/jpeg", headers={"Cache-Control": "max-age=3600"})
+
+    def looks_table(request: Request):
+        key = request.path_params["key"]
+        if key not in looks.BY_KEY:
+            return JSONResponse({"error": "unknown look"}, status_code=404)
+        return Response(looks.lut_bytes(key), media_type="application/octet-stream")
+
+    def _still(p: Path) -> bytes:
+        """A still of the file as the camera made it (a log clip is shown as a normal picture first)."""
+        if p.suffix.lower() in (".jpg", ".jpeg"):
+            from PIL import Image as _I
+            im = _I.open(p).convert("RGB")
+            im.thumbnail((960, 960))
+            b = io.BytesIO()
+            im.save(b, "JPEG", quality=88)
+            return b.getvalue()
+        r = subprocess.run([video.ffmpeg(), "-hide_banner", "-v", "error", "-ss", "1", "-i", str(p), "-frames:v", "1",
+                            "-vf", "scale=960:-2", "-f", "image2pipe", "-c:v", "mjpeg", "-"],
+                           capture_output=True, timeout=60, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        jpg = r.stdout
+        if _clip_is_log(p) and jpg:
+            jpg = lut.apply_table_to_jpeg(jpg, *lut.parse_cube(lut.export_cube(None, "log709", size=33, source="slog3cine")))
+        return jpg
+
+    async def looks_still(request: Request):
+        """Before (key=original) / after still of one of his files, with the strength."""
+        q = request.query_params
+        try:
+            p = _shoot_file(q.get("file", ""))
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        key = q.get("key", "original")
+        try:
+            strength = min(max(float(q.get("strength", "1")), 0.0), 1.0)
+        except ValueError:
+            strength = 1.0
+
+        def work():
+            base = _still(p)
+            return base if key == "original" or key not in looks.BY_KEY else looks.apply_jpeg(base, key, strength, quality=88)
+        try:
+            return Response(await anyio.to_thread.run_sync(work), media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+        except Exception:  # noqa: BLE001
+            return JSONResponse({"error": "Studio couldn't read that file."}, status_code=500)
+
+    async def looks_copy(request: Request):
+        """His press: a NEW file with the look under <shoot>\\LOOKS\\<look>\\ (photo now, clip in the background)."""
+        body = await request.json()
+        key = body.get("key")
+        if key not in looks.BY_KEY:
+            return JSONResponse({"error": "Choose a look first."}, status_code=400)
+        try:
+            p = _shoot_file(str(body.get("file", "")))
+            strength = min(max(float(body.get("strength", 1.0)), 0.0), 1.0)
+        except (ValueError, TypeError) as exc:
+            return JSONResponse({"error": str(exc) or "Choose a photo or clip from this shoot."}, status_code=400)
+        shoot = Path(handoff.current()["path"])
+        name = looks.BY_KEY[key]["name"]
+        if p.suffix.lower() in (".jpg", ".jpeg"):
+            try:
+                out = await anyio.to_thread.run_sync(lambda: looks.copy_photo(p, shoot, key, strength))
+            except OSError as exc:
+                return JSONResponse({"error": "The disk is full, so the copy could not be saved." if getattr(exc, "errno", None) == 28
+                                     else "The copy could not be saved in the shoot folder."}, status_code=500)
+            autof._event(f"You made a copy of {p.name} with the look {name}", kind="you")
+            return JSONResponse({"ok": True, "out": out.name, "say": f"Saved {out.name} in LOOKS › {name}. The original is unchanged."})
+        if video.find_ffmpeg() is None:
+            return JSONResponse({"error": "Studio's video tool (ffmpeg) is missing, so clips can't get a look. "
+                                          "Run \"Install or repair camctl Studio\" once."}, status_code=400)
+        if look_job["busy"]:
+            return JSONResponse({"error": "A copy is already being made. Wait for it, or press Stop."}, status_code=409)
+        look_job.update(busy=True, out=None, message=f"Making a copy of {p.name} with {name}…")
+        look_job["stop"].clear()
+
+        def work():
+            try:
+                out = looks.copy_clip(p, shoot, key, strength, log=_clip_is_log(p), stop=look_job["stop"])
+                look_job.update(out=out.name, message=f"Saved {out.name} in LOOKS › {name}. The original is unchanged.")
+                autof._event(f"You made a copy of {p.name} with the look {name}", kind="you")
+            except InterruptedError:
+                look_job.update(message="Stopped. Nothing was saved and the original is unchanged.")
+            except Exception:  # noqa: BLE001
+                look_job.update(message="The copy could not be made. The original is unchanged.")
+            finally:
+                look_job["busy"] = False
+        threading.Thread(target=work, daemon=True, name="look-copy").start()
+        return JSONResponse({"ok": True, "busy": True, "say": look_job["message"]})
+
+    def looks_stop(_: Request):
+        look_job["stop"].set()
+        return JSONResponse({"ok": True})
+
+    ui_ctx: dict = {"panel": None, "look": None}          # what the page has open (no content, only names)
+
+    def _active_tools() -> list[dict]:
+        """The tools in use right now, each {key, detail} (assistant.TOOL_RULES gives Claude the priorities)."""
+        out = []
+        if (series_state.get("kind") == "focusstack" and auto.status.get("running")) or ui_ctx.get("panel") == "focusstack":
+            out.append({"key": "focusstack", "detail": "a focus stack series" + (" is running" if auto.status.get("running") else " is being set up")})
+        if play["long_on"]:
+            out.append({"key": "long", "detail": f"long exposure, {play['long_s']} s applied" if play["long_before"] is not None
+                        else "long exposure, setup not applied yet"})
+        if play["double_on"]:
+            out.append({"key": "double", "detail": "double exposure, composing photo 2 over the ghost of photo 1"
+                        if play["first"] and not play["second"] else "double exposure, photo 1 of 2"})
+        if play["pull"].get("a") or play["pull"].get("b") or ui_ctx.get("panel") == "pull":
+            p = play["pull"]
+            out.append({"key": "pull", "detail": "focus pull" + (f" from position {p['a']['pos']} to {p['b']['pos']}"
+                                                                  if p.get("a") and p.get("b") else ", points not set yet")})
+        if studio.reel.on:
+            out.append({"key": "reel", "detail": "day reel on (the 3 s before each photo are kept)"})
+        if ui_ctx.get("panel") in ("sound", "teleprompter", "shotlist"):
+            out.append({"key": ui_ctx["panel"], "detail": {"sound": "the sound check result is open",
+                                                           "teleprompter": "the teleprompter is open",
+                                                           "shotlist": "the shot list is open"}[ui_ctx["panel"]]})
+        return out
+
+    async def claude_context(request: Request):
+        """The page says which tool panel is open and whether a look preview is on (names only, never pictures)."""
+        b = await request.json()
+        if "panel" in b:
+            ui_ctx["panel"] = b["panel"] if b["panel"] in ("focusstack", "pull", "sound", "teleprompter", "shotlist") else None
+        if "look" in b:
+            ui_ctx["look"] = str(b["look"])[:40] if b["look"] else None
+        return JSONResponse({"tools": [t["key"] for t in _active_tools()], "look": ui_ctx["look"]})
+
+    def _situation() -> dict:
+        """The situation every camera button sends Claude (assistant.SITUATION): mode, format, shot, locks, offers."""
+        props = studio._props or {}
+        em = props.get(PROPS["exposure_mode"])
+        mode = "video" if em is not None and em.value in autofix.MOVIE_MODES else "photo"
+        prof = camprofile.of(studio)
+        fs = formats.summary(mode, props, prof, label) if props else {}
+        s = {"mode": mode, "format": fs.get("name"), "pp_kind": fs.get("pp_kind"),
+             "aspect": fs.get("ratio_name") if mode == "photo" else None,
+             "shot": (autof.decision or {}).get("shot_name")}
+        if mode == "video" and props.get(SP_MOVIE_SETTING):
+            fps = capture.fps_of(label("movie_setting", props[SP_MOVIE_SETTING].value))
+            t = capture.video_shutter(fps, int(prefs().get("mains_hz", 50)))[0]
+            s["shutter_rule"] = f"{fps}p with {int(prefs().get('mains_hz', 50))} Hz mains: 1/{round(1 / t)} s, never changed"
+        locked = [n for n in ("aperture", "shutter_speed", "iso", "white_balance", "focus_mode") if n in (autof.paused or {})]
+        if focus_state.get("text"):
+            locked.append("focus " + str(focus_state["text"]))
+        s["locked"] = ", ".join(locked) if locked else "Studio's setup"
+        vals = {x["name"]: x for x in settings_view(props)} if props else {}
+        offers = []
+        for n, t in (("aperture", "aperture"), ("iso", "ISO")):
+            ch = [c["label"] for c in vals.get(n, {}).get("choices", []) if c["value"] not in (0, 0xFFFFFF)]
+            if ch:
+                offers.append(f"{t} {ch[0]} to {ch[-1]}")
+        s["offered"] = "; ".join(offers)
+        s["tools"] = _active_tools()
+        if ui_ctx.get("look"):
+            s["look_preview"] = ui_ctx["look"]
+        if mode == "video":
+            sh = handoff.current()
+            vt = [t for t in (importer.takes(sh) if sh else []) if t.get("kind") == "video" and t.get("settings")]
+            if vt:
+                st = vt[-1]["settings"]
+                s["last_take"] = ", ".join(f"{k.replace('_', ' ')} {st[k]}" for k in
+                                           ("aperture", "shutter_speed", "iso", "white_balance", "color_temp") if st.get(k))
+        return s
+    assistant.SITUATION = _situation
+
+    # -- CAPTURE CARD (optional, not yet tested on a real card): picture source and recording on the laptop --------
+    card_rec: dict = {"state": "idle", "t0": 0.0, "say": "", "file": None, "mkv": None}
+
+    def _card_state() -> dict:
+        devs = card_state.get("devices") or {"video": [], "audio": [], "ffmpeg": video.find_ffmpeg() is not None}
+        c = getattr(studio, "card", None)
+        lvl = c.level() if c is not None else None
+        return {"source": "card" if c is not None else "camera", "devices": devs,
+                "chosen": card_state.get("chosen"), "size": list(c.size) if c is not None and c.size else None,
+                "level_db": None if lvl is None else round(lvl, 1), "note": getattr(studio, "card_note", ""),
+                "record_to": "laptop" if prefs().get("record_to") == "laptop" else "card",
+                "rec": {k: card_rec[k] for k in ("state", "say")} | {"elapsed": round(time.time() - card_rec["t0"], 1)
+                                                                    if card_rec["state"] == "recording" else 0}}
+
+    card_state: dict = {"devices": None, "chosen": None}
+
+    async def card_view(request: Request):
+        """GET: the state (device names only after he opened this page; nothing is opened by listing).
+        POST {list} / {source:'camera'} / {source:'card', video, audio} / {record_to}."""
+        if request.method == "POST":
+            b = await request.json()
+            if b.get("list"):
+                card_state["devices"] = await anyio.to_thread.run_sync(capture_card.list_devices)
+            if "record_to" in b:
+                save_prefs(record_to="laptop" if b["record_to"] == "laptop" else "card")
+            if b.get("source") == "camera":
+                if card_rec["state"] in ("starting", "recording", "finishing"):
+                    return JSONResponse({"error": "Stop the recording on the laptop first."}, status_code=409)
+                studio.card_fallback("")
+                card_state["chosen"] = None
+                autof._event("You switched the picture back to the camera cable", kind="you")
+            elif b.get("source") == "card":
+                devs = card_state.get("devices") or await anyio.to_thread.run_sync(capture_card.list_devices)
+                card_state["devices"] = devs
+                if not devs.get("ffmpeg"):
+                    return JSONResponse({"error": "The capture card needs Studio's video tool (ffmpeg). Run \"Install "
+                                                  "or repair camctl Studio\" once."}, status_code=400)
+                v, a = b.get("video"), b.get("audio")
+                if v not in devs["video"] or (a and a not in devs["audio"]):
+                    return JSONResponse({"error": "Choose the capture card from the list first."}, status_code=400)
+                old = getattr(studio, "card", None)
+                if old is not None:
+                    studio.card_fallback("")
+                src = capture_card.CardSource(v, a or None)
+                try:
+                    await anyio.to_thread.run_sync(src.start)
+                except Exception:  # noqa: BLE001
+                    return JSONResponse({"error": "The capture card could not be opened. Check that it is plugged in."},
+                                        status_code=400)
+                studio.card_note = ""
+                studio._card_seq = 0
+                studio.card = src
+                card_state["chosen"] = {"video": v, "audio": a}
+                autof._event("You chose the capture card as the picture", kind="you")   # never the device name
+        return JSONResponse(_card_state())
+
+    def card_levels(request: Request):
+        """The card's sound levels (dBFS per 50 ms) since a time: the Sound check can listen through the card."""
+        c = getattr(studio, "card", None)
+        try:
+            t0 = float(request.query_params.get("since", "0"))
+        except ValueError:
+            t0 = 0.0
+        return JSONResponse({"levels": c.levels_since(t0) if c is not None else [], "now": time.time()})
+
+    def _card_record(action: str) -> dict:
+        """His press on record while "Record video to: This laptop" and the card is the source."""
+        c = getattr(studio, "card", None)
+        if c is None:
+            raise ValueError("Choose the capture card as the picture first, or record to the camera's card.")
+        sh = Path(handoff.ensure_shoot()["path"])
+        if action == "start":
+            if card_rec["state"] in ("starting", "recording", "finishing"):
+                return {"ok": True, **card_rec}
+            if capture_card.disk_free(sh) < capture_card.MIN_FREE_START:
+                raise ValueError("The laptop's disk is almost full (less than 2 GB free), so the recording was not "
+                                 "started. Free some space first.")
+            mkv = sh / "VIDEO" / (time.strftime("%Y%m%d-%H%M%S") + " laptop.mkv")
+            card_rec.update(state="starting", say="Starting…", mkv=mkv, file=None, t0=0.0)
+            studio.card_recording = True
+            c.start(record_path=mkv)                     # about a second without picture: one process owns the device
+
+            def watch():
+                end = time.time() + 10
+                while time.time() < end and card_rec["state"] == "starting":
+                    if c.writing():
+                        card_rec.update(state="recording", t0=time.time(), say="Recording on the laptop")
+                        studio.recording, studio.rec_since = True, time.time()
+                        break
+                    time.sleep(0.2)
+                if card_rec["state"] == "starting":
+                    c.start()                            # back to the picture only
+                    studio.card_recording = False
+                    card_rec.update(state="idle", say="The recording on the laptop did not start. Nothing was saved.")
+                    return
+                while card_rec["state"] == "recording":     # disk guard while recording
+                    if capture_card.disk_free(sh) < capture_card.MIN_FREE_KEEP:
+                        _card_stop("The laptop's disk is almost full, so Studio stopped the recording. ")
+                        return
+                    time.sleep(2)
+            threading.Thread(target=watch, daemon=True, name="card-rec").start()
+            return {"ok": True, **{k: card_rec[k] for k in ("state", "say")}}
+        _card_stop("")
+        return {"ok": True, **{k: card_rec[k] for k in ("state", "say")}}
+
+    def _card_stop(prefix: str) -> None:
+        c = getattr(studio, "card", None)
+        if card_rec["state"] not in ("starting", "recording"):
+            return
+        card_rec.update(state="finishing", say="Finishing the file…")
+        studio.recording = False
+        start_t = card_rec["t0"] or time.time()
+
+        def work():
+            if c is not None:
+                c.start()                                # stop writing, keep the picture
+            studio.card_recording = False
+            mkv = card_rec["mkv"]
+            out, say = capture_card.finish_file(mkv) if mkv and mkv.exists() else (None, "Nothing was recorded.")
+            card_rec.update(state="saved" if out else "failed", say=prefix + say, file=str(out) if out else str(mkv))
+            if out:
+                try:
+                    importer.log_take("video", start_t, time.time(), files=[str(out)])
+                except Exception:  # noqa: BLE001
+                    pass
+        threading.Thread(target=work, daemon=True, name="card-finish").start()
+
+    # -- PLAYGROUND EXPERIMENTS: double exposure, long exposure (+ practice), shoot for a mood, focus pull ----------
+    play: dict = {"double_on": False, "first": None, "second": None, "result": None, "blend": "bright",
+                  "long_on": False, "long_s": None, "long_before": None, "long_entry": None, "long_phase": None,
+                  "long_open_until": 0.0, "mood": None, "mood_words": "",
+                  "pull": {"a": None, "b": None, "busy": False, "say": "", "pick": None}}
+
+    def _shoot() -> Path:
+        sh = handoff.current() or handoff.ensure_shoot()
+        return Path(sh["path"])
+
+    def _jpeg_of(paths: list[str]) -> Path | None:
+        return next((Path(p) for p in paths if str(p).lower().endswith((".jpg", ".jpeg")) and Path(p).exists()), None)
+
+    def _double_after_photo(paths: list[str]) -> dict | None:
+        """His photo 1 or 2 of a double exposure. Photo 1 stays a normal photo; after photo 2 the blend is saved."""
+        if not play["double_on"]:
+            return None
+        jpg = _jpeg_of(paths)
+        if jpg is None:
+            return {"say": "The double exposure needs the camera's JPEG. Choose RAW + JPEG or JPEG in Format."}
+        if play["first"] is None:
+            play.update(first=str(jpg), second=None, result=None)
+            return {"step": 2, "say": "Photo 1 saved. Its picture now lies over the live view: compose photo 2."}
+        play["second"] = str(jpg)
+        out = playground.double_save(Path(play["first"]), jpg, _shoot(), play["blend"])
+        play["result"] = str(out)
+        autof._event(f"Double exposure saved: {out.name}", kind="you")
+        return {"step": 3, "say": f"Saved {out.name} in PLAYGROUND › Double exposure. Both photos are kept as they are.",
+                "file": out.name}
+
+    def _play_state() -> dict:
+        p = play["pull"]
+        sh = studio._props or {}                 # cached only: never wait for the camera while the shutter is open
+        sp = sh.get(PROPS["shutter_speed"]) if sh else None
+        offered = playground.long_offered(list(sp.choices or []) if sp else [], presets.shutter_seconds)
+        now = time.time()
+        phase = play["long_phase"]
+        left = max(0, int(math.ceil(play["long_open_until"] - now))) if phase == "open" else 0
+        if phase == "open" and left == 0:
+            phase = "finishing"
+        return {"double": {"on": play["double_on"], "step": 2 if play["first"] and not play["second"] else 1,
+                           "first": bool(play["first"]), "result": Path(play["result"]).name if play["result"] else None,
+                           "blend": play["blend"]},
+                "long": {"on": play["long_on"], "offered": sorted(offered), "seconds": play["long_s"],
+                         "applied": play["long_before"] is not None, "phase": phase, "left": left,
+                         "mode_ok": studio.cam is None or not (sh and sh.get(PROPS["exposure_mode"]) and
+                                                               sh[PROPS["exposure_mode"]].value in autofix.MOVIE_MODES)},
+                "mood": {"words": play["mood_words"], "proposal": play["mood"]},
+                "pull": {k: p[k] for k in ("a", "b", "busy", "say", "pick")}}
+
+    async def play_view(request: Request):
+        """GET the experiments' state; POST {double:on/off/reset/blend, long:on/off, pull_pick:'a'|'b'|null}."""
+        if request.method == "POST":
+            b = await request.json()
+            if "double" in b:
+                v = b["double"]
+                if v in ("on", "off", "reset"):
+                    play.update(first=None, second=None, result=None)
+                    play["double_on"] = v != "off" if v != "reset" else play["double_on"]
+                elif v in playground.BLENDS and play["first"] and play["second"]:
+                    play["blend"] = v
+                    old = Path(play["result"]) if play["result"] else None
+                    out = await anyio.to_thread.run_sync(
+                        lambda: playground.double_save(Path(play["first"]), Path(play["second"]), _shoot(), v))
+                    if old and old != out and old.exists():
+                        old.unlink()                     # his choice of blend replaces the one Studio made, never a photo
+                    play["result"] = str(out)
+            if "long" in b:
+                play["long_on"] = bool(b["long"])
+            if "pull_pick" in b:
+                play["pull"]["pick"] = b["pull_pick"] if b["pull_pick"] in ("a", "b") else None
+        return JSONResponse(_play_state())
+
+    def play_image(request: Request):
+        which = request.path_params["which"]
+        p = {"first": play["first"], "second": play["second"], "result": play["result"]}.get(which)
+        if not p or not Path(p).exists():
+            return JSONResponse({"error": "nothing yet"}, status_code=404)
+        return Response(playground.preview(Path(p), 1280 if which == "first" else 960), media_type="image/jpeg",
+                        headers={"Cache-Control": "no-store"})
+
+    async def long_apply(request: Request):
+        """His Apply of the long-exposure setup (logged with undo); the long shutter is his choice from here."""
+        b = await request.json()
+        if studio.recording:
+            return JSONResponse({"error": "Stop the recording first."}, status_code=409)
+        secs = int(b.get("seconds") or 0)
+        props = studio.props(max_age=0)
+        em = props.get(PROPS["exposure_mode"])
+        if em is not None and em.value in autofix.MOVIE_MODES:
+            return JSONResponse({"error": "Switch to Photo first: a long exposure is a photo."}, status_code=400)
+        codes = {n: code_of(n) for n in ("shutter_speed", "iso", "aperture", "focus_mode", "white_balance", "color_temp")}
+        ch = playground.long_setup(props, secs, codes, presets.shutter_seconds)
+        if not ch:
+            return JSONResponse({"error": "This camera does not offer long shutter times over the cable."}, status_code=400)
+        before = {s["name"]: s["value"] for s in settings_view(props) if s["name"] in {c["name"] for c in ch}}
+
+        def work():
+            autof.studio_busy(20)
+            r = changelog.apply(ch, "you", f"Long exposure: {secs} s")
+            for c in ch:
+                autof.manual(c["name"])                  # his choice: no "too slow", no compensation
+            return r
+        r = await anyio.to_thread.run_sync(work)
+        play.update(long_before=before if play["long_before"] is None else play["long_before"], long_s=secs)
+        claude_intent.clear()
+        return JSONResponse({**_play_state(), "applied": r.get("applied"),
+                             "say": f"Locked for a long exposure: {secs} s. Press the shutter, then draw with light."})
+
+    async def long_restore(_: Request):
+        """"Back to Studio's choice": the setup he had before the long exposure."""
+        before = play["long_before"]
+        if not before:
+            return JSONResponse(_play_state())
+        order = ["white_balance", "color_temp", "focus_mode", "aperture", "iso", "shutter_speed"]
+        ch = [{"name": n, "value": before[n]} for n in order if n in before]
+        await anyio.to_thread.run_sync(lambda: (autof.studio_busy(20), changelog.apply(ch, "you", "Back from the long exposure")))
+        play.update(long_before=None, long_s=None)
+        return JSONResponse({**_play_state(), "say": "Back to the setup you had before."})
+
+    async def paint_save(request: Request):
+        """The Practice picture (made in the page from the live picture) into PLAYGROUND › Paint with light."""
+        raw = await request.body()
+        if len(raw) > 8_000_000 or raw[:2] != b"\xff\xd8":
+            return JSONResponse({"error": "That isn't a practice picture."}, status_code=400)
+        try:
+            out = await anyio.to_thread.run_sync(lambda: playground.save_practice(raw, _shoot()))
+        except OSError:
+            return JSONResponse({"error": "The picture could not be saved in the shoot folder."}, status_code=500)
+        return JSONResponse({"ok": True, "say": f"Saved {out.name} in PLAYGROUND › Paint with light."})
+
+    def _nearest(choices, want, key=lambda v: v):
+        return min(choices, key=lambda v: abs(math.log(max(key(v), 1e-6)) - math.log(max(want, 1e-6))))
+
+    async def mood_ask(request: Request):
+        """Shoot for a mood: ONE Claude call per press, on the untouched frame; values clamped to what the camera
+        offers (and said so). Nothing changes until his Apply."""
+        b = await request.json()
+        words = str(b.get("words", "")).strip()[:300]
+        if not words:
+            return JSONResponse({"error": "Say the mood in a few words first."}, status_code=400)
+        if not assistant.has_key():
+            return JSONResponse({"error": "NO_KEY"}, status_code=400)
+        props = studio.props(max_age=0)
+        vals = {s["name"]: s for s in settings_view(props)}
+        em = props.get(PROPS["exposure_mode"])
+        video_mode = em is not None and em.value in autofix.MOVIE_MODES
+        aps = sorted(c["value"] for c in vals.get("aperture", {}).get("choices", []) if c["value"])
+        shs = sorted((c["value"] for c in vals.get("shutter_speed", {}).get("choices", []) if presets.shutter_seconds(c["value"])),
+                     key=presets.shutter_seconds)
+        isos = sorted(c["value"] for c in vals.get("iso", {}).get("choices", []) if 0 < c["value"] < 0xFFFFFF)
+        kel = props.get(SP_COLOR_TEMP)
+        krange = list(kel.range[:2]) if kel is not None and kel.range else [2500, 9900]
+        fixed = None
+        if video_mode:
+            ms = props.get(SP_MOVIE_SETTING)
+            fps = capture.fps_of(label("movie_setting", ms.value)) if ms else 25
+            fixed = capture.video_shutter(fps, int(prefs().get("mains_hz", 50)))[0]
+        if not (aps and shs and isos):
+            return JSONResponse({"error": "The camera isn't reporting its values right now. Try again in a moment."}, status_code=400)
+        ranges = {"mode": "video" if video_mode else "photo", "aperture": [aps[0] / 100, aps[-1] / 100],
+                  "shutter_s": [presets.shutter_seconds(shs[0]), presets.shutter_seconds(shs[-1])],
+                  "iso": [isos[0], isos[-1]], "kelvin": krange, "fixed_shutter_s": fixed}
+        frame = studio.frame or live_frame()
+
+        def work():
+            return assistant.mood(frame, words, ranges)
+        try:
+            ans = await anyio.to_thread.run_sync(work)
+        except assistant.AskError as exc:
+            return _claude_err(exc)
+        clamped, changes = [], []
+        ap = _nearest(aps, float(ans["aperture_f"]) * 100)
+        sh = _nearest(shs, float(fixed or ans["shutter_s"]), presets.shutter_seconds)
+        iso = _nearest(isos, float(ans["iso"]))
+        kv = int(min(max(int(ans["kelvin"]), krange[0]), krange[1]))
+        step = (kel.range[2] if kel is not None and kel.range and kel.range[2] else 100)
+        kv = int(round(kv / step) * step)
+        if abs(ap / 100 - float(ans["aperture_f"])) > 0.35:
+            clamped.append(f"aperture f/{float(ans['aperture_f']):g} → {label('aperture', ap)}")
+        if not fixed and abs(math.log2(presets.shutter_seconds(sh) / max(float(ans["shutter_s"]), 1e-6))) > 0.4:
+            clamped.append(f"shutter {float(ans['shutter_s']):g} s → {label('shutter_speed', sh)}")
+        if abs(math.log2(iso / max(float(ans["iso"]), 1))) > 0.4:
+            clamped.append(f"ISO {ans['iso']} → {iso}")
+        if kv != int(ans["kelvin"]) and abs(kv - int(ans["kelvin"])) > step:
+            clamped.append(f"{ans['kelvin']} K → {kv} K")
+        for name, v in (("aperture", ap), ("shutter_speed", sh), ("iso", iso)):
+            if vals.get(name) and vals[name]["value"] != v:
+                changes.append({"name": name, "value": v, "label": label(name, v), "from_label": vals[name]["label"]})
+        if vals.get("white_balance") and 32786 in [c["value"] for c in vals["white_balance"]["choices"]]:
+            if vals["white_balance"]["value"] != 32786:
+                changes.append({"name": "white_balance", "value": 32786, "label": "Color temp", "from_label": vals["white_balance"]["label"]})
+            if vals.get("color_temp", {}).get("value") != kv:
+                changes.append({"name": "color_temp", "value": kv, "label": f"{kv} K", "from_label": vals.get("color_temp", {}).get("label", "")})
+        prop = {"words": words, "changes": changes, "guide": ans["guide"], "light": ans["light"], "room": ans["room"],
+                "cannot": ans["cannot"], "clamped": clamped,
+                "note": ("Some values were outside what the camera offers, so Studio used the nearest: " + "; ".join(clamped) + ".")
+                if clamped else "", "shutter_rule": bool(fixed)}
+        play.update(mood=prop, mood_words=words,
+                    mood_before={c["name"]: vals[c["name"]]["value"] for c in changes if c["name"] in vals})
+        return JSONResponse(prop)
+
+    async def mood_back(_: Request):
+        """"Back to Studio's choice" after a mood: the values he had before he applied it."""
+        before = play.get("mood_before") or {}
+        order = ["white_balance", "color_temp", "aperture", "iso", "shutter_speed"]
+        ch = [{"name": n, "value": before[n]} for n in order if n in before]
+        if ch:
+            await anyio.to_thread.run_sync(lambda: (autof.studio_busy(20), changelog.apply(ch, "you", "Back from the mood")))
+        claude_intent.clear()
+        play.update(mood=None, mood_before=None)
+        return JSONResponse({**_play_state(), "say": "Back to the setup you had before the mood."})
+
+    async def pull_mark(request: Request):
+        """His tap for point A or B: focus there once, lock MF, remember the lens position."""
+        b = await request.json()
+        which = b.get("which")
+        if which not in ("a", "b"):
+            return JSONResponse({"error": "Tap A or B."}, status_code=400)
+        x, y = float(b.get("x", .5)), float(b.get("y", .5))
+
+        def work():
+            studio.run(lambda c: c.focus_at(x, y))
+            time.sleep(0.6)
+            studio.run(lambda c: c.set("focus_mode", 1) if 1 in c.refresh()[PROPS["focus_mode"]].choices else None)
+            return focus_pos_now()
+        pos = await anyio.to_thread.run_sync(work)
+        if pos is None:
+            return JSONResponse({"error": "The camera doesn't report a focus position, so a pull can't be planned."}, status_code=400)
+        play["pull"][which] = {"pos": pos, "x": x, "y": y}
+        play["pull"]["pick"] = None
+        return JSONResponse(_play_state())
+
+    async def pull_run(request: Request):
+        """His press: move the focus between A and B in small even steps. Never starts or stops a recording."""
+        b = await request.json()
+        p = play["pull"]
+        if not (p["a"] and p["b"]):
+            return JSONResponse({"error": "Tap point A and point B first."}, status_code=400)
+        if p["busy"]:
+            return JSONResponse(_play_state())
+        start, end = (p["a"], p["b"]) if b.get("direction", "ab") == "ab" else (p["b"], p["a"])
+        secs = float(b.get("seconds", 2))
+        secs = secs if secs in (1.0, 2.0, 4.0) else 2.0
+        fm = studio.props(max_age=0).get(PROPS["focus_mode"])
+        if fm is None or fm.value not in (1, 32774):
+            studio.run(lambda c: c.set("focus_mode", 1))
+        p.update(busy=True, say="Pulling focus…")
+
+        def work():
+            try:
+                focus_goto_pos(int(start["pos"]))
+                now = focus_pos_now() or start["pos"]
+                steps, gap = playground.pull_plan(int(now), int(end["pos"]), secs)
+                for s in steps:
+                    studio.run(lambda c, s=s: c.focus_step(s))
+                    time.sleep(gap)
+                ended = focus_pos_now()
+                p["say"] = f"Focus stays where the pull ended ({'B' if end is p['b'] else 'A'}, position {ended})."
+            except Exception:  # noqa: BLE001
+                p["say"] = "The pull stopped part-way. Focus stays where it is."
+            finally:
+                p["busy"] = False
+        threading.Thread(target=work, daemon=True, name="focus-pull").start()
+        return JSONResponse(_play_state())
+
+    SOUND_FIELDS = ("noise_dbfs", "hum_db", "voice_dbfs", "clipped", "echo_s", "mains_hz")
+
+    async def sound_ask(request: Request):
+        """His press on the Claude spark under a sound check: only the NUMBERS go into one question (the sound was
+        never recorded; anything else in the request is ignored)."""
+        raw = await request.body()
+        if len(raw) > 2000:
+            return JSONResponse({"error": "Only the sound check's numbers can be sent."}, status_code=400)
+        try:
+            body = json.loads(raw or b"{}")
+        except ValueError:
+            body = {}
+        nums = {}
+        for k in SOUND_FIELDS:
+            v = body.get(k)
+            if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v):
+                nums[k] = round(float(v), 1)
+        if not assistant.has_key():
+            return JSONResponse({"error": "NO_KEY"}, status_code=400)
+        text = ("A sound check before recording a talking-head video, measured through a laptop microphone (not the "
+                "camera's microphone). Numbers: " + json.dumps(nums) + ". noise_dbfs is the quiet room, voice_dbfs the "
+                "90th percentile of speech, hum_db how far a mains hum stands above its neighbours (null = none), "
+                "echo_s an estimated reverberation time (null = not clear). In two or three plain sentences, like a "
+                "sound person on set, say what matters most and what to do. No jargon without a plain word beside it.")
+
+        def work():
+            with assistant.feature("sound check"):
+                data = assistant.call({"model": assistant.MODEL, "max_tokens": 16000,
+                                       "messages": [{"role": "user", "content": text}]}, assistant._key())
+            if data.get("stop_reason") == "refusal":
+                raise assistant.AskError("Claude declined this question. The numbers above still say what to fix.")
+            return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
+        try:
+            return JSONResponse({"say": await anyio.to_thread.run_sync(work), "sent": nums})
+        except assistant.AskError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+
+    def _format_rows() -> dict:
+        _migrate_photo_log()
+        props = studio.props(max_age=0)
+        prof = camprofile.of(studio)
+        em = props.get(PROPS["exposure_mode"])
+        active = "video" if em is not None and em.value in autofix.MOVIE_MODES else "photo"
+        formats.remember(active, props)
+        pl = bool(prefs().get("photo_log", False))
+        return {"active": active, "summary": formats.summary(active, props, prof, label),
+                "photo": formats.rows("photo", props, prof, label, active == "photo", pl),
+                "video": formats.rows("video", props, prof, label, active == "video", pl)}
+
+    BASIS = {"picture_profile", "movie_format", "movie_setting", "still_format"}     # these change how to expose
+
+    async def formats_view(request: Request):
+        """All settings › Camera › Format. GET: both modes' rows (what the camera offers, his choice, Studio's
+        choice). POST {mode, key, value}: his pick (value null = back to Studio's choice). Only on his press; a value
+        the camera refuses keeps the previous one and says so calmly; a new exposure basis gets one fresh setup."""
+        if request.method == "GET":
+            try:
+                return JSONResponse(await anyio.to_thread.run_sync(_format_rows))
+            except Exception as exc:  # noqa: BLE001
+                return err(exc)
+        body = await request.json()
+        mode, key = body.get("mode"), body.get("key")
+        if mode not in formats.ROWS or key not in formats.ROWS[mode]:
+            return JSONResponse({"error": "That is not a format setting."}, status_code=400)
+        value = body.get("value")
+        try:
+            value = None if value is None else int(value)
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "That is not a value the camera offers."}, status_code=400)
+        if studio.recording:
+            return JSONResponse({"error": "Stop the recording to change the format."}, status_code=409)
+        if dirx.status["running"]:
+            return JSONResponse({"error": "Stop the director first."}, status_code=400)
+
+        def work():
+            props = studio.props(max_age=0)
+            prof = camprofile.of(studio)
+            em = props.get(PROPS["exposure_mode"])
+            active = "video" if em is not None and em.value in autofix.MOVIE_MODES else "photo"
+            title = formats.TITLES[(mode, key)]
+            code = formats.CODES[key]
+            p = props.get(code)
+            before = p.value if p is not None else None
+            target = value
+            if value is None:
+                formats.set_choice(mode, key, None)
+                say = f"{title}: back to Studio's choice ({formats.default_name(mode, key, prof)})."
+                if mode == active:
+                    target = formats.studio_value(mode, key, props, prof, label, bool(prefs().get("photo_log", False)))
+            else:
+                name = formats.value_name(key, value, prof, label)
+                offered = [c["value"] for r in formats.rows(mode, props, prof, label, mode == active) if r["key"] == key
+                           for c in r["choices"]]
+                if value not in offered:
+                    return {"ok": False, "say": f"The camera doesn't offer {name} here, so {title.lower()} stays as it is."}
+                if mode != active:
+                    formats.set_choice(mode, key, value)
+                    autof._event(f"You chose {title.lower()}: {name} (used when you switch to {mode})", kind="you")
+                    return {"ok": True, "say": f"{title}: {name}. Studio uses it when you switch to {mode.title()}."}
+                say = f"{title}: {name}."
+            changed = False
+            if mode == active and target is not None and target != before:
+                autof.studio_busy(30)
+                try:
+                    studio.run(lambda c: c.set(code, target))
+                    time.sleep(0.4)
+                    now = studio.props(max_age=0).get(code)
+                    ok = now is not None and now.value == target
+                except Exception:  # noqa: BLE001 - the camera said no: nothing stored, the previous value stays
+                    ok = False
+                if not ok:
+                    return {"ok": False, "say": f"The camera didn't take {formats.value_name(key, target, prof, label)} "
+                                                f"right now, so it stays on {formats.value_name(key, before, prof, label)}. "
+                                                "Some formats need another camera mode or menu setting first."}
+                changed = True
+            if value is not None:
+                formats.set_choice(mode, key, value)
+            if not (changed and key in BASIS):
+                autof._event(("You chose " + say[0].lower() + say[1:]).rstrip("."), kind="you")
+            if changed and key in BASIS:
+                # like the Photo/Video switch: built-in rules only (no Claude), logged with undo, Locked afterwards
+                fname = formats.summary(mode, studio.props(max_age=0), prof, label)["name"] or mode
+                mode_setup(mode, who="You", event=f"You chose {title.lower()}: set up again for {fname}")
+                setup = f"Set up again for {formats.summary(mode, studio.props(max_age=0), prof, label)['name'] or mode}."
+                return {"ok": True, "say": say + " " + setup, "setup": setup}
+            return {"ok": True, "say": say}
+        try:
+            out = await anyio.to_thread.run_sync(work)
+            return JSONResponse({**out, **(await anyio.to_thread.run_sync(_format_rows))})
+        except Exception as exc:  # noqa: BLE001
+            return err(exc)
+
     def settings(_: Request):
         try:
             props = studio.props()
@@ -3277,7 +4265,15 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         prof = camprofile.of(studio)
         ppv = props.get(presets.PROP_PICTURE_PROFILE)
         kind = camprofile.log_kind(prof, ppv.value if ppv else None)
+        em = props.get(PROPS["exposure_mode"])
+        fmode = "video" if em is not None and em.value in autofix.MOVIE_MODES else "photo"
+        try:
+            fsum = formats.summary(fmode, props, prof, label)
+            formats.remember(fmode, props)
+        except Exception:  # noqa: BLE001
+            fsum = {"mode": fmode, "name": "", "ratio": None, "pp_kind": "standard", "jpeg_only": False}
         return JSONResponse({"camera": studio.cam.name if studio.cam else "",
+                             "format": fsum,
                              "profile": {"model": prof.get("model"), "tested": bool(prof.get("tested")),
                                          "log_confirmed": bool(prof.get("log_confirmed")), "log_pp": prof.get("log_pp"),
                                          "log_min_iso": prof.get("log_min_iso"), "zoom_mm": bool((prof.get("lens") or {}).get("zoom_mm"))},
@@ -3555,8 +4551,16 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
 
     def take_photo() -> dict:
         """Shoot one photo (only ever from the owner's button or the smart mode he armed). RAW is enforced first."""
+        moment = studio.reel.snapshot() if studio.reel.on and not studio.recording else []   # the 3 s before his press
         fmt = enforce_format("photo")
-        files = studio.run(lambda c: c.capture(af=False))     # no AF on the shutter: the focus lock holds
+        long_s = play["long_s"] if play["long_on"] and play["long_before"] is not None else None
+        if long_s:                               # his long exposure: the shutter is open, then the camera finishes
+            from .drivers.sony import S1_SETTLE_S
+            play.update(long_phase="open", long_open_until=time.time() + S1_SETTLE_S + long_s)
+        try:                                     # no AF on the shutter: the focus lock holds
+            files = studio.run(lambda c: c.capture(af=False, timeout=2 * long_s + 40) if long_s else c.capture(af=False))
+        finally:
+            play.update(long_phase=None, long_open_until=0.0)      # no retry, no second press by Studio
         saved = save_files(files)
         if not saved:                         # nothing arrived: say so in words, and log no empty take
             return {"saved": [], "shoot": [], "take": None, "format_fixed": fmt, "failed": True,
@@ -3567,6 +4571,13 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 shoot_copies.append(str(handoff.add_file(CAPTURE_DIR / name)))
             except OSError:
                 pass
+        dbl = None
+        try:
+            dbl = _double_after_photo(shoot_copies)
+        except Exception:  # noqa: BLE001 - the photo itself is saved whatever happens to the blend
+            dbl = {"say": "The double exposure could not be made. Both photos are saved as they are."}
+        if moment:                               # the clip is written in the background: the photo is not slower
+            _reel_clip_later(moment, shoot_copies or [str(CAPTURE_DIR / n) for n in saved])
         take = None
         try:
             jpg = next((CAPTURE_DIR / n for n in saved if n.lower().endswith(".jpg")), None)
@@ -3578,7 +4589,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             note = ("The photo is saved, but it could not be copied into the shoot folder (disk full or folder missing). "
                     "It is in Studio's captures folder and on the card.")
         return {"saved": saved, "shoot": shoot_copies, "take": take["id"] if take else None, "format_fixed": fmt,
-                "note": note}
+                "note": note, "double": dbl}
 
     async def record(request: Request):
         """Start or stop recording: a dedicated start and a dedicated stop. The camera's movie button is a toggle,
@@ -3592,6 +4603,13 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         action = body.get("action") or ("stop" if studio.recording else "start")
         if action not in ("start", "stop"):
             return JSONResponse({"error": "unknown action"}, status_code=400)
+        if prefs().get("record_to") == "laptop" and getattr(studio, "card", None) is not None:
+            # "Record video to: This laptop": his press records the card's picture and sound; the camera's own
+            # recording is never started or stopped by this
+            try:
+                return JSONResponse(await anyio.to_thread.run_sync(lambda: _card_record(action)))
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=409)
         if time.time() - studio.rec_toggled < 2.5:
             return JSONResponse({"error": "Wait a moment between start and stop."}, status_code=429)
         if action == "start" and studio.rec_check is not None:
@@ -3638,7 +4656,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 devs = video.capture_devices() if p.get("hdmi") else []
                 vjobs.recording_started(devs[0] if devs else None)
             else:
-                vjobs.recording_stopped({"quick_draft": p.get("quick_draft", False), "log": True})
+                vjobs.recording_stopped({"log": True})
                 t = record_take("video", getattr(studio, "take_start", time.time()), time.time(), studio.frame, [])
                 if t:
                     vjobs.status["take"] = t["id"]
@@ -3736,7 +4754,6 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         Route("/api/preset", preset, methods=["POST"]),
         Route("/api/autopilot", autopilot, methods=["POST"]),
         Route("/api/follow", follow, methods=["GET", "POST"]),
-        Route("/api/grade", make_grade, methods=["POST"]),
         Route("/api/record/state", record_state),
         Route("/api/auto/start", auto_start, methods=["POST"]),
         Route("/api/auto/stop", auto_stop, methods=["POST"]),
@@ -3767,10 +4784,37 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         Route("/api/focus/track", focus_track, methods=["POST"]),
         Route("/api/focus", focus_view),
         Route("/api/focus/step", focus_step, methods=["POST"]),
-        Route("/api/lut/data/{key}", lut_data),
         Route("/api/lut/{key}.cube", lut_export),
         Route("/api/liveview.jpg", liveview),
         Route("/api/settings", settings),
+        Route("/api/formats", formats_view, methods=["GET", "POST"]),
+        Route("/api/sound/ask", sound_ask, methods=["POST"]),
+        Route("/api/looks", looks_list),
+        Route("/api/looks/sample/{key}.jpg", looks_sample),
+        Route("/api/looks/table/{key}", looks_table),
+        Route("/api/looks/still", looks_still),
+        Route("/api/looks/copy", looks_copy, methods=["POST"]),
+        Route("/api/looks/stop", looks_stop, methods=["POST"]),
+        Route("/api/card", card_view, methods=["GET", "POST"]),
+        Route("/api/card/levels", card_levels),
+        Route("/api/play", play_view, methods=["GET", "POST"]),
+        Route("/api/play/image/{which}.jpg", play_image),
+        Route("/api/play/long/apply", long_apply, methods=["POST"]),
+        Route("/api/play/long/restore", long_restore, methods=["POST"]),
+        Route("/api/play/paint/save", paint_save, methods=["POST"]),
+        Route("/api/play/mood", mood_ask, methods=["POST"]),
+        Route("/api/play/mood/back", mood_back, methods=["POST"]),
+        Route("/api/play/pull/mark", pull_mark, methods=["POST"]),
+        Route("/api/play/pull/run", pull_run, methods=["POST"]),
+        Route("/api/reel", reel_view, methods=["GET", "POST"]),
+        Route("/api/reel/make", reel_make, methods=["POST"]),
+        Route("/api/reel/stop", reel_stop, methods=["POST"]),
+        Route("/api/reel/delete", reel_delete, methods=["POST"]),
+        Route("/api/reel/show", reel_show, methods=["POST"]),
+        Route("/api/sound/cancel", sound_cancel, methods=["POST"]),
+        Route("/api/claude/model", claude_model, methods=["POST"]),
+        Route("/api/claude/context", claude_context, methods=["POST"]),
+        Route("/api/takes/{tid:int}/sound", take_sound, methods=["POST"]),
         Route("/api/set", set_setting, methods=["POST"]),
         Route("/api/autofocus", autofocus, methods=["POST"]),
         Route("/api/shoot", shoot, methods=["POST"]),
@@ -3871,7 +4915,27 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         if request.query_params.get("reset"):
             PERF.clear(); PERF_T[0] = time.time()
         return JSONResponse(out)
+    class _AnsweredBy:
+        """When an answer came from the safety-net model during this request, the page is told (one header)."""
+        def __init__(self, inner):
+            self.inner = inner
+
+        async def __call__(self, scope, receive, send):
+            if scope.get("type") != "http" or scope.get("method") != "POST":
+                return await self.inner(scope, receive, send)
+            n0 = len(assistant.FALLBACKS)
+            t0 = assistant.FALLBACKS[-1][0] if assistant.FALLBACKS else 0
+
+            async def send2(msg):
+                if msg.get("type") == "http.response.start" and assistant.FALLBACKS and \
+                        (len(assistant.FALLBACKS) != n0 or assistant.FALLBACKS[-1][0] != t0):
+                    msg = {**msg, "headers": list(msg.get("headers") or []) +
+                           [(b"x-claude-answered-by", assistant.FALLBACK_NAME.encode())]}
+                await send(msg)
+            await self.inner(scope, receive, send2)
+
     _app.router.routes.append(Route("/api/diag/perf", perf_view))
+    _app.add_middleware(_AnsweredBy)
     _app.add_middleware(_Touch)
     _app.add_middleware(_Perf)
     return _app

@@ -524,6 +524,10 @@ button.as-row .v::after{content:"›";color:var(--dimw);font-size:19px;margin-le
 .as-sw[aria-checked="true"]{background:#fff}.as-sw[aria-checked="true"]::after{transform:translateX(20px);background:#16191f}
 .as-fs{display:flex;gap:6px;margin-top:9px}.as-fs button{flex:1;height:44px;min-height:44px;border:0;border-radius:14px;background:rgba(255,255,255,.1);color:var(--text);font:500 15px var(--ui)}
 .as-tag{display:inline-block;margin-left:6px;font-size:12px;font-weight:500;color:var(--warn)}
+.as-seg.wrap{flex-wrap:wrap}.as-seg.wrap button{flex:1 1 30%}
+.as-ours{display:inline-block;margin-top:8px;height:32px;padding:0 12px;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:none;color:var(--soft);font:500 13px var(--ui)}
+.as-ours[hidden]{display:none}
+.as-sub{font-size:13px;color:var(--dimw);margin:10px 4px 6px;font-weight:600}
 .as-note{font-size:13px;color:var(--dimw);margin:10px 10px 0;line-height:1.4}
 .as-back{display:inline-flex;align-items:center;gap:4px;height:40px;min-height:40px;padding:0 14px 0 10px;border-radius:20px;border:0;background:rgba(255,255,255,.1);color:var(--text);font:500 15px var(--ui);margin:2px 0 6px}
 .as-subpage{display:none}.as-subpage.on{display:block}
@@ -839,8 +843,8 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
       </div></div>
       <div class="result" id="review"><div class="rcard glass" style="grid-template-columns:1fr 1fr;width:min(1200px,96%)">
         <div><div class="cmp" style="aspect-ratio:3/2"><img id="rvO" alt="" style="clip-path:none"></div><div class="muted" style="margin-top:6px;font-size:11px;letter-spacing:.1em">Original, untouched</div></div>
-        <div><div class="cmp" style="aspect-ratio:3/2"><img id="rvG" alt=""></div><div class="muted" style="margin-top:6px;font-size:11px;letter-spacing:.1em" id="rvGT">Graded copy</div></div>
-        <div style="grid-column:1/-1" class="row"><span class="muted grow" id="rvInfo"></span><label class="row muted" style="gap:6px;font-size:11.5px;display:none"><input type="checkbox" id="rvDraftAlways"> always make a quick draft</label><button class="ibtn" id="rvDraft" style="display:none">Quick graded draft</button><button class="ibtn" id="rvPs">Open in Photoshop</button><button class="ibtn" id="rvMore">More looks…</button><button class="ibtn" id="rvClose" style="background:var(--accent);color:#141006;border-color:var(--accent);font-weight:650">Done</button></div>
+        <div><div class="cmp" style="aspect-ratio:3/2"><img id="rvG" alt=""></div><div class="muted" style="margin-top:6px;font-size:11px;letter-spacing:.1em" id="rvGT"></div></div>
+        <div style="grid-column:1/-1" class="row"><span class="muted grow" id="rvInfo"></span><button class="ibtn" id="rvPs">Open in Photoshop</button><button class="ibtn" id="rvMore">Open the photo</button><button class="ibtn" id="rvClose" style="background:var(--accent);color:#141006;border-color:var(--accent);font-weight:650">Done</button></div>
       </div></div>
       <div class="busy glass" id="busy"><div style="font-weight:600;font-size:14px" id="busyT">Setting up the camera…</div><div class="muted" style="font-size:12px;margin-top:4px" id="busyS"></div><div class="bar"><i></i></div>
         <button class="ibtn" id="busyStop" style="margin-top:12px;height:32px">Stop</button></div>
@@ -861,7 +865,6 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
         <div class="mhead"><h2>More</h2><button class="dz-round" id="moreClose" aria-label="Close" style="background:rgba(255,255,255,.1)"><svg width="16" height="16" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></div><div class="mscroll" id="mScroll">
         <details><summary>Shot type</summary><div class="mbody" id="mShot"></div></details>
         <details><summary>Photo preview</summary><div class="mbody">
-          <label class="row" style="gap:8px;font-size:12.5px"><input type="checkbox" id="photoLog"> Match video (S-Log3) in photo mode</label>
           <div class="dimtxt" style="font-size:11px;margin-top:6px">Makes the photo preview and the JPEG reference flat like your S-Log3 video. The RAW file is not changed. Cost: minimum ISO 500 in photo mode (instead of 100), so in bright light the RAW gets less of its cleanest range.</div></div></details>
         <details><summary>See the exposure</summary><div class="mbody"><div class="row" style="flex-wrap:wrap;gap:6px">
           <button class="ibtn" data-aid="falsecolor">False colour</button><button class="ibtn" data-aid="zebra">Zebra</button><button class="ibtn" data-aid="wave">Waveform</button></div>
@@ -1018,6 +1021,7 @@ const PHOTO_ONLY=new Set(["still_format","save_to","jpeg_quality","image_size"])
 const CAM_MODE = {photo:1, video:491603};   // Manual stills / Movie M
 
 async function api(path, opts){ const r = await fetch(path, opts); const j = await r.json().catch(()=>({}));
+  const by=r.headers.get("X-Claude-Answered-By"); if(by) setTimeout(()=>toast("Answered with "+by+".",4000),300);   /* the safety net said so */
   if(!r.ok) throw new Error(j.error || r.statusText); return j; }
 const post = (p, body) => api(p, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})});
 function toast(t, ms=2600){ const el=$("#toast"); el.textContent=t; el.style.display="block"; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display="none", ms); }
@@ -1121,15 +1125,20 @@ function drawFrame(bmp){
   const H=new Uint32Array(256); let sum=0, cnt=0;
   for(let i=0;i<d.length;i+=16){ const l=(d[i]*54+d[i+1]*183+d[i+2]*19)>>8; H[l]++; sum+=l; cnt++; }
   meanLuma=sum/cnt; drawHist(H); updateMeter();
-  const lut = S.overlays.has("view709") ? ensureLut() : null;
+  /* the picture is the camera's own frame, untouched, in every format. The only view change: LOG | 709 on a log
+     profile, by his switch. No grade, LUT, curve or roll-off ever runs on any other profile. */
+  const v709 = S.overlays.has("view709") && isLog3() && GAMUT[curPP()];
+  const lookOn = !!(S.lookPreview && LK.tab && !S.overlays.has("falsecolor"));
   const zebra=S.overlays.has("zebra"), peak=S.overlays.has("peak");
   let luma=null;
   if(zebra||peak){ luma=new Uint8Array(cv.width*cv.height); for(let i=0,p=0;i<d.length;i+=4,p++) luma[p]=(d[i]*54+d[i+1]*183+d[i+2]*19)>>8; }
   const W=cv.width,Hh=cv.height;
   if(S.overlays.has("wave")) drawWave(d,W,Hh); else { $("#wave").style.display="none"; const sc=$("#dzScope"); if(sc) sc.classList.remove("on"); }
   if(S.overlays.has("falsecolor")){ falseColour(d); }
-  else if(lut && LUTPP && !currentGrade() && !(S.look&&S.look.user)) applyLog709(d,LUTPP,W,S.split);
-  else if(lut){ if(S.split) applyLutSplit(d,lut,W,grainNow()); else applyLut(d,lut,grainNow()); }
+  /* his look preview (More › Looks), on the monitor only, after the proper log -> 709 view. Nothing Studio measures
+     reads these pixels: the histogram and the scopes above were taken from the camera's frame. */
+  else if(v709 || (lookOn && isLog3() && GAMUT[curPP()])) applyLog709(d,curPP(),W,v709?S.split:false);
+  if(lookOn) applyLook(d,LK.tab);
   const zLvl=(+$("#zebraLvl").value)*2.55, pk=[0,9000,6500,4800,3600,2700,2000,1500,1100,800,550][+$("#peakLvl").value];
   if(zebra){ for(let y=0;y<Hh;y++) for(let x=0;x<W;x++){ const p=y*W+x; if(luma[p]>=zLvl && ((x+y)&7)<3){ const i=p*4; d[i]=230; d[i+1]=40; d[i+2]=200; } } }
   if(peak){ for(let y=1;y<Hh-1;y+=1) for(let x=1;x<W-1;x++){ const p=y*W+x;
@@ -1196,6 +1205,7 @@ function frameCoords(ev){
 }
 async function tapFocus(ev){
   if(!cv.width) return; const p=frameCoords(ev); if(!p) return;
+  if(PX.st&&PX.st.pull&&PX.st.pull.pick){ pullTap(p); return; }   /* Playground › Focus pull: his tap sets A or B */
   if(ev.target.closest && ev.target.closest(".glass,button")) return;
   if(S.mag>1){ toast("Turn the magnifier off to pick a new focus point.",2500); return; }
   if(S.rec){ toast("Focus stays locked while recording.",2000); return; }
@@ -1226,13 +1236,34 @@ function drawHist(H){
   for(let i=0;i<256;i++){ const h=Math.min(100,H[i]/m*96); hctx.fillRect(i,100-h,1,h); }
   hctx.fillStyle="#f2463f"; if(H[255]+H[254]>H.reduce((a,b)=>a+b,0)*0.01) hctx.fillRect(250,0,6,100);
 }
+/* the recorded picture inside the live frame (frame pixels). The camera's live view is shown whole when it has the
+   recorded shape; when it is wider or taller, the part the file does not hold is masked. Never stretched. */
+function recRatio(){ const f=S.format||{}; return S.mode==="video"?16/9:(f.ratio||null); }
+function recRect(W,H){ const want=recRatio(), fr=W/H;
+  if(!want||Math.abs(want/fr-1)<0.02) return {x:0,y:0,w:W,h:H};
+  if(want<fr){ const w=Math.round(H*want); return {x:Math.round((W-w)/2),y:0,w,h:H}; }
+  const h=Math.round(W/want); return {x:0,y:Math.round((H-h)/2),w:W,h}; }
+const GUIDES=[["off","Off"],["9:16","9:16"],["4:5","4:5"],["1:1","1:1"],["16:9","16:9"],["2.35:1","2.35:1"]];
+const guideRatio=g=>{ const m=/^([\d.]+):([\d.]+)$/.exec(g||""); return m?(+m[1])/(+m[2]):null; };
+function guideRect(W,H){ const g=guideRatio(S.guide); if(!g) return null; const R=recRect(W,H), rr=R.w/R.h;
+  if(Math.abs(g/rr-1)<0.01) return null;                       /* the same shape as the file: nothing to show */
+  if(g<rr){ const w=Math.round(R.h*g); return {x:R.x+Math.round((R.w-w)/2),y:R.y,w,h:R.h}; }
+  const h=Math.round(R.w/g); return {x:R.x,y:R.y+Math.round((R.h-h)/2),w:R.w,h}; }
+window.recRect=recRect; window.guideRect=guideRect;
 function drawGuides(){
   const W=ov.width,H=ov.height; octx.clearRect(0,0,W,H); octx.lineWidth=Math.max(1,W/900);
   octx.strokeStyle="#ffffff55";
   if(S.overlays.has("thirds")){ octx.beginPath(); for(const f of [1/3,2/3]){ octx.moveTo(W*f,0); octx.lineTo(W*f,H); octx.moveTo(0,H*f); octx.lineTo(W,H*f);} octx.stroke(); }
   if(S.overlays.has("cross")){ octx.beginPath(); const s=W*0.025; octx.moveTo(W/2-s,H/2); octx.lineTo(W/2+s,H/2); octx.moveTo(W/2,H/2-s); octx.lineTo(W/2,H/2+s); octx.stroke(); }
   if(S.overlays.has("horizon")){ octx.strokeStyle="#3ec27fcc"; octx.beginPath(); octx.moveTo(W*0.3,H/2); octx.lineTo(W*0.45,H/2); octx.moveTo(W*0.55,H/2); octx.lineTo(W*0.7,H/2); octx.stroke(); }
-  if(S.overlays.has("frame")){ const h=W/2.39, m=(H-h)/2; octx.fillStyle="#000000b0"; octx.fillRect(0,0,W,m); octx.fillRect(0,H-m,W,m); }
+  if(W&&H){ const R=recRect(W,H);   /* what the file records: the rest is masked like the camera's own screen */
+    octx.fillStyle="#000000e0"; if(R.y>0){ octx.fillRect(0,0,W,R.y); octx.fillRect(0,R.y+R.h,W,H-R.y-R.h); }
+    if(R.x>0){ octx.fillRect(0,0,R.x,H); octx.fillRect(R.x+R.w,0,W-R.x-R.w,H); }
+    const G=guideRect(W,H); if(G){   /* frame guide: a thin outline, the outside dimmed; the file stays full size */
+      octx.save(); octx.fillStyle="#00000073";
+      octx.fillRect(R.x,R.y,R.w,G.y-R.y); octx.fillRect(R.x,G.y+G.h,R.w,R.y+R.h-G.y-G.h);
+      octx.fillRect(R.x,G.y,G.x-R.x,G.h); octx.fillRect(G.x+G.w,G.y,R.x+R.w-G.x-G.w,G.h);
+      octx.strokeStyle="#ffffffcc"; octx.lineWidth=Math.max(1,W/700); octx.strokeRect(G.x+.5,G.y+.5,G.w-1,G.h-1); octx.restore(); } }
   if(S.afPoint && S.mag===1){ const x=S.afPoint.x*W, y=S.afPoint.y*H, s=W*0.052; octx.save(); octx.strokeStyle=S.focusLocked?"#7db4ff":"#ffffff"; octx.lineWidth=Math.max(1.5,W/600);
     const k=S.focusSeek?(1+0.08*Math.sin(Date.now()/90)):1, ss=s*k;
     octx.beginPath(); if(octx.roundRect) octx.roundRect(x-ss,y-ss,ss*2,ss*2,ss*0.27); else octx.rect(x-ss,y-ss,ss*2,ss*2); octx.stroke(); octx.restore(); }
@@ -1266,7 +1297,7 @@ function setConn(ok,msg){ $("#dot").className="dot "+(ok?"ok":"bad"); $("#conn")
 
 /* ------------------------------------------------------------ settings / steppers / OSD */
 async function loadSettings(){
-  try{ const j=await api("/api/settings"); S.settings=j.settings; S.assistant=j.assistant_ready; S.profile=j.profile||null; S.log=j.log||null;
+  try{ const j=await api("/api/settings"); S.settings=j.settings; S.assistant=j.assistant_ready; S.profile=j.profile||null; S.log=j.log||null; S.format=j.format||null;
     $("#camName").textContent=j.camera||"—"; renderStatus(j);
     // the page follows the camera's real mode (after a reload, or a change on the camera body); no setup is run
     const em=(S.settings.find(s=>s.name==="exposure_mode")||{}).value, camMode=em===undefined?null:([491600,491601,491602,491603].includes(em)?"video":"photo");
@@ -1302,12 +1333,6 @@ function renderOsd(){ }
 /* ------------------------------------------------------------ preset + look dropdowns */
 function renderPresetLook(){ }
 function updateLutLinks(){ }
-async function selectUserLut(u){
-  try{ const d=await api("/api/lut/data/"+encodeURIComponent(u.key));
-    S.look={key:u.key,name:u.name,user:true,data:Uint8Array.from(d.data)}; LUTKEY="";
-    renderPresetLook(); renderOsd(); toast(u.name+": live preview on.",2500); }
-  catch(e){ toast("Couldn't load LUT: "+e.message,4000); }
-}
 function showReport(title, html){ }
 async function runPreset(){ }
 function reportHtml(r){
@@ -1391,7 +1416,7 @@ zone.ondrop=e=>{ e.preventDefault(); zone.classList.remove("over"); addRefs([...
 document.addEventListener("paste",e=>{ const files=[...(e.clipboardData||{}).items||[]].filter(i=>i.type.startsWith("image/")).map(i=>i.getAsFile());
   if(!files.length) return; e.preventDefault(); if(TR.k==="sp_match") return mtSetRef(files[0]); showPane("lighting"); addRefs(files); });
 $("#litGo").onclick=async()=>{ if(!S.assistant){ rdOpen(true); return; }
-  const btn=$("#litGo"); btn.disabled=true; $("#litMsg").textContent="Claude is reading the light… (20–60 s)";
+  const btn=$("#litGo"); btn.disabled=true; $("#litMsg").textContent="Claude is reading the light… (this can take a minute or two; the page stays usable)";
   try{ const p=await post("/api/lighting/plan",{refs:S.refs,include_live:$("#litLive").checked,request:$("#litReq").value,mode:S.mode,use_gear:$("#gearUse").checked});
     S.plan=p; renderPlan(p); $("#litMsg").textContent=""; }
   catch(e){ $("#litMsg").innerHTML=`<span class="warn">${esc(keyMsg(e.message))}</span>`; }
@@ -1614,7 +1639,7 @@ function paintLooks(){ }
 /* before/after: the camera's own frame, never what is drawn on the monitor (magnifier, false colour, zebras,
    focus box, 1:1 view would make the two pictures differ for reasons that have nothing to do with the setup).
    The same monitor view (Log or 709) is applied to both, so only the camera settings differ. */
-function snap(){ try{ const f=S.lastFrame; if(!f) return cv.toDataURL("image/jpeg",0.85);
+function snap(){ try{ const f=S.lastFrame; if(!f) return "";   /* the camera's own frame only, never the monitor (looks, aids) */
     const c=document.createElement("canvas"); c.width=f.width; c.height=f.height; const x=c.getContext("2d"); x.drawImage(f,0,0);
     if(S.overlays.has("view709") && isLog3()){ const im=x.getImageData(0,0,c.width,c.height); applyLog709(im.data,curPP(),c.width,false); x.putImageData(im,0,0); }
     return c.toDataURL("image/jpeg",0.88); }catch(e){ return ""; } }
@@ -1779,34 +1804,19 @@ $("#offFind").onclick=async()=>{ $("#offStat").textContent="Searching your netwo
 $("#offUsb").onclick=()=>switchConn("usb");
 $("#offWifi").onclick=()=>api("/api/connection").then(c=>switchConn("wifi",c.saved_host||undefined));
 
-/* instant photo review: original + graded copy side by side (original never changed) */
+/* instant photo review: the camera's photo as it made it (looks have one home: More › Looks) */
 async function photoReview(file){
   if(!file || !isSimple()) return;
   S.reviewFile=file;
-  if(!S.prefs.quick_draft){
-    $("#rvO").src="/captures/"+encodeURIComponent(file); $("#rvG").removeAttribute("src"); $("#rvGT").textContent="RAW for your grade in Lightroom / Photoshop (this is the camera JPEG reference).";
-    $("#rvInfo").textContent=file+" saved"+(S.post?" (RAW + JPEG: the RAW is for your grade)":"")+". Original untouched.";
-    $("#review").classList.add("on"); $("#rvMore").onclick=()=>{ $("#review").classList.remove("on"); openViewer(file); }; return; }
-  return makeDraft(file);
-}
-async function makeDraft(file){
-  const look=S.look&&!S.look.user?S.look:(S.catalog.looks.find(l=>l.key==="goldendrama")||S.catalog.looks[0]);
-  const strength=S.look?S.strength:0.6;
-  $("#rvO").src="/captures/"+encodeURIComponent(file); $("#rvG").src=$("#rvO").src; $("#rvGT").textContent="GRADING…";
-  $("#rvInfo").textContent=file+" saved in captures\\ (original untouched).";
-  $("#review").classList.add("on");
-  try{ const j=await post("/api/grade",{file,key:look.key,kind:"look",strength});
-    $("#rvG").src="/captures/"+encodeURIComponent(j.file)+"?t="+Date.now();
-    $("#rvGT").textContent=`GRADED COPY · ${look.name}${strength<1?" · "+Math.round(strength*100)+"%":""} · saved as ${j.file}`; loadFilm(); }
-  catch(e){ $("#rvGT").textContent="Grading failed: "+e.message; }
-  $("#rvMore").onclick=()=>{ $("#review").classList.remove("on"); openViewer(file); };
+  { const jo=!!(S.format&&S.format.jpeg_only);   /* shown exactly as the camera made it */
+    $("#rvO").src="/captures/"+encodeURIComponent(file); $("#rvG").removeAttribute("src"); $("#rvGT").textContent=jo?"The camera's JPEG, exactly as the camera made it.":"RAW for your grade in Lightroom / Photoshop (this is the camera JPEG reference).";
+    $("#rvInfo").textContent=file+" saved"+(jo?" (JPEG only)":S.post?" (RAW + JPEG: the RAW is for your grade)":"")+". Original untouched.";
+    $("#review").classList.add("on"); $("#rvMore").onclick=()=>{ $("#review").classList.remove("on"); openViewer(file); }; }
 }
 $("#rvClose").onclick=()=>$("#review").classList.remove("on");
-$("#rvDraft").onclick=()=>makeDraft(S.reviewFile);
-$("#rvDraftAlways").onchange=async e=>{ S.prefs=await post("/api/post",{quick_draft:e.target.checked}); };
 /* shoot for post */
 S.prefs={post:true,quick_draft:false}; S.post=true;
-function renderPost(){ S.post=true; $("#rvDraftAlways").checked=!!S.prefs.quick_draft; renderFormat(); }
+function renderPost(){ S.post=true; renderFormat(); }
 /* professional format pill (RAW / S-Log3), white balance lock, Rec.709 view (monitor only) */
 function renderFormat(){
   const g=n=>S.settings.find(s=>s.name===n)||{};
@@ -1968,8 +1978,9 @@ async function loadUsage(){ try{ const u=await api("/api/usage"); const t=u.tota
   $("#usageFeat").innerHTML=Object.entries(u.features).sort((a,b)=>(b[1].input+b[1].output)-(a[1].input+a[1].output))
     .map(([k,f])=>`${esc(k)}: ${f.calls}× · ${fmtN(f.input+f.output)}`).join("<br>")||"No Claude calls today.";
   $("#claudeConnect").checked=!!u.claude_on_connect;
+  S.usage=u; const mt=$("#asClaudeModelT"); if(mt&&u.model){ mt.textContent=u.model; mdlDraw(); }
   const ri=+$("#rateIn").value, ro=+$("#rateOut").value;
-  $("#usageCost").textContent=(ri||ro)?`≈ ${(t.input/1e6*ri+t.output/1e6*ro).toFixed(2)} at your rate`:""; }catch(e){} }
+  $("#usageCost").textContent=(ri||ro)?`≈ ${(t.input/1e6*ri+t.output/1e6*ro).toFixed(2)} at your rate`:(t.cost?`≈ $${t.cost.toFixed(2)} at list price (${u.model}: $${u.price.input} in / $${u.price.output} out per million tokens)`:""); }catch(e){} }
 $("#claudeConnect").onchange=e=>post("/api/usage",{claude_on_connect:e.target.checked}).then(loadUsage);
 $("#rateIn").oninput=$("#rateOut").oninput=()=>{ try{ localStorage.setItem("camctl.rateIn",$("#rateIn").value); localStorage.setItem("camctl.rateOut",$("#rateOut").value); }catch(e){} loadUsage(); };
 setInterval(()=>{ if(document.body.classList.contains("pro-open")||!isSimple()) loadUsage(); },5000);
@@ -2002,14 +2013,23 @@ S.lastTake=null;
 async function pollTakes(){ try{ const j=await api("/api/takes"); const im=j.importer||{};
   const waiting=(j.pending||[]).length, card=$("#sxCard");
   card.style.display=waiting||im.card?"inline-flex":"none";
-  card.innerHTML=im.busy?`<span class="spin"></span>IMPORTING…`:im.card?`CARD ${esc(im.card)} · ${waiting?waiting+" WAITING":"ALL IMPORTED"}`:`${waiting} TAKE${waiting>1?"S":""} ON CARD`;
-  card.onclick=()=>toast(waiting&&!im.card?("Still on the card: "+waiting+" take(s). "+im.step):(im.card?"Card connected: Studio copies new files into your shoot and verifies them.":"All takes are on the PC."),6000);
+  const snd=j.sound||{};
+  if(snd.busy) card.style.display="inline-flex";
+  card.innerHTML=im.busy?`<span class="spin"></span>IMPORTING…`:snd.busy?`<span class="spin"></span>Sound report… <span data-sndstop role="button" aria-label="Stop the sound report" title="Stop the sound report" style="margin-left:6px;padding:0 6px;border-radius:8px;background:rgba(255,255,255,.14)">Stop ×</span>`:im.card?`CARD ${esc(im.card)} · ${waiting?waiting+" WAITING":"ALL IMPORTED"}`:`${waiting} TAKE${waiting>1?"S":""} ON CARD`;
+  card.onclick=e=>{ if(snd.busy){ if(e&&e.target&&e.target.closest&&e.target.closest("[data-sndstop]")){ post("/api/sound/cancel").then(r=>toast(r.message||"Sound report stopped. You can run it again from the take.",4000)).catch(()=>{}); return; }
+      return toast(snd.message||"Studio is listening to the new clips for their sound report.",4000); }
+    toast(waiting&&!im.card?("Still on the card: "+waiting+" take(s). "+im.step):(im.card?"Card connected: Studio copies new files into your shoot and verifies them.":"All takes are on the PC."),6000); };
   const latest=(j.takes||[])[0];
   if(latest && S.lastTake!==null && latest.id!==S.lastTake){ const r=latest.review||{}; const n=(r.fixes||[]).length;
     toast(`Take ${latest.id} saved`+(n?` · ${n} thing${n>1?"s":""} to check (More › Takes)`:" · looks good"),3500); }
   if(latest) S.lastTake=latest.id; else if(S.lastTake===null) S.lastTake=0;
 }catch(e){} }
 setInterval(pollTakes,3000);
+/* the clip's sound report (from the copy in the shoot folder): words first, the number small */
+function soundHtml(s){ if(!s) return "";
+  if(!(s.lines||[]).length) return `<div class="muted" style="margin-top:6px"><b>Sound:</b> ${esc(s.summary||"")}</div>`;
+  const NM={loudness:"Loudness",clipping:"Clipping",noise:"Background noise",pauses:"Long pauses",none:"Sound"};
+  return `<div style="margin-top:6px;border-top:1px solid var(--line);padding-top:6px"><b>Sound</b>${s.lines.map(l=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap;gap:8px"><span${l.advice?' class="warn"':""}>${esc(NM[l.key]||l.key)}: ${esc(l.word)}${l.advice?` · ${esc(l.advice)}`:""}</span><small class="muted" style="white-space:nowrap">${esc(l.num||"")}</small></div>`).join("")}</div>`; }
 function showTakeReview(t,force){
   if(!force) return;
   const r=t.review||{}; const p=$("#treview");
@@ -2019,9 +2039,13 @@ function showTakeReview(t,force){
   if((r.fixes||[]).length) h+=`<div style="margin-top:6px">${r.fixes.map((f,i)=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="warn">${esc(f.text)}</span>${f.fix?`<button class="ibtn" style="height:28px" data-fx="${i}">${esc(f.fix.label)}</button>`:""}</div>`).join("")}</div>`;
   if(r.continuity) h+=`<div class="muted" style="margin-top:6px">${r.continuity.matches?"Matches take "+r.continuity.previous+".":"Continuity vs take "+r.continuity.previous+": "+esc(r.continuity.notes.join("; "))+"."}</div>`;
   if(t.claude) h+=`<div style="margin-top:6px;border-top:1px solid var(--line);padding-top:6px"><b>Claude:</b> ${t.claude.good.map(esc).join(" · ")}<br><span class="warn">${t.claude.fix.map(esc).join(" · ")}</span></div>`;
+  if(t.sound) h+=soundHtml(t.sound);
+  if(t.kind==="video" && t.imported) h+=`<div class="row" style="margin-top:6px"><button class="ibtn" style="height:28px" id="trSound">${t.sound?"Check the sound again":"Check the sound"}</button></div>`;
   if(t.kind==="video" && !t.imported) h+=`<div class="dimtxt" style="margin-top:6px">The clip is still on the card. Studio imports it by itself once the card is reachable.</div>`;
   $("#trBody").innerHTML=h||'<span class="muted">No notes.</span>';
   $$("#trBody [data-fx]").forEach(b=>b.onclick=()=>doFix(r.fixes[+b.dataset.fx].fix));
+  const sb=$("#trSound"); if(sb) sb.onclick=async()=>{ sb.disabled=true; sb.textContent="Listening to the clip…";
+    try{ const j=await post(`/api/takes/${t.id}/sound`); toast(j.message+" The result appears here in a moment.",3500); }catch(e){ toast(e.message,4000); sb.disabled=false; sb.textContent="Check the sound"; } };
   $("#trBtns").innerHTML=(r.continuity&&!r.continuity.matches?`<button class="ibtn" id="trMatch">Match take ${r.continuity.previous}</button>`:"")+`<button class="ibtn" id="trClaude">Review with Claude</button>`;
   const m=$("#trMatch"); if(m) m.onclick=async()=>{ try{ const j=await post(`/api/takes/${t.id}/match`); toast("Matched: "+(j.applied.join(", ")||"already the same"),3500); loadSettings(); pollDirector(); }catch(e){ toast(e.message,3500); } };
   $("#trClaude").onclick=async()=>{ $("#trClaude").disabled=true; $("#trClaude").textContent="Claude is looking…";
@@ -2268,10 +2292,7 @@ function openViewer(f){
   viewing=f; $("#viewer").classList.add("on");
   $("#baBefore").src=$("#baAfter").src="/captures/"+encodeURIComponent(f); $("#afterTag").textContent="ORIGINAL";
   const im=new Image(); im.onload=()=>$("#ba").style.setProperty("--ar",im.naturalWidth/im.naturalHeight); im.src=$("#baBefore").src;
-  const fx=[...S.catalog.effects.map(e=>({...e,kind:"effect"})),...S.catalog.looks.map(l=>({key:l.key,name:l.name,kind:"look"})),
-            ...S.userLuts.map(u=>({key:u.key,name:u.name+" (LUT)",kind:"user"}))];
-  $("#effects").innerHTML=fx.map(e=>`<button data-k="${esc(e.key)}" data-kind="${e.kind}">${esc(e.name)}</button>`).join("")+'<button id="closeV">Close</button>';
-  $$("#effects button[data-k]").forEach(b=>b.onclick=()=>makeGraded(b));
+  $("#effects").innerHTML='<button id="closeV">Close</button>';   /* looks live in More › Looks only */
   $("#closeV").onclick=()=>$("#viewer").classList.remove("on");
   rawReview(f);
 }
@@ -2287,13 +2308,6 @@ async function rawReview(f){
       const c=(x)=>x?x.map((v,i)=>"RGB"[i]+" "+v.toFixed(1)+"%").join(" "):"—";
       toast(`Clipping · JPEG: ${c(r.clip_jpeg)} · RAW preview: ${c(r.clip_preview)} (camera preview, not RAW data)`,6000); }
   }catch(e){}
-}
-async function makeGraded(b){
-  $$("#effects button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); b.disabled=true;
-  try{ const j=await post("/api/grade",{file:viewing,key:b.dataset.k,kind:b.dataset.kind,strength:S.strength});
-    $("#baAfter").src="/captures/"+encodeURIComponent(j.file)+"?t="+Date.now(); $("#afterTag").textContent=b.textContent+" · saved copy"; loadFilm(); }
-  catch(e){ toast("Effect failed: "+e.message,4000); }
-  b.disabled=false;
 }
 $("#ba").addEventListener("pointermove",e=>{ if(e.buttons||e.pointerType==="mouse"){ const r=$("#ba").getBoundingClientRect();
   $("#ba").style.setProperty("--split",Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100))+"%"); }});
@@ -2387,10 +2401,7 @@ $("#fActual").onclick=()=>{ S.actual=!S.actual; const dpr=window.devicePixelRati
     else { c.style.cssText=""; } }
   $("#fActual").textContent=S.actual?"Fit to window":"Actual size (1:1)"; };
 
-(async()=>{ try{ const pr=await api("/api/post"); $("#photoLog").checked=pr.photo_log===true;   /* off by default: normal picture in photo */ }catch(e){} })();
-$("#photoLog").onchange=async e=>{ const on=e.target.checked;
-  try{ await post("/api/post",{photo_log:on}); toast(on?`Photo preview: S-Log3 (RAW unchanged; ${(S.profile&&S.profile.log_min_iso)?"minimum ISO "+S.profile.log_min_iso:"the lowest ISO rises"}).`:"Photo preview: camera standard.",3000);
-    if(S.mode==="photo") modeSetup("photo"); }catch(err){ toast(err.message,3000); } };
+/* "Photo preview like video" is now the Photo picture profile row in All settings › Camera › Format (one home) */
 
 $("#camCheck").onclick=async()=>{ if(S.rec){ toast("Not while recording.",2000); return; }
   $("#camCheck").disabled=true; $("#camCheckOut").textContent="Running… (the picture will change while it sets up photo and video)";
@@ -2482,7 +2493,13 @@ function renderDz(){
   // bottom: state label + one sentence + at most one amber note (space reserved: no jumps)
   const a=S.op||{}, d=a.decision||{}, st=$("#dzState"); let label, cls, say="", note="";
   if(typeof TR!=="undefined" && TR.k) drawTrayLive();
-  if(S.rec){ label="Recording"; cls="rec"; say="All settings are held until you stop."; }
+  const cr=(S.card&&S.card.rec)||{};
+  if(cr.state==="starting"){ label="Starting…"; cls="is-busy"; say="The recording on the laptop is starting."; }
+  else if(cr.state==="finishing"){ label="Finishing the file…"; cls="is-busy"; say="The recording on the laptop is being saved."; }
+  else if(S.rec&&cr.state==="recording"){ label="Recording on the laptop"; cls="rec"; say="All settings are held until you stop."; }
+  else if(S.rec){ label="Recording"; cls="rec"; say="All settings are held until you stop."; }
+  else if(S.firing && PX.st && PX.st.long && PX.st.long.phase==="open"){ label="Long exposure"; cls="is-busy"; say=`Shutter open, ${PX.st.long.left} s left`; }
+  else if(S.firing && PX.st && PX.st.long && PX.st.long.phase==="finishing"){ label="Long exposure"; cls="is-busy"; say="The camera is finishing the picture…"; }
   else if(S.firing){ label="Taking the picture"; cls="is-busy"; say="Hold still…"; }
   else if(S.modeBusy){ label="Setting up"; cls="is-busy"; say=`Measuring the light for ${S.mode}…`; }
   else if(S.dzFlash && Date.now()<S.dzFlash.until){ label=S.dzFlash.label; cls=label==="Locked"?"":"is-busy"; say=S.dzFlash.say; }
@@ -2492,16 +2509,20 @@ function renderDz(){
     else if(typeof clHolds==="function" && clHolds()){ label="Locked"; cls=""; say=S.claudeIntent.say; }
     else if(typeof yourSetting==="function" && yourSetting()){ const st=expoState(); say="Your setting."+(st==null?"":Math.abs(st)<=.4?" The picture is on target.":" The picture is "+stopsWords(st)+"."); note="Tap a number, then “Studio's choice”, to go back."; }
     else { const ex=((S.coach&&S.coach.checks)||[]).find(c=>c.key==="exposure");
-      say=[d.shot_name?d.shot_name.replace(/^./,c=>c.toUpperCase())+".":"", ex?ex.label.replace(/ · /," ·  ").split("·")[0].trim()+".":""].filter(Boolean).join(" ")||(a.state||""); } }
+      const fmn=(S.format&&S.format.name)||"", shn=d.shot_name?d.shot_name.replace(/^./,c=>c.toUpperCase()):"";   /* the format in use, by name */
+      const head=[shn,fmn].filter(Boolean).join(", ");
+      say=[head?head+".":"", ex?ex.label.replace(/ · /," ·  ").split("·")[0].trim()+".":""].filter(Boolean).join(" ")||(a.state||""); } }
   if(S.recChecking) note="Checking the camera… (its recording light and the card time disagree for a moment)";
   if(!S.rec && !note && S.nd && (S.nd.on||S.nd.recall)) note="ND on the lens"+(S.nd.text&&S.nd.stops!=null?" · "+S.nd.text:"")+(S.nd.limit?" · "+S.nd.limit:"");
   if(!S.rec && !note && S.mode==="video" && S.profile && !S.profile.log_confirmed) note="Log profile not confirmed on this model.";
   if(!S.rec && !note && S.log && S.log.note) note=S.log.note;
+  if(!S.rec && !note && S.lookPreview) note="Look preview on the monitor only. The camera's file is not changed.";
+  if(!S.rec && !note && S.mode==="photo" && S.format && S.format.jpeg_only) note="JPEG only: there is no RAW to recover bright parts, so Studio keeps the highlights safe.";
   if(!S.rec && !note && S.mode==="video" && S.log && S.log.active && S.log.kind!=="slog3") note="709 view is not available for this profile yet.";
   if(!S.rec && !note){ const w=((S.coach&&S.coach.checks)||[]).find(c=>c.status!=="ok"&&c.key!=="exposure"&&c.key!=="battery"&&c.key!=="focus"); note=w?w.label:""; }
   st.className="dz-state"+(cls?" "+cls:""); st.innerHTML=(label==="Locked"?LOCK_SVG:"")+esc(label);
   $("#dzSay").textContent=say; $("#dzNote").textContent=note;
-  $("#dzNote").classList.toggle("neutral", /^ND on the lens/.test(note) && !(S.nd&&S.nd.limit));   /* a plain note, amber only at the ISO limit */
+  $("#dzNote").classList.toggle("neutral", (/^ND on the lens/.test(note) && !(S.nd&&S.nd.limit)) || /^JPEG only|^Look preview/.test(note));   /* a plain note, amber only at the ISO limit */
   // last take tile
   const lp=$("#sxLast"); const has=lp.style.display!=="none"&&lp.getAttribute("src"); $("#dzTileEmpty").style.display=has?"none":""; lp.style.display=has?"block":"none";
   const n=S.takeCount||0; const cb=$("#dzCount"); cb.textContent=n; cb.classList.toggle("on",n>0);
@@ -2568,7 +2589,7 @@ function drawTray(){ const k=TR.k; if(!k) return; if(k.startsWith("sp_")) return
   if(k==="wb"){ $("#trWbFind").onclick=()=>{ closeTray(); $("#wbcard").classList.add("on"); S.wbBox=true; drawGuides(); $("#wbFind").click(); };
     $("#trWbCard").onclick=()=>{ closeTray(); $("#wbMsg").innerHTML=""; $("#wbcard").classList.add("on"); S.wbBox=true; drawGuides(); }; } }
 function openTray(k){ if(S.rec||(S.firing&&!k.startsWith("sp_"))||S.modeBusy) return; if(TR.k===k){ closeTray(); return; } TR.k=k; TR.shot=null; document.body.dataset.tray="1"; $("#moreSheet").classList.remove("on"); drawTray(); renderDz(); if(k==="sp_match") mtPoll(); }
-function closeTray(){ TR.k=null; document.body.dataset.tray="0"; renderDz(); if(typeof mtPlace==="function") mtPlace(); }
+function closeTray(){ TR.k=null; document.body.dataset.tray="0"; renderDz(); if(typeof mtPlace==="function") mtPlace(); if(S.ctxPanel==="focusstack"&&typeof ctxPanel==="function") ctxPanel(null); }
 async function trSet(name,value){
   const s=sv(name), ch=(s.choices||[]).find(c=>c.value===value); S.pendingSet={name,value,label:ch?ch.label:String(value),t:Date.now()};
   $$("#trBody2 .stop").forEach(b=>{ const on=+b.dataset.v===value; b.setAttribute("aria-pressed",String(on)); b.classList.toggle("is-setting",on); });
@@ -2613,28 +2634,328 @@ function moreModel(){ const on=o=>S.overlays.has(o)?"On":"Off";
   const shot=(S.op&&S.op.decision&&S.op.decision.shot_name)||"";
   return [
     ["See the exposure",[mrow("False colour",on("falsecolor"),()=>$('[data-aid="falsecolor"]').click()),mrow("Zebras",on("zebra"),()=>$('[data-aid="zebra"]').click()),
-         mrow("Waveform",on("wave"),()=>$('[data-aid="wave"]').click())]],
+         mrow("Waveform",on("wave"),()=>$('[data-aid="wave"]').click()),
+         mrow("Frame guide",guideRatio(S.guide)?S.guide:"Off",()=>{ fgDraw(); openSub("Frame guide",["#fgBox"]); },1)]],
     ["Check the focus",[mrow("Magnify for 6 seconds","",()=>{ $("#moreSheet").classList.remove("on"); $("#fCheck").click(); }),mrow("1:1 view",S.actual?"On":"Off",()=>$("#fActual").click()),
          ]],
     ["This shoot",[mrow("Takes",(S.takeCount||0)+" today",async()=>{ const j=await api("/api/takes"); if(j.takes&&j.takes[0]){ $("#moreSheet").classList.remove("on"); showTakeReview(j.takes[0],true); } else toast("No takes yet.",2500); },1),
          mrow("Smart photo","",()=>{ $("#moreSheet").classList.remove("on"); $("#sxSmart").click(); }),mrow("Coach voice",S.voice?"On":"Off",()=>$("#sxVoice").click()),mrow("Shot list","",()=>{ openSub("Shot list",["#ppanel"]); loadPlan(); },1),
-         mrow("Teleprompter","",()=>openSub("Teleprompter",["#tpanel"]),1),mrow("Import from card",(($("#sxCard").textContent||"").match(/\d+/)||[""])[0]+(/\d/.test($("#sxCard").textContent||"")?" on the card":""),()=>$("#sxCard").click())]],
+         mrow("Teleprompter","",()=>openSub("Teleprompter",["#tpanel"]),1),
+         window.isSecureContext&&navigator.mediaDevices?mrow("Sound check",SC.res?SC.res.short:"",()=>{ scDraw(); openSub("Sound check",["#scBox"]); },1):{note:"Sound check works on the laptop."},mrow("Import from card",(($("#sxCard").textContent||"").match(/\d+/)||[""])[0]+(/\d/.test($("#sxCard").textContent||"")?" on the card":""),()=>$("#sxCard").click())]],
     ["Special shots",[{cards:Object.keys(SPECIAL)}]],
+    ["Looks",[mrow("Looks",S.lookPreview?"Preview on":"",()=>{ lkDraw(); openSub("Looks",["#lkBox"]); lkLoad(); },1)]],
+    ["Playground",[mrow("Playground",PG.reel&&PG.reel.on?"Day reel on":"Experiments",()=>{ pgDraw(); openSub("Playground",["#pgBox"]); pgLoad(); },1)]],
     ["Studio",[mrow("All settings","",()=>asOpen())]]];
 }
 function renderMore(){ let box=$("#mGroups"); if(!box){ box=document.createElement("div"); box.className="mgroups"; box.id="mGroups"; $("#mScroll").prepend(box); }
   const model=moreModel(); S.moreActs=[];
   box.innerHTML=model.map(([h,rows])=>(h?`<h3>${esc(h)}</h3>`:"")+(rows[0]&&rows[0].cards?
       '<div class="cards" style="padding:4px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow:visible">'+rows[0].cards.map(k=>`<button class="card" data-spk="${k}" style="min-width:0;width:auto"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice">${SPECIAL[k].art}</svg><b>${SPECIAL[k].title}</b><span>${SPECIAL[k].line}</span></button>`).join("")+'</div>'
-      :'<div class="mgrp">'+rows.map(r=>{ S.moreActs.push(r.act); return `<button class="mrow${r.sub?" sub":""}" data-i="${S.moreActs.length-1}">${esc(r.label)}<span>${esc(r.val||"")}</span></button>`; }).join("")+'</div>')).join("");
+      :'<div class="mgrp">'+rows.map(r=>{ if(r.note) return `<div class="mnote" style="padding:12px 14px;color:var(--dimw);font-size:14px">${esc(r.note)}</div>`; S.moreActs.push(r.act); return `<button class="mrow${r.sub?" sub":""}" data-i="${S.moreActs.length-1}">${esc(r.label)}<span>${esc(r.val||"")}</span></button>`; }).join("")+'</div>')).join("");
   box.querySelectorAll("[data-spk]").forEach(b=>b.onclick=()=>{ $("#moreSheet").classList.remove("on"); spSheet(b.dataset.spk); });
   box.querySelectorAll(".mrow").forEach(b=>b.onclick=()=>{ S.moreActs[+b.dataset.i](); if(!b.classList.contains("sub")) setTimeout(renderMore,150); }); }
 function openSub(title,sels){ let p=$("#mSub"); if(!p){ p=document.createElement("div"); p.className="msub"; p.id="mSub";
     p.innerHTML='<div class="mhead"><button class="dz-round" id="mBack" aria-label="Back" style="background:rgba(255,255,255,.1)"><svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 3L5 9l6 6"/></svg></button><h2 id="mSubT"></h2></div><div class="mbody2" id="mSubB"></div>';
     $("#moreSheet").append(p); $("#mBack").onclick=()=>p.classList.remove("on"); }
+  ctxPanel({"Sound check":"sound","Teleprompter":"teleprompter","Shot list":"shotlist"}[title]||null);
   $("#mSubT").textContent=title; const b=$("#mSubB"); [...b.children].forEach(c=>{ if((S.subHome||{})[c.id]){ S.subHome[c.id].append(c); if(c.classList.contains("sheetpart")) c.style.display="none"; } }); b.innerHTML="";
   S.subHome=S.subHome||{}; for(const s of sels){ const el=$(s); if(!el) continue; if(!S.subHome[el.id]) S.subHome[el.id]=el.parentNode; el.style.display=""; b.append(el); }
   p.classList.add("on"); }
+/* ================= LOOKS (More › Looks): six film-style looks, only by his press. Two things live here and nowhere
+   else: the live preview switch (OFF at every start; a marked pill while on; the camera's file is not changed) and
+   "Make a copy with this look" (a NEW file; the original is never changed). */
+const LK={list:null, sel:null, file:null, strength:100, preview:null, tab:null, busy:false, say:"", poll:null};
+S.lookPreview=null;                                     /* never remembered: off at every start */
+async function lkLoad(){ try{ LK.list=await api("/api/looks"); }catch(e){ LK.list=null; } if(!LK.sel&&LK.list) LK.sel=LK.list.looks[0].key;
+  if(!LK.file&&LK.list&&LK.list.files.length) LK.file=LK.list.files[0].file; lkDraw(); }
+async function lkPreview(key){ post("/api/claude/context",{look:key?lkName(key):null}).catch(()=>{});
+  if(!key){ S.lookPreview=null; LK.tab=null; lkPill(); lkDraw(); return; }
+  try{ const r=await fetch("/api/looks/table/"+key); LK.tab=new Uint8Array(await r.arrayBuffer()); S.lookPreview=key; }catch(e){ toast("The look could not be loaded.",2500); }
+  lkPill(); lkDraw(); }
+const lkName=k=>((LK.list&&LK.list.looks.find(l=>l.key===k))||{}).name||k;
+function lkPill(){ let p=$("#lookPill"); if(!p){ p=document.createElement("button"); p.id="lookPill"; p.type="button"; p.className="pill glass";
+    p.style.cssText="position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:12;height:30px;padding:0 14px;font:600 13px var(--ui);cursor:pointer;color:var(--text);border:1px solid rgba(255,255,255,.55)";
+    p.onclick=e=>{ e.stopPropagation(); lkPreview(null); toast("Look preview off: the live picture is the camera's again.",2500); };
+    document.body.append(p); }
+  p.style.display=S.lookPreview?"":"none"; p.textContent=S.lookPreview?`Look preview: ${lkName(S.lookPreview)} ×`:""; }
+/* the look on the monitor only: trilinear through the 33-point table (the frame Studio analyses is never touched) */
+function applyLook(d,t){ const n=33, m=n-1;
+  for(let i=0;i<d.length;i+=4){ const r=d[i]*m/255, g=d[i+1]*m/255, b=d[i+2]*m/255;
+    const r0=Math.min(m-1,r|0), g0=Math.min(m-1,g|0), b0=Math.min(m-1,b|0), fr=r-r0, fg=g-g0, fb=b-b0;
+    for(let c=0;c<3;c++){ const at=(bb,gg,rr)=>t[(((b0+bb)*n+(g0+gg))*n+(r0+rr))*3+c];
+      const v=((at(0,0,0)*(1-fr)+at(0,0,1)*fr)*(1-fg)+(at(0,1,0)*(1-fr)+at(0,1,1)*fr)*fg)*(1-fb)
+             +((at(1,0,0)*(1-fr)+at(1,0,1)*fr)*(1-fg)+(at(1,1,0)*(1-fr)+at(1,1,1)*fr)*fg)*fb;
+      d[i+c]=v; } } }
+function lkDraw(){ let b=$("#lkBox"); if(!b){ b=document.createElement("div"); b.id="lkBox"; b.className="mbody"; b.style.display="none"; $("#mScroll").append(b); }
+  const L=LK.list; if(!L){ b.innerHTML='<p class="as-note">Loading the looks…</p>'; return; }
+  const f=(L.files||[]).find(x=>x.file===LK.file), st=LK.strength;
+  let h=`<p class="as-note" style="margin:0 2px 10px">Film-style looks, only when you choose one. Your camera files are never changed.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">${L.looks.map(l=>`<button class="card" data-lk="${l.key}" style="min-width:0;width:auto;text-align:left${LK.sel===l.key?";outline:2px solid var(--text)":""}"><img src="/api/looks/sample/${l.key}.jpg" alt="" style="width:100%;aspect-ratio:8/5;object-fit:cover;border-radius:10px"><b>${esc(l.name)}</b><span>${esc(l.for)}</span></button>`).join("")}</div>
+    <div class="as-grp" style="margin-top:12px"><div class="as-row"><span class="l">Show on the live picture<small>A preview on this screen only. The camera's file is not changed.</small></span>
+      <button class="as-sw" role="switch" id="lkSw" aria-checked="${!!S.lookPreview}" aria-label="Show the look on the live picture"></button></div></div>
+    <h4 style="margin:16px 4px 6px;font-size:13px;font-weight:500;color:var(--dimw)">Make a copy with this look</h4>`;
+  if(!(L.files||[]).length) h+=`<p class="as-note">No photos or clips in this shoot yet.</p>`;
+  else{ h+=`<select id="lkFile" style="width:100%;margin-bottom:8px">${L.files.map(x=>`<option value="${esc(x.file)}" ${x.file===LK.file?"selected":""}>${x.kind==="clip"?"Clip":"Photo"} · ${esc(x.name)}</option>`).join("")}</select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><figure style="margin:0"><img src="/api/looks/still?file=${encodeURIComponent(LK.file)}&key=original" alt="Before" style="width:100%;border-radius:10px"><figcaption class="as-note" style="margin:4px 2px 0">Before</figcaption></figure>
+        <figure style="margin:0"><img id="lkAfter" src="/api/looks/still?file=${encodeURIComponent(LK.file)}&key=${LK.sel}&strength=${st/100}" alt="After" style="width:100%;border-radius:10px"><figcaption class="as-note" style="margin:4px 2px 0">After: ${esc(lkName(LK.sel))}</figcaption></figure></div>
+      <label class="row" style="gap:10px;margin-top:10px;align-items:center"><span>Strength</span><input type="range" id="lkStr" min="0" max="100" value="${st}" class="grow"><b id="lkStrV" style="width:44px;text-align:right">${st}%</b></label>
+      <div class="trayacts" style="margin-top:10px">${LK.busy?`<button class="tbtn" id="lkStop">Stop</button>`:`<button class="tbtn" id="lkMake" style="background:var(--text);color:#000">Make the copy</button>`}</div>
+      ${f&&f.kind==="clip"&&!L.ffmpeg?`<p class="as-note" style="color:var(--warn)">Studio's video tool is missing, so clips can't get a look. Run "Install or repair camctl Studio" once.</p>`:""}
+      <p class="as-note">Photos: from the camera's JPEG (the RAW file is left as it is). Clips: the sound is copied unchanged. Saved in your shoot under LOOKS.</p>`; }
+  if(LK.say) h+=`<p class="as-note" style="margin-top:8px">${esc(LK.say)}</p>`;
+  b.innerHTML=h;
+  b.querySelectorAll("[data-lk]").forEach(x=>x.onclick=()=>{ LK.sel=x.dataset.lk; if(S.lookPreview) lkPreview(LK.sel); else lkDraw(); });
+  $("#lkSw").onclick=()=>lkPreview(S.lookPreview?null:LK.sel);
+  const fs=$("#lkFile"); if(fs) fs.onchange=()=>{ LK.file=fs.value; lkDraw(); };
+  const sr=$("#lkStr"); if(sr){ sr.oninput=()=>{ LK.strength=+sr.value; $("#lkStrV").textContent=sr.value+"%"; };
+    sr.onchange=()=>{ const a=$("#lkAfter"); if(a) a.src=`/api/looks/still?file=${encodeURIComponent(LK.file)}&key=${LK.sel}&strength=${LK.strength/100}`; }; }
+  const mk=$("#lkMake"); if(mk) mk.onclick=async()=>{ mk.disabled=true; mk.textContent="Making the copy…";
+    try{ const r=await post("/api/looks/copy",{file:LK.file,key:LK.sel,strength:LK.strength/100}); LK.say=r.say; if(r.busy){ LK.busy=true; lkWatch(); } }catch(e){ LK.say=e.message; } lkDraw(); };
+  const sp=$("#lkStop"); if(sp) sp.onclick=()=>post("/api/looks/stop").catch(()=>{}); }
+async function lkWatch(){ clearTimeout(LK.poll); try{ const L=await api("/api/looks"); LK.list=L; LK.busy=L.job.busy; LK.say=L.job.message; }catch(e){}
+  lkDraw(); if(LK.busy) LK.poll=setTimeout(lkWatch,1000); }
+/* All settings › Studio › Claude › Model: two big choices, the dot on Studio's choice (one home) */
+function mdlDraw(){ const box=$("#asModelPick"), u=S.usage||{}; if(!box||!u.models) return;
+  box.innerHTML=u.models.map(m=>`<button class="as-row" type="button" data-mdl="${m.id}" style="padding-left:28px"><span class="l">${m.id===u.studio_model?'<i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ai,#7db4ff);margin-right:8px"></i>':""}${esc(m.name)}<small>${esc(m.line||"")}${m.id===u.model_id&&u.model_id!==u.studio_model?" If your key can't use it, Studio answers with "+esc(u.fallback_model)+" and says so.":""}</small></span><span class="v">${m.id===u.model_id?"✓":""}</span></button>`).join("");
+  box.querySelectorAll("[data-mdl]").forEach(b=>b.onclick=async e=>{ e.stopPropagation(); try{ const r=await post("/api/claude/model",{model:b.dataset.mdl===u.studio_model?null:b.dataset.mdl}); S.usage=r; $("#asClaudeModelT").textContent=r.model; mdlDraw(); toast("Claude: "+r.model+".",2500); }catch(err){ toast(err.message,3000); } }); }
+document.addEventListener("click",e=>{ const r=e.target.closest&&e.target.closest("#asClaudeModel"); if(r){ const p=$("#asModelPick"); if(p){ p.hidden=!p.hidden; mdlDraw(); } } });
+/* ================= PLAYGROUND (More › Playground): experiments, each off until he switches it on. Today: Day reel. */
+const PG={reel:null, sure:false, poll:null};
+async function pgLoad(){ try{ PG.reel=await api("/api/reel"); }catch(e){ PG.reel=null; } pgDot(); const b=$("#pgBox"); if(b&&b.parentNode&&b.parentNode.id==="mSubB") pgDraw(); }
+function pgDot(){ const sh=$("#sxShutter"); if(!sh) return; let d=$("#sxReel");
+  if(!d){ d=document.createElement("button"); d.id="sxReel"; d.type="button"; d.className="pill glass"; d.title="Day reel is on: Studio keeps the last 3 seconds of the live picture";
+    d.style.cssText="height:26px;padding:0 10px;font:600 12px var(--ui);cursor:pointer;display:none;align-items:center;gap:6px";
+    d.innerHTML='<i style="width:7px;height:7px;border-radius:50%;background:var(--soft);display:inline-block"></i>Reel';
+    d.onclick=e=>{ e.stopPropagation(); $("#moreSheet").classList.add("on"); renderMore(); pgDraw(); openSub("Playground",["#pgBox"]); };
+    sh.insertAdjacentElement("afterend",d); }
+  d.style.display=PG.reel&&PG.reel.on?"inline-flex":"none"; d.style.opacity=PG.reel&&PG.reel.paused?".5":"1"; }
+function pgDraw(){ let b=$("#pgBox"); if(!b){ b=document.createElement("div"); b.id="pgBox"; b.className="mbody"; b.style.display="none"; $("#mScroll").append(b); }
+  const r=PG.reel||{}, j=r.job||{}, local=/^(127\.|localhost)/.test(location.hostname);
+  let h=`<p class="as-note" style="margin:0 2px 12px">Experiments. Each one is off until you switch it on, and may change.</p>
+    <div class="as-grp"><div class="as-row"><span class="l">Day reel: keep the moment before each photo<small>Studio keeps the last 3 seconds of the live picture and saves them as a small silent clip when you take a photo.</small></span>
+      <button class="as-sw" role="switch" id="pgReelSw" aria-checked="${!!r.on}" aria-label="Keep the moment before each photo"></button></div>
+    <div class="as-row"><span class="l">Today<small>${r.moments?`${r.moments} moment${r.moments===1?"":"s"} · ${r.size_mb} MB`:"No moments yet today."}${r.on&&r.paused?" Paused while recording or while the camera is not connected.":""}</small></span></div>`;
+  if(j.busy) h+=`<div class="as-row"><span class="l">${esc(j.message||"Making today's reel…")}</span><button class="tbtn" id="pgStop">Stop</button></div>`;
+  else if(j.message) h+=`<div class="as-row"><span class="l"><small>${esc(j.message)}</small></span>${j.out&&local?'<button class="tbtn" id="pgShow">Show in folder</button>':""}</div>`;
+  h+=`</div><div class="trayacts" style="margin-top:12px"><button class="tbtn" id="pgMake" style="background:var(--text);color:#000" ${j.busy||!r.moments?"disabled":""}>Make today's reel</button>
+      ${r.moments?`<button class="tbtn" id="pgDel">${PG.sure?`Delete ${r.moments} clip${r.moments===1?"":"s"}? Photos stay`:"Delete today's clips"}</button>`:""}</div>
+    <p class="as-note" style="margin:10px 2px 0">Clips are small and silent because they come from the live picture. The photos in the reel are full quality.</p>
+    <p class="as-note" style="margin:6px 2px 0">Everything stays in your shoot folder on this laptop.</p>`;
+  h+=pxHtml();
+  b.innerHTML=h; pxWire();
+  $("#pgReelSw").onclick=async()=>{ try{ PG.reel=await post("/api/reel",{on:!r.on}); }catch(e){ toast(e.message,3000); } pgDot(); pgDraw(); };
+  const mk=$("#pgMake"); if(mk) mk.onclick=async()=>{ try{ PG.reel=await post("/api/reel/make",{}); pgPoll(); }catch(e){ toast(e.message,4000); } pgDraw(); };
+  const st=$("#pgStop"); if(st) st.onclick=()=>post("/api/reel/stop").then(x=>{ PG.reel=x; pgDraw(); }).catch(()=>{});
+  const sw=$("#pgShow"); if(sw) sw.onclick=()=>post("/api/reel/show").catch(e=>toast(e.message,3000));
+  const dl=$("#pgDel"); if(dl) dl.onclick=async()=>{ if(!PG.sure){ PG.sure=true; pgDraw(); setTimeout(()=>{ PG.sure=false; if($("#pgDel")) pgDraw(); },6000); return; }
+    PG.sure=false; try{ PG.reel=await post("/api/reel/delete",{count:r.moments}); toast(`Deleted ${PG.reel.deleted} clips. Your photos are kept.`,3500); }catch(e){ toast(e.message,4000); } pgDraw(); }; }
+/* ---------- the four experiments: same card style; each off until switched on; every photo is his press ---------- */
+const PX={st:null, ghost:40, longS:20, moodBusy:false, moodSay:"", pullS:2, pr:{ref:null,acc:null,until:0,run:false,secs:20}};
+const pxHow=(a,b,c)=>`<small>1. ${a}<br>2. ${b}<br>3. ${c}</small>`;
+async function pxLoad(){ try{ PX.st=await api("/api/play"); }catch(e){} pxGhost(); }
+function pxCard(title,sentence,how,body){ return `<div class="as-grp" style="margin-top:12px"><div class="as-row"><span class="l"><b>${title}</b><small>${sentence}</small>${how}</span></div>${body}</div>`; }
+function pxHtml(){ const s=PX.st||{double:{},long:{offered:[]},mood:{},pull:{}}, d=s.double, L=s.long, M=s.mood.proposal, P=s.pull;
+  let h="";
+  /* double exposure */
+  h+=pxCard("Double exposure","Two of your photos become one, like film exposed twice.",pxHow("Switch it on and take photo 1.","Its picture lies over the live view: compose photo 2.","Studio blends both into a new photo."),
+    `<div class="as-row"><span class="l">Double exposure<small>Works best when photo 1 has a dark area for photo 2 to show through.</small></span><button class="as-sw" role="switch" id="pxDbl" aria-checked="${!!d.on}" aria-label="Double exposure"></button></div>`
+    +(d.on?`<div class="as-blk"><div class="l">Photo ${d.step||1} of 2<small>${d.first?"Ghost strength":"Take photo 1 with the shutter button."}</small></div>${d.first?`<div class="as-seg">${[25,40,60].map(v=>`<button data-gh="${v}" aria-pressed="${PX.ghost===v}">${v}%</button>`).join("")}</div>`:""}
+      <div class="trayacts" style="margin-top:8px"><button class="tbtn" id="pxDblReset">Start over</button></div></div>`:"")
+    +(d.result?`<div class="as-blk"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"><img src="/api/play/image/first.jpg?t=${Date.now()}" alt="Photo 1" style="width:100%;border-radius:8px"><img src="/api/play/image/second.jpg?t=${Date.now()}" alt="Photo 2" style="width:100%;border-radius:8px"><img src="/api/play/image/result.jpg?t=${Date.now()}" alt="Together" style="width:100%;border-radius:8px"></div>
+      <div class="as-seg" style="margin-top:8px">${[["bright","Bright (film style)"],["soft","Soft"]].map(([k,l])=>`<button data-bl="${k}" aria-pressed="${d.blend===k}">${l}</button>`).join("")}</div><small class="as-note">Saved as ${esc(d.result)} in PLAYGROUND › Double exposure.</small></div>`:""));
+  /* long exposure + practice */
+  const lo=L.offered||[];
+  h+=pxCard("Paint with light","Draw with a torch in a dark room: the camera keeps every light it sees.",pxHow("Put the camera on a tripod in a dark room.","Apply the setup, press the shutter and draw with a phone torch.","The camera makes one real full-size photo."),
+    `<div class="as-row"><span class="l">Long exposure<small>${lo.length?"A real photo with the shutter open for seconds.":"This camera does not offer long shutter times over the cable."} <span class="as-tag">not yet checked on your camera</span></small></span><button class="as-sw" role="switch" id="pxLong" aria-checked="${!!L.on}" aria-label="Long exposure" ${lo.length?"":"disabled"}></button></div>`
+    +(L.on&&lo.length?`<div class="as-blk"><div class="l">Shutter open for<small>Studio suggests: lowest ISO, about f/8, focus and white balance locked. Nothing changes until you press Apply.</small></div>
+      <div class="as-seg">${lo.map(v=>`<button data-ls="${v}" aria-pressed="${PX.longS===v}">${v} s</button>`).join("")}</div>
+      <div class="trayacts" style="margin-top:8px">${L.applied?`<button class="tbtn" id="pxLongBack">Back to Studio's choice</button>`:`<button class="tbtn" id="pxLongApply" style="background:var(--text);color:#000">Apply</button><button class="tbtn" id="pxLongNo">Not now</button>`}</div>
+      ${L.phase==="open"?`<p class="as-note" style="font-size:16px;color:var(--text)">Shutter open, ${L.left} s left</p>`:L.phase==="finishing"?`<p class="as-note" style="font-size:16px;color:var(--text)">The camera is finishing the picture…</p>`:L.applied?`<p class="as-note">Locked for a long exposure: ${L.seconds} s. Press the shutter, then draw.</p>`:""}</div>`:"")
+    +`<div class="as-blk"><div class="l">Practice<small>This is a small picture (1024 x 576) made from the live picture; no real shot is taken.</small></div>
+      <canvas id="pxPrac" width="320" height="180" style="width:100%;background:#000;border-radius:8px;margin-top:8px"></canvas>
+      <div class="trayacts" style="margin-top:8px">${PX.pr.run?`<button class="tbtn" id="pxPrStop">Stop</button>`:`${[10,20,30].map(v=>`<button class="tbtn" data-pr="${v}">${v} s</button>`).join("")}<button class="tbtn" id="pxPrSave">Save</button><button class="tbtn" id="pxPrAgain">Again</button>`}</div></div>`);
+  /* shoot for a mood */
+  h+=pxCard(`<span class="ai-mark">${SPARK(14)}</span> Shoot for a mood`,"Say a mood; Claude suggests settings, framing and light for this room.",pxHow("Type a mood or tap an example.","Claude looks at the picture once and proposes.","Apply what you like; nothing changes before."),
+    `<div class="as-blk"><input id="pxMoodIn" maxlength="300" placeholder="Describe the mood" style="width:100%" value="${esc(s.mood.words||"")}">
+      <div class="cl-chips" style="margin-top:8px">${["film noir","window light like an old painting","dreamy and bright","silhouette","golden evening","clean studio"].map(c=>`<button data-md="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+      <div class="trayacts" style="margin-top:8px"><button class="tbtn" id="pxMoodGo" ${PX.moodBusy||!S.assistant?"disabled":""}>${PX.moodBusy?"Claude is looking…":"Ask Claude"}</button></div>
+      ${!S.assistant?`<p class="as-note">Add your Claude key in All settings › Studio › Claude first.</p>`:""}${PX.moodSay?`<p class="as-note">${esc(PX.moodSay)}</p>`:""}</div>`
+    +(M?`<div class="as-blk">${(M.changes||[]).length?`<div class="cl-changes">${M.changes.map(c=>`<span>${esc(NAMES[c.name]||c.name)} ${esc(c.from_label||"")} → ${esc(c.label)}</span>`).join("")}</div>`:""}
+      <p class="as-note"><b>Framing:</b> ${esc(M.guide)}. <b>Light:</b> ${esc(M.light)}</p>${(M.room||[]).length?`<p class="as-note"><b>In the room:</b> ${M.room.map(esc).join(" · ")}</p>`:""}
+      ${M.cannot?`<p class="as-note"><b>What the camera can't do here:</b> ${esc(M.cannot)}</p>`:""}${M.note?`<p class="as-note" style="color:var(--warn)">${esc(M.note)}</p>`:""}${M.shutter_rule?`<p class="as-note">The shutter stays with the frame rate in video.</p>`:""}
+      <div class="trayacts">${(M.changes||[]).length?`<button class="tbtn" id="pxMoodApply" style="background:var(--text);color:#000">Apply</button>`:""}<button class="tbtn" id="pxMoodNo">Not now</button><button class="tbtn" id="pxMoodBack">Back to Studio's choice</button></div></div>`:""));
+  /* focus pull */
+  h+=pxCard("Focus pull","Focus glides from one point to another, by your press.",pxHow("Tap Set A, then tap that spot on the picture; the same for B.","Press record yourself if you want it filmed.","Press Pull: Studio moves the focus in small even steps."),
+    `<div class="as-blk"><span class="as-tag">Not yet checked on the real camera</span>
+      <div class="trayacts" style="margin-top:8px"><button class="tbtn" data-pick="a">${P.pick==="a"?"Tap the picture…":P.a?"A set ✓":"Set A"}</button><button class="tbtn" data-pick="b">${P.pick==="b"?"Tap the picture…":P.b?"B set ✓":"Set B"}</button></div>
+      <div class="as-seg" style="margin-top:8px">${[1,2,4].map(v=>`<button data-ps="${v}" aria-pressed="${PX.pullS===v}">${v} s</button>`).join("")}</div>
+      <div class="trayacts" style="margin-top:8px"><button class="tbtn" data-pull="ab" ${P.a&&P.b&&!P.busy?"":"disabled"}>Pull A to B</button><button class="tbtn" data-pull="ba" ${P.a&&P.b&&!P.busy?"":"disabled"}>Pull B to A</button></div>
+      ${P.say?`<p class="as-note">${esc(P.say)}</p>`:""}<p class="as-note">Studio never starts or stops a recording for this.</p></div>`);
+  return h; }
+function pxWire(){ const b=$("#pgBox"); if(!b) return;
+  const on=(sel,fn)=>{ const e=$(sel); if(e) e.onclick=fn; };
+  const P=(body)=>post("/api/play",body).then(r=>{ PX.st=r; pxGhost(); pgDraw(); }).catch(e=>toast(e.message,3000));
+  on("#pxDbl",()=>P({double:(PX.st&&PX.st.double.on)?"off":"on"})); on("#pxDblReset",()=>P({double:"reset"}));
+  b.querySelectorAll("[data-gh]").forEach(x=>x.onclick=()=>{ PX.ghost=+x.dataset.gh; pxGhost(); pgDraw(); });
+  b.querySelectorAll("[data-bl]").forEach(x=>x.onclick=()=>P({double:x.dataset.bl}));
+  on("#pxLong",()=>P({long:!(PX.st&&PX.st.long.on)}));
+  b.querySelectorAll("[data-ls]").forEach(x=>x.onclick=()=>{ PX.longS=+x.dataset.ls; pgDraw(); });
+  on("#pxLongApply",()=>post("/api/play/long/apply",{seconds:PX.longS}).then(r=>{ PX.st=r; toast(r.say,3500); loadSettings(); pgDraw(); }).catch(e=>toast(e.message,4000)));
+  on("#pxLongNo",()=>P({long:false}));
+  on("#pxLongBack",()=>post("/api/play/long/restore",{}).then(r=>{ PX.st=r; toast(r.say,3000); loadSettings(); pgDraw(); }).catch(e=>toast(e.message,4000)));
+  b.querySelectorAll("[data-pr]").forEach(x=>x.onclick=()=>prStart(+x.dataset.pr));
+  on("#pxPrStop",()=>{ PX.pr.run=false; pgDraw(); }); on("#pxPrAgain",()=>{ PX.pr.acc=null; PX.pr.ref=null; prPaint(); });
+  on("#pxPrSave",prSave);
+  b.querySelectorAll("[data-md]").forEach(x=>x.onclick=()=>{ $("#pxMoodIn").value=x.dataset.md; });
+  on("#pxMoodGo",moodAsk); on("#pxMoodNo",()=>{ if(PX.st) PX.st.mood.proposal=null; pgDraw(); });
+  on("#pxMoodApply",moodApply); on("#pxMoodBack",()=>post("/api/play/mood/back",{}).then(r=>{ PX.st=r; S.claudeIntent=null; toast(r.say,3000); loadSettings(); pgDraw(); }).catch(e=>toast(e.message,4000)));
+  b.querySelectorAll("[data-pick]").forEach(x=>x.onclick=()=>P({pull_pick:x.dataset.pick}).then(()=>toast("Tap the spot on the live picture.",2500)));
+  b.querySelectorAll("[data-ps]").forEach(x=>x.onclick=()=>{ PX.pullS=+x.dataset.ps; pgDraw(); });
+  b.querySelectorAll("[data-pull]").forEach(x=>x.onclick=()=>post("/api/play/pull/run",{direction:x.dataset.pull,seconds:PX.pullS}).then(r=>{ PX.st=r; pgDraw(); pxWatch(); }).catch(e=>toast(e.message,4000)));
+  prPaint(); }
+async function pxWatch(){ await pxLoad(); if($("#pgBox")) pgDraw(); const s=PX.st||{};
+  if((s.pull&&s.pull.busy)||(s.long&&s.long.phase)) setTimeout(pxWatch,500); }
+/* the ghost of photo 1 over the live picture (monitor only), with its pill */
+function pxGhost(){ const d=(PX.st||{}).double||{}; let g=$("#pxGhost"), p=$("#pxPill"); const on=!!(d.on&&d.first&&!d.result);
+  if(on&&!g){ g=document.createElement("img"); g.id="pxGhost"; g.alt=""; g.style.cssText="position:absolute;pointer-events:none;object-fit:fill;z-index:1"; cv.parentNode.insertBefore(g,cv.nextSibling); }
+  if(g){ g.hidden=!on; if(on){ if(!g.dataset.src){ g.src="/api/play/image/first.jpg?t="+Date.now(); g.dataset.src="1"; } const {r,w,h,ox,oy}=picRect(), pr=(g.offsetParent||document.body).getBoundingClientRect();
+      Object.assign(g.style,{left:(r.left-pr.left+ox)+"px",top:(r.top-pr.top+oy)+"px",width:w+"px",height:h+"px",opacity:(PX.ghost/100).toFixed(2)}); } else g.dataset.src=""; }
+  if(!p){ p=document.createElement("button"); p.id="pxPill"; p.type="button"; p.className="pill glass";
+    p.style.cssText="position:absolute;left:50%;top:calc(100px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:12;height:30px;padding:0 14px;font:600 13px var(--ui);cursor:pointer;color:var(--text);border:1px solid rgba(255,255,255,.55)";
+    p.onclick=e=>{ e.stopPropagation(); post("/api/play",{double:"off"}).then(r=>{ PX.st=r; pxGhost(); }); }; document.body.append(p); }
+  p.style.display=d.on?"":"none"; p.textContent=d.on?`Double exposure: photo ${d.first&&!d.result?2:1} of 2 ×`:""; }
+window.addEventListener("resize",pxGhost); setInterval(()=>{ if(document.visibilityState==="visible") pxLoad(); },4000); pxLoad();
+setInterval(()=>{ if(S.firing && PX.st && PX.st.long && PX.st.long.applied) pxLoad(); },1000);   /* the countdown while the shutter is open */
+/* practice: the brightest light seen above a one-second dark reference, from the frames as received */
+async function prStart(secs){ PX.pr={...PX.pr,run:true,secs,ref:null,acc:null,until:Date.now()+(secs+1)*1000}; pgDraw();
+  const c=document.createElement("canvas"); let refN=0, refSum=null;
+  while(PX.pr.run && Date.now()<PX.pr.until){ const f=S.lastFrame; if(f){ c.width=f.width; c.height=f.height; const x=c.getContext("2d"); x.drawImage(f,0,0);
+      const d=x.getImageData(0,0,c.width,c.height).data;
+      if(Date.now()<PX.pr.until-secs*1000){ if(!refSum) refSum=new Float32Array(d.length); for(let i=0;i<d.length;i++) refSum[i]+=d[i]; refN++; }
+      else{ if(!PX.pr.ref){ PX.pr.ref=new Uint8ClampedArray(d.length); for(let i=0;i<d.length;i++) PX.pr.ref[i]=refSum?refSum[i]/Math.max(1,refN):0; PX.pr.acc=new Uint8ClampedArray(PX.pr.ref); PX.pr.w=c.width; PX.pr.h=c.height; }
+        const R=PX.pr.ref, A=PX.pr.acc; for(let i=0;i<d.length;i+=4){ const l=d[i]+d[i+1]+d[i+2], lr=R[i]+R[i+1]+R[i+2];
+          if(l>lr+36 && l>A[i]+A[i+1]+A[i+2]){ A[i]=d[i]; A[i+1]=d[i+1]; A[i+2]=d[i+2]; } }
+        prPaint(); } }
+    await sleep(60); }
+  PX.pr.run=false; if($("#pgBox")) pgDraw(); }
+function prPaint(){ const v=$("#pxPrac"), A=PX.pr.acc; if(!v) return; const x=v.getContext("2d");
+  if(!A){ x.fillStyle="#000"; x.fillRect(0,0,v.width,v.height); return; }
+  const t=document.createElement("canvas"); t.width=PX.pr.w; t.height=PX.pr.h; const im=t.getContext("2d").createImageData(t.width,t.height); im.data.set(A); for(let i=3;i<A.length;i+=4) im.data[i]=255;
+  t.getContext("2d").putImageData(im,0,0); x.drawImage(t,0,0,v.width,v.height); }
+async function prSave(){ const A=PX.pr.acc; if(!A) return toast("Draw something first: press 10, 20 or 30 s.",2500);
+  const t=document.createElement("canvas"); t.width=PX.pr.w; t.height=PX.pr.h; const im=t.getContext("2d").createImageData(t.width,t.height); im.data.set(A); for(let i=3;i<A.length;i+=4) im.data[i]=255; t.getContext("2d").putImageData(im,0,0);
+  const blob=await new Promise(r=>t.toBlob(r,"image/jpeg",0.92));
+  try{ const r=await fetch("/api/play/paint/save",{method:"POST",headers:{"Content-Type":"image/jpeg"},body:blob}); const j=await r.json(); toast(j.say||j.error,3500); }catch(e){ toast("The picture could not be saved.",3000); } }
+/* shoot for a mood: one Claude call per press; Apply = his choice, locked */
+async function moodAsk(){ const w=($("#pxMoodIn")||{}).value||""; if(!w.trim()) return toast("Say the mood in a few words first.",2500);
+  PX.moodBusy=true; PX.moodSay=""; pgDraw();
+  try{ const r=await post("/api/play/mood",{words:w}); if(PX.st) PX.st.mood={words:w,proposal:r}; }catch(e){ PX.moodSay=keyMsg(e.message); }
+  PX.moodBusy=false; pgDraw(); }
+async function moodApply(){ const M=PX.st&&PX.st.mood.proposal; if(!M) return; const say=`Locked for a mood: ${M.words}`;
+  try{ const r=await post("/api/claude/apply",{changes:M.changes.map(c=>({name:c.name,value:c.value})),say});
+    S.claudeIntent=Object.keys(r.values||{}).length?{values:r.values,say}:null; await loadSettings(); toast(say+".",3000); }catch(e){ toast(e.message,4000); } }
+/* focus pull: his tap on the picture sets A or B while picking */
+async function pullTap(p){ const pick=PX.st&&PX.st.pull&&PX.st.pull.pick; if(!pick) return false;
+  try{ PX.st=await post("/api/play/pull/mark",{which:pick,x:p.x,y:p.y}); toast((pick==="a"?"A":"B")+" set.",2000); }catch(e){ toast(e.message,3500); }
+  if($("#pgBox")) pgDraw(); return true; }
+async function pgPoll(){ clearTimeout(PG.poll); await pgLoad(); if(PG.reel&&PG.reel.job&&PG.reel.job.busy) PG.poll=setTimeout(pgPoll,1000); }
+setInterval(()=>{ if(document.visibilityState==="visible") pgLoad(); },5000); pgLoad();
+/* Frame guide (More › See the exposure): a shape for social posts on the monitor only, also in Line up */
+function fgDraw(){ let b=$("#fgBox"); if(!b){ b=document.createElement("div"); b.id="fgBox"; b.className="mbody"; b.style.display="none"; $("#mScroll").append(b); }
+  const cur=guideRatio(S.guide)?S.guide:"off";
+  b.innerHTML=`<div><div class="as-seg wrap">${GUIDES.map(([v,l])=>`<button data-fg="${v}" aria-pressed="${v===cur}">${l}</button>`).join("")}</div>
+    <p class="as-note" style="margin:12px 2px 0">A guide on the screen only: the photo or video is still recorded full size. Crop it later in your editor.</p></div>`;
+  b.querySelectorAll("[data-fg]").forEach(x=>x.onclick=()=>{ S.guide=x.dataset.fg==="off"?null:x.dataset.fg; fgDraw(); drawGuides(); }); }
+/* ================= SOUND CHECK (More › This shoot): ten seconds through the LAPTOP's microphone, analysed here in
+   the page. The sound is never saved, never sent anywhere, never sent to Claude; only the numbers, and only when he
+   presses the Claude spark. The microphone is released right after (the browser's indicator goes off). */
+const SC={run:false, phase:"", left:0, level:-90, res:null, err:"", ask:null};
+const scDb=x=>20*Math.log10(Math.max(x,1e-9));
+function scMedian(a){ const s=[...a].sort((x,y)=>x-y); return s.length?s[Math.floor(s.length/2)]:-90; }
+function scPct(a,p){ const s=[...a].sort((x,y)=>x-y); return s.length?s[Math.min(s.length-1,Math.floor(s.length*p))]:-90; }
+/* the analysis, from numbers only (testable without a microphone):
+   d={quiet:[dBFS per 50 ms], speech:[dBFS per 50 ms], frameS, spec:[dB per bin, quiet phase], binHz, hz, clipped, samples} */
+function scAnalyse(d){ const items=[], hz=d.hz===60?60:50;
+  const noise=scMedian(d.quiet);
+  const nW=noise<-60?"quiet":noise<-45?"some noise":"too noisy";
+  items.push({key:"noise",label:"Room noise",word:nW,num:Math.round(noise)+" dBFS",ok:nW==="quiet",
+    advice:nW==="quiet"?"":"Switch off the fan or the air conditioning, close the window, or move away from the noise, then check again."});
+  let hum=null; if(d.spec&&d.spec.length&&d.binHz){ const at=f=>{ const i=Math.round(f/d.binHz); return d.spec[i]; };
+    const near=f=>{ const v=[]; for(let k=-Math.round(25/d.binHz);k<=Math.round(25/d.binHz);k++){ if(Math.abs(k*d.binHz)<6) continue; const i=Math.round(f/d.binHz)+k; if(i>0&&i<d.spec.length) v.push(d.spec[i]); } return scMedian(v); };
+    const over=[1,2,3].map(n=>at(hz*n)-near(hz*n)); const best=Math.max(...over);
+    if(best>12) hum=Math.round(best); }
+  if(hum!=null) items.push({key:"hum",label:"Mains hum",word:hz+" Hz hum",num:"+"+hum+" dB",ok:false,
+    advice:"Keep the microphone and its cable away from power cables, chargers and lamps, or try another socket."});
+  else items.push({key:"hum",label:"Mains hum",word:"none",num:"",ok:true,advice:""});
+  const talk=d.speech.filter(v=>v>noise+10), voice=talk.length>=6?scPct(talk,0.9):null;
+  const clip=(d.clipped||0)>=3;
+  let vW, vAdv="";
+  if(voice==null){ vW="no voice heard"; vAdv="Speak normally towards the microphone during the six seconds, then check again."; }
+  else if(clip||voice>-10){ vW=clip?"too loud (clipping)":"too loud"; vAdv="Move the microphone a little further away, or turn its gain down."; }
+  else if(voice<-36){ vW="too quiet"; vAdv="Move the microphone closer, about a hand's width from your mouth."; }
+  else vW="good";
+  items.push({key:"voice",label:"Your voice",word:vW,num:voice==null?"":Math.round(voice)+" dBFS"+(clip?` · ${d.clipped} clipped`:""),ok:vW==="good",advice:vAdv});
+  if(voice!=null && vW==="good" && voice-noise<20) items.push({key:"snr",label:"Voice above the room",word:"close to the noise",num:Math.round(voice-noise)+" dB",ok:false,
+    advice:"Bring the microphone closer to your mouth so your voice stands well above the room."});
+  /* echo, only when it is clear: how long the room keeps ringing after you stop (20 dB of decay, at least 3 times) */
+  const dec=[]; const L=d.speech, fs=d.frameS||0.05;
+  for(let i=2;i<L.length-2;i++){ if(L[i-1]>noise+25 && L[i]<L[i-1]-3){ const top=L[i-1]; let j=i; while(j<L.length&&L[j]>top-20&&L[j]>noise+3) j++;
+      if(j<L.length&&L[j]<=top-20) dec.push((j-i+1)*fs); i=j; } }
+  if(dec.length>=3 && scMedian(dec)>=0.3) items.push({key:"echo",label:"Echo",word:"the room echoes",num:"about "+(scMedian(dec)*3).toFixed(1)+" s",ok:false,
+    advice:"Add soft things around you (a blanket, curtains, a sofa) or move closer to the microphone."});
+  const bad=items.filter(i=>!i.ok);
+  return {items, short:bad.length?bad.length+" to fix":"Good", numbers:{noise_dbfs:Math.round(noise),hum_db:hum,voice_dbfs:voice==null?null:Math.round(voice),
+    clipped:d.clipped||0,echo_s:dec.length>=3?+(scMedian(dec)*3).toFixed(1):null,mains_hz:hz}}; }
+function scDraw(){ let b=$("#scBox"); if(!b){ b=document.createElement("div"); b.id="scBox"; b.className="mbody"; b.style.display="none"; $("#mScroll").append(b); }
+  const cardSound=!!(S.card&&S.card.source==="card"&&S.card.chosen&&S.card.chosen.audio); if(!cardSound) SC.via="laptop";
+  const honest=SC.via==="card"?"This listens through the capture card, so it hears the camera's own microphone.":"This listens through the laptop's microphone. Studio cannot hear the camera's own microphone, so check the camera's level on its screen.";
+  let h=(cardSound&&!SC.run?`<div class="as-seg" style="margin-bottom:10px"><button data-scvia="card" aria-pressed="${SC.via==="card"}">Capture card (camera microphone)</button><button data-scvia="laptop" aria-pressed="${SC.via!=="card"}">Laptop microphone</button></div>`:"")+`<p class="as-note" style="margin:0 2px 10px">${honest}</p>`;
+  if(SC.run){ const w=Math.max(0,Math.min(100,(SC.level+70)/70*100));
+    h+=`<div style="font-size:18px;font-weight:600;margin:6px 2px">${esc(SC.phase)}</div><div style="color:var(--soft);margin:0 2px 8px">${SC.left} s</div>
+      <div style="height:12px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden"><i id="scBar" style="display:block;height:100%;width:${w}%;background:${SC.level>-10?"var(--rec)":"var(--ok,#3ec27f)"}"></i></div>`; }
+  else{ if(SC.err) h+=`<p class="as-note" style="color:var(--warn);margin:0 2px 10px">${esc(SC.err)}</p>`;
+    if(SC.res) h+=`<div class="as-grp">${SC.res.items.map(i=>`<div class="as-row"><span class="l">${esc(i.label)}: ${esc(i.word)}${i.advice?`<small>${esc(i.advice)}</small>`:""}</span><span class="v" style="font-size:13px">${esc(i.num)}</span></div>`).join("")}</div>`;
+    h+=`<div class="trayacts" style="margin-top:12px"><button class="tbtn" id="scGo" style="background:var(--text);color:#000">${SC.res?"Check again":"Start the sound check"}</button>
+      ${SC.res&&S.assistant?`<button class="tbtn" id="scAsk" title="Sends only these numbers, never the sound"><span class="ai-mark">${SPARK(15)}</span>Ask Claude about these numbers</button>`:""}</div>`;
+    if(SC.ask) h+=`<p class="as-note" style="margin:10px 2px 0">${esc(SC.ask)}</p>`;
+    if(!SC.res) h+=`<p class="as-note" style="margin:10px 2px 0">About ten seconds: first stay quiet for 4 seconds, then speak normally for 6 seconds. Nothing is recorded or saved.</p>`; }
+  b.innerHTML=h; b.querySelectorAll("[data-scvia]").forEach(x=>x.onclick=()=>{ SC.via=x.dataset.scvia; scDraw(); }); const g=$("#scGo"); if(g) g.onclick=scStart; const a=$("#scAsk"); if(a) a.onclick=scAsk; }
+async function scStart(){ if(SC.run) return; if(S.rec) return toast("Not while recording.",2000);
+  if(SC.via==="card") return scStartCard();
+  SC.err=""; SC.ask=null; let stream=null, ctx=null;
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}); }
+  catch(e){ SC.err=e&&e.name==="NotFoundError"?"No microphone was found on the laptop. Connect one, then press Start again."
+      :"Studio may not use the microphone yet. Allow it with the microphone symbol in the address bar (or in Windows Settings › Privacy › Microphone), then press Start again.";
+    return scDraw(); }
+  const d={quiet:[],speech:[],frameS:0.05,clipped:0,samples:0,hz:(S.prefs&&+S.prefs.mains_hz)||50};
+  try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); const src=ctx.createMediaStreamSource(stream), an=ctx.createAnalyser();
+    an.fftSize=16384; an.smoothingTimeConstant=0; src.connect(an); d.binHz=ctx.sampleRate/an.fftSize;
+    const buf=new Float32Array(an.fftSize), spec=new Float32Array(an.frequencyBinCount), acc=new Float64Array(an.frequencyBinCount); let nSpec=0;
+    SC.run=true;
+    for(const [phase,secs,key] of [["Stay quiet",4,"quiet"],["Now speak normally",6,"speech"]]){
+      SC.phase=phase; const t0=performance.now();
+      while(performance.now()-t0<secs*1000){ SC.left=Math.ceil(secs-(performance.now()-t0)/1000);
+        an.getFloatTimeDomainData(buf); let s=0, n=Math.round(ctx.sampleRate*d.frameS); for(let i=buf.length-n;i<buf.length;i++){ const x=buf[i]; s+=x*x; if(Math.abs(x)>=0.99) d.clipped++; } d.samples+=n;
+        const db=scDb(Math.sqrt(s/n)); d[key].push(db); SC.level=db;
+        if(key==="quiet"&&d.quiet.length>10){ an.getFloatFrequencyData(spec); for(let i=0;i<spec.length;i++) acc[i]+=spec[i]; nSpec++; }
+        scDraw(); await sleep(d.frameS*1000); } }
+    d.spec=Array.from(acc,v=>v/Math.max(1,nSpec)).slice(0,Math.ceil(400/d.binHz));
+    SC.res=scAnalyse(d); }
+  catch(e){ SC.err="The sound check stopped before the end. Press Start to try again."; }
+  finally{ SC.run=false; try{ stream.getTracks().forEach(t=>t.stop()); }catch(e){} try{ ctx&&ctx.close(); }catch(e){} scDraw(); } }
+/* through the capture card: the same two phases, the levels the card's own process measures (no hum check) */
+async function scStartCard(){ SC.err=""; SC.ask=null; SC.run=true; const d={quiet:[],speech:[],frameS:0.05,clipped:0,hz:(S.prefs&&+S.prefs.mains_hz)||50,spec:[],binHz:0};
+  try{ for(const [phase,secs,key] of [["Stay quiet",4,"quiet"],["Now speak normally",6,"speech"]]){
+      SC.phase=phase; const t0=Date.now(), since=(await api("/api/card/levels?since=0")).now;
+      while(Date.now()-t0<secs*1000){ SC.left=Math.ceil(secs-(Date.now()-t0)/1000); const r=await api("/api/card/levels?since="+since); const L=r.levels||[];
+        SC.level=L.length?L[L.length-1]:-90; d[key]=L.slice(); scDraw(); await sleep(200); }
+      d.clipped+=d[key].filter(v=>v>-0.2).length; }
+    SC.res=scAnalyse(d); }
+  catch(e){ SC.err="The sound check stopped before the end. Press Start to try again."; }
+  finally{ SC.run=false; scDraw(); } }
+async function scAsk(){ if(!SC.res) return; SC.ask="Claude is reading the numbers… (this can take a minute)"; scDraw();
+  try{ const r=await post("/api/sound/ask",SC.res.numbers); SC.ask="Claude: "+r.say; }catch(e){ SC.ask=keyMsg(e.message); }
+  scDraw(); }
 (function(){ /* sub-page sources that are not elements yet */
   const keys=document.createElement("div"); keys.id="mKeys"; keys.className="mbody"; keys.innerHTML='<div><b>Space</b> or <b>Enter</b>: take the photo / start or stop recording<br><b>P</b> / <b>V</b>: Photo / Video<br><b>L</b>: Log | 709<br><b>M</b>: More<br><b>A</b>: Analyse again<br><b>Esc</b>: close<br><span class="dimtxt">iPad: tap the picture to focus there, double-tap to check focus.</span></div>';
   $("#mScroll").append(keys); keys.style.display="none";
@@ -2643,7 +2964,7 @@ function openSub(title,sels){ let p=$("#mSub"); if(!p){ p=document.createElement
   const out=$("#camCheckOut"); if(out){ const note=out.previousElementSibling; if(note) cc.append(note); cc.append(out); }
   $("#mScroll").append(cc); cc.style.display="none";
 })();
-new MutationObserver(()=>{ if($("#moreSheet").classList.contains("on")) renderMore(); else { const p=$("#mSub"); if(p) p.classList.remove("on"); } }).observe($("#moreSheet"),{attributes:true,attributeFilter:["class"]});
+new MutationObserver(()=>{ if($("#moreSheet").classList.contains("on")) renderMore(); else { const p=$("#mSub"); if(p) p.classList.remove("on"); if(["sound","teleprompter","shotlist"].includes(S.ctxPanel)) ctxPanel(null); } }).observe($("#moreSheet"),{attributes:true,attributeFilter:["class"]});
 
 function drawTrayLive(){ /* keep the verdict and sentence live while the tray is open (cheap) */
   if(TR.k&&(TR.k.startsWith("sp_")||TR.k==="zoom")) return;
@@ -2704,7 +3025,7 @@ async function atPoll(){ clearTimeout(AT.poll);
     S.firing=false; loadFilm(); toast((s.message||"Done.")+" Nothing was deleted.",5000);
   }catch(e){ AT.poll=setTimeout(atPoll,2000); } }
 const SP={kind:null, shots:8, step:3, near:true, poll:null};
-function spSheet(kind){ SP.kind=kind; SP.shots=SPECIAL[kind].def||0; openTray("sp_"+kind); if(kind==="auto") api("/api/auto/status").then(s=>{ if(s.running){ S.auto=s; atPoll(); } }).catch(()=>{}); }
+function spSheet(kind){ SP.kind=kind; if(kind==="focusstack") ctxPanel("focusstack"); SP.shots=SPECIAL[kind].def||0; openTray("sp_"+kind); if(kind==="auto") api("/api/auto/status").then(s=>{ if(s.running){ S.auto=s; atPoll(); } }).catch(()=>{}); }
 function spDraw(){ const k=SP.kind, c=SPECIAL[k], st=S.series||{};
   if(k==="match") return mtDraw();
   if(k==="auto") return atDraw();
@@ -2755,7 +3076,7 @@ async function spPoll(){ clearTimeout(SP.poll);
 function spResult(r){ /* before (one photo) and after (merged), side by side at full size */
   $("#rvO").src="/captures/"+encodeURIComponent(r.first)+"?t="+Date.now(); $("#rvG").src="/captures/"+encodeURIComponent(r.preview)+"?t="+Date.now();
   $("#rvGT").textContent=r.name+" (merged)"; const labs=$$("#review .muted"); if(labs[0]) labs[0].textContent="One photo of the series";
-  $("#rvMore").style.display="none"; $("#rvDraft").style.display="none";
+  $("#rvMore").style.display="none";
   $("#rvInfo").textContent=[(r.partial?"Merged from the photos taken before it stopped. ":"")+"Original RAW and JPEG files are kept.",...(r.notes||[])].join(" ");
   $("#review").classList.add("on"); }
 
@@ -2811,7 +3132,7 @@ async function mtClaude(){ if(MT.asking) return; MT.asking=true; MT.ask={wait:tr
   MT.asking=false; mtAskDraw(); }
 function mtAskDraw(){ const box=$("#mtAsk"); if(!box) return; const a=MT.ask;
   if(!a){ box.innerHTML=""; return; }
-  if(a.wait){ box.innerHTML=`<div class="mt-ask muted">Claude is comparing the two pictures… (10–30 s)</div>`; return; }
+  if(a.wait){ box.innerHTML=`<div class="mt-ask muted">Claude is comparing the two pictures… (this can take a minute or two)</div>`; return; }
   if(a.error){ box.innerHTML=`<div class="mt-ask warn">${esc(a.error)}</div>`; return; }
   box.innerHTML=`<div class="mt-ask"><b>Claude:</b> ${esc(a.verdict||"")}<ul>${(a.fixes||[]).slice(0,3).map(f=>`<li><b>${esc(f.aspect)}</b> ${esc(f.fix)}</li>`).join("")}</ul></div>`; }
 
@@ -2901,19 +3222,82 @@ function asCamera(){ const isV=S.mode==="video"; let h="";
     <div class="as-row"><span class="l">Follow my eyes<small>Keeps refocusing. Off means focus once and hold.</small></span><button class="as-sw" role="switch" data-sw="eyes" aria-checked="${eyes}" aria-label="Follow my eyes"></button></div>
     <div class="as-blk"><div class="l">Manual focus<span class="as-tag">not yet tested on your camera</span><small>Moves the lens nearer or farther, in MF.</small></div>
       <div class="as-fs"><button data-fstep="-7">« Near</button><button data-fstep="-2">‹</button><button data-fstep="2">›</button><button data-fstep="7">Far »</button></div></div></div>`;
-  const ms=asAvail("movie_setting",[[0x21,"100M"],[0x24,"60M"]]), st=asAvail("save_to",[[17,"PC + card"],[16,"Card only"],[1,"PC only"]]),
-        jq=asAvail("jpeg_quality",[[4,"Extra fine"],[3,"Fine"],[1,"Standard"]]), is=asAvail("image_size",[[1,"L"],[2,"M"],[3,"S"]]), pl=$("#photoLog");
-  h+=`<h4>File</h4><div class="as-grp">
-    <div class="as-row"><span class="l">Photo file<small>Always RAW + JPEG: the RAW for your edit, the JPEG to look at right away.</small></span><span class="v">RAW + JPEG</span></div>
-    ${S.profile&&!S.profile.log_confirmed?`<div class="as-row"><span class="l">Video file<small>The best gradeable video this camera offers. Log profile not confirmed on this model: run Check this camera.</small></span><span class="v">Best 4K / HD</span></div>`:`<div class="as-row"><span class="l">Video file<small>Always S-Log3 in 4K 25p, for your grade.</small></span><span class="v">S-Log3 · 4K 25p</span></div>`}
-    ${ms.length?`<div class="as-blk"><div class="l">Video bitrate<small>100M keeps the most detail; 60M makes smaller files.</small></div>${asSeg("movie_setting",ms)}</div>`:""}
-    ${st.length?`<div class="as-blk"><div class="l">Save photos to<small>PC + card keeps a copy on the card too.</small></div>${asSeg("save_to",st)}</div>`:""}
-    ${jq.length?`<div class="as-blk"><div class="l">JPEG quality</div>${asSeg("jpeg_quality",jq)}</div>`:""}
-    ${is.length?`<div class="as-blk"><div class="l">Image size</div>${asSeg("image_size",is)}</div>`:""}
-    ${pl?`<div class="as-row"><span class="l">Photo preview like video<small>Picture profile S-Log3 in photo mode: the preview and JPEG look flat like your video; the RAW is not changed. ${(S.profile&&S.profile.log_min_iso)?"Lowest ISO becomes "+S.profile.log_min_iso+".":"The lowest ISO rises."}</small></span><button class="as-sw" role="switch" data-sw="photolog" aria-checked="${pl.checked}" aria-label="Photo preview like video"></button></div>`:""}</div>`;
+  const st=asAvail("save_to",[[17,"PC + card"],[16,"Card only"],[1,"PC only"]]);
+  h+=`<h4>Format</h4><div id="asFormat">${fmtHtml()}</div>`;
+  h+=`<h4>Picture source</h4><div id="asCard">${cdHtml()}</div>`;
+  const cs=CD.st||{}, onCard=cs.source==="card";
+  h+=`<h4>Saving</h4><div class="as-grp">${st.length?`<div class="as-blk"><div class="l">Save photos to<small>PC + card keeps a copy on the card too.</small></div>${asSeg("save_to",st)}</div>`:""}
+    <div class="as-blk"><div class="l">Record video to<small>${onCard?"This laptop records the capture card's picture and sound into your shoot's VIDEO folder. The picture pauses for about a second when a recording on the laptop starts and stops.":"Recording on the laptop needs the capture card as the picture source."}</small></div>
+      <div class="as-seg"><button data-recto="card" aria-pressed="${cs.record_to!=="laptop"}">The camera's card</button><button data-recto="laptop" aria-pressed="${cs.record_to==="laptop"}" ${onCard?"":"disabled"}>This laptop (capture card)</button></div></div></div>`;
   if(!isV){ const tv=($("#timer")||{}).value||"0";
     h+=`<h4>Drive</h4><div class="as-grp"><div class="as-blk"><div class="l">Shutter<small>Studio counts down, then takes one photo.</small></div><div class="as-seg">${[["0","Single"],["3","3 s timer"],["10","10 s timer"]].map(([v,l])=>`<button data-timer="${v}" aria-pressed="${tv===v}">${l}</button>`).join("")}</div></div></div>`; }
-  $("#asCamera").innerHTML=h; }
+  $("#asCamera").innerHTML=h; fmtLoad(); cdLoad(true); }
+/* ---------- Camera › Picture source: the optional HDMI capture card (not yet tested on a real card) ---------- */
+const CD={st:null, v:null, a:null, poll:null};
+async function cdLoad(list){ try{ CD.st=list?await post("/api/card",{list:true}):await api("/api/card"); }catch(e){} const b=$("#asCard"); if(b) b.innerHTML=cdHtml(); cdPoll(); }
+function cdHtml(){ const s=CD.st; if(!s) return `<div class="as-grp"><div class="as-row"><span class="l">Looking for a capture card…</span></div></div>`;
+  const d=s.devices||{video:[],audio:[]}, on=s.source==="card";
+  let h=`<div class="as-grp"><div class="as-blk"><div class="l">Live picture from<small>Camera control always stays on the cable or Wi-Fi. <span class="as-tag">Not yet tested on a real capture card</span></small></div>
+    <div class="as-seg"><button data-src="camera" aria-pressed="${!on}">Camera cable</button><button data-src="card" aria-pressed="${on}" ${d.video.length&&d.ffmpeg!==false?"":"disabled"}>Capture card (HDMI)</button></div></div>`;
+  if(d.ffmpeg===false) h+=`<div class="as-row"><span class="l"><small>The capture card needs Studio's video tool (ffmpeg). Run "Install or repair camctl Studio" once.</small></span></div>`;
+  else if(!d.video.length) h+=`<div class="as-row"><span class="l"><small>No capture card found. Plug an HDMI capture card (for example a Cam Link) into the laptop, then open this page again.</small></span></div>`;
+  else if(!on){ h+=`<div class="as-blk"><div class="l">Which device is the capture card?<small>Studio never guesses and never opens a webcam by itself. Nothing is opened until you press Use it.</small></div>
+      <select id="cdV" style="width:100%;margin-top:6px"><option value="">Choose…</option>${d.video.map(n=>`<option ${CD.v===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
+      <select id="cdA" style="width:100%;margin-top:6px"><option value="">No sound from the card</option>${d.audio.map(n=>`<option ${CD.a===n?"selected":""}>${esc(n)}</option>`).join("")}</select>
+      <div class="trayacts" style="margin-top:8px"><button class="tbtn" id="cdUse" ${CD.v?"":"disabled"}>Use it</button></div></div>`; }
+  else h+=`<div class="as-row"><span class="l">The capture card is the picture<small>${s.size?s.size[0]+" x "+s.size[1]+", shown as it arrives.":"Waiting for the first picture…"}</small></span><span class="v">${s.level_db==null?"no sound":"sound "+Math.round(s.level_db)+" dB"}</span></div>`;
+  if(s.note) h+=`<div class="as-row"><span class="l"><small style="color:var(--warn)">${esc(s.note)}</small></span></div>`;
+  h+=`<div class="as-blk"><div class="l">How to connect it<small>1. An HDMI cable from the camera to the capture card.<br>2. The capture card into the laptop.<br>3. On the camera, switch the HDMI information display off so the picture is clean (Studio does not change the camera's menu).<br>Whether the ZV-E10 keeps sending HDMI while PC Remote is on is not known yet.</small></div></div></div>`;
+  return h; }
+async function cdPoll(){ clearTimeout(CD.poll); const s=CD.st||{};
+  if(s.source==="card"||["starting","recording","finishing"].includes((s.rec||{}).state)){ CD.poll=setTimeout(async()=>{ try{ CD.st=await api("/api/card"); S.card=CD.st; }catch(e){} const b=$("#asCard"); if(b&&asIsOpen()&&AS.tab==="camera") b.innerHTML=cdHtml(); cdPoll(); },1000); } }
+$("#asPanel").addEventListener("click",async e=>{ const s=e.target.closest("[data-src]"), r=e.target.closest("[data-recto]"), u=e.target.closest("#cdUse");
+  try{ if(s&&s.getAttribute("aria-pressed")!=="true"){ if(s.dataset.src==="camera"){ CD.st=await post("/api/card",{source:"camera"}); } else { const b=$("#asCard"); if(b) b.innerHTML=cdHtml(); } }
+    else if(r&&!r.disabled){ CD.st=await post("/api/card",{record_to:r.dataset.recto}); asCamera(); return; }
+    else if(u){ u.disabled=true; u.textContent="Opening the capture card…"; CD.st=await post("/api/card",{source:"card",video:CD.v,audio:CD.a||null}); toast("The capture card is the picture now.",2500); }
+    else return; }catch(err){ toast(err.message,4000); }
+  S.card=CD.st; const b=$("#asCard"); if(b) b.innerHTML=cdHtml(); cdPoll(); });
+$("#asPanel").addEventListener("change",e=>{ if(e.target.id==="cdV"){ CD.v=e.target.value||null; const b=$("#cdUse"); if(b) b.disabled=!CD.v; } if(e.target.id==="cdA") CD.a=e.target.value||null; });
+setInterval(async()=>{ if(document.visibilityState!=="visible") return; try{ S.card=await api("/api/card"); }catch(e){} },3000);
+
+/* ---------- Camera › Format: what each mode records, from what the camera offers (one home) ---------- */
+const FMT={d:null, busy:null, say:"", sayOk:true};
+const FMT_HELP={"photo:still_format":"RAW keeps the most for your edit. JPEG is ready to share straight away.",
+  "photo:aspect":"The shape of the photo the camera records.",
+  "photo:picture_profile":"Changes the JPEG and the preview. The RAW is not changed.",
+  "video:picture_profile":"A log picture profile (S-Log) keeps the most for colour grading. Off and HLG look finished straight away.",
+  "video:movie_format":"4K for the most detail, HD for smaller files and higher frame rates.",
+  "video:movie_setting":"Frames per second and quality (more Mbps keeps more detail). Studio sets the shutter to match, for example 1/50 s at 25p."};
+async function fmtLoad(){ try{ FMT.d=await api("/api/formats"); }catch(e){ FMT.d={error:true}; } const b=$("#asFormat"); if(b) b.innerHTML=fmtHtml(); }
+function fmtRow(r){ const id=r.mode+":"+r.key, mine=r.chosen!=null, busy=FMT.busy===id;
+  const help=r.note||FMT_HELP[id]||"", other=!r.active?` <span class="as-tag" style="color:var(--dimw)">used when you switch to ${r.mode==="video"?"Video":"Photo"}</span>`:"";
+  const ours=`<button class="as-ours" data-freset="${id}" ${mine&&!busy?"":"hidden"}>Studio's choice · ${esc(r.studio)}</button>`;
+  if(!r.settable) return `<div class="as-row" data-fmt="${id}"><span class="l">${esc(r.title)}${other}<small>${esc(help)}</small></span><span class="v">${esc(r.value_name)}</span></div>`;
+  const cur=r.active?r.value:(mine?r.chosen:r.value), many=r.choices.length>3;
+  return `<div class="as-blk" data-fmt="${id}"><div class="l">${esc(r.title)}${other}${mine?' <span class="as-tag" style="color:var(--soft)">your choice</span>':""}<small>${esc(busy?"Setting the camera…":help)}</small></div>
+    <div class="as-seg${many?" wrap":""}">${r.choices.map(c=>`<button data-fset="${id}" data-v="${c.value}" aria-pressed="${c.value===cur}" ${busy?"disabled":""} title="${esc(c.label)}">${esc(c.label)}</button>`).join("")}</div>${ours}</div>`; }
+function fmtHtml(){ const d=FMT.d;
+  if(!d) return `<div class="as-grp"><div class="as-row"><span class="l">Reading what the camera offers…</span></div></div>`;
+  if(d.error) return `<div class="as-grp"><div class="as-row"><span class="l">Format<small>Studio can't read the camera's formats right now. Check that the camera is on, then open this page again.</small></span></div></div>`;
+  if(S.rec) return `<div class="as-grp"><div class="as-row"><span class="l">Format<small>Stop the recording to change the format.</small></span><span class="v">${esc((S.format||{}).name||"")}</span></div></div>`;
+  let h="";
+  for(const m of [d.active, d.active==="photo"?"video":"photo"]){ const rows=d[m]||[];
+    h+=`<div class="as-sub">${m==="photo"?"Photo":"Video"}${m===d.active?" · in use now":""}</div><div class="as-grp">`;
+    h+=rows.length?rows.map(fmtRow).join(""):`<div class="as-row"><span class="l">Not known yet<small>Switch to ${m==="video"?"Video":"Photo"} once, so Studio can see what your camera offers there.</small></span></div>`;
+    h+=`</div>`; }
+  if(FMT.say) h+=`<p class="as-note" style="color:${FMT.sayOk?"var(--soft)":"var(--warn)"}">${esc(FMT.say)}</p>`;
+  return h; }
+async function fmtSet(id,v){ if(FMT.busy) return; if(S.rec) return toast("Not while recording: change the format between takes.",3000);
+  const [mode,key]=id.split(":"); FMT.busy=id; FMT.say=""; $("#asFormat").innerHTML=fmtHtml();
+  if(FMT_BASIS.includes(key)&&mode===(FMT.d||{}).active) S.modeBusy=true;   /* the status sentence says it is setting up */
+  try{ const r=await post("/api/formats",{mode,key,value:v}); FMT.d=r; FMT.say=r.say||""; FMT.sayOk=r.ok!==false;
+    if(r.ok!==false&&r.setup) S.dzFlash={label:"Locked",say:r.setup,until:Date.now()+6000}; }
+  catch(e){ FMT.say=e.message||"The camera didn't answer. Nothing was changed."; FMT.sayOk=false; }
+  S.modeBusy=false; FMT.busy=null; const b=$("#asFormat"); if(b) b.innerHTML=fmtHtml(); loadSettings(); }
+const FMT_BASIS=["picture_profile","movie_format","movie_setting","still_format"];
+$("#asPanel").addEventListener("click",e=>{ const s=e.target.closest("[data-fset]"), r=e.target.closest("[data-freset]");
+  if(s){ e.stopPropagation(); if(s.getAttribute("aria-pressed")!=="true") fmtSet(s.dataset.fset,+s.dataset.v); }
+  else if(r){ e.stopPropagation(); fmtSet(r.dataset.freset,null); } },true);
 
 /* ---------- Light: what the light does now (local), then the Lighting Lab ---------- */
 async function asLightPoll(){ clearTimeout(AS.poll); if(!asIsOpen()||AS.tab!=="light") return;
@@ -3060,7 +3444,7 @@ function asStudio(){ const box=$("#asStudio");
         <div class="as-row"><span class="l">Battery</span><span class="v" id="asBatt">—</span></div>
         <div class="as-row" id="asNeeds"><span class="l">Libraries<small id="asNeedsS">Checking…</small></span><span class="v" id="asNeedsV"></span></div>
         <button class="as-row" data-sub="asSub-camcheck" data-title="Check this camera"><span class="l">Check this camera<small>Tests the controls without taking a photo or recording.</small></span><span class="v"></span></button></div>
-      <h4>Claude</h4><div class="as-grp" style="margin-bottom:8px"><button class="as-row" data-sub="asSub-key" data-title="Claude key"><span class="l">Claude key<small>Paste it once. It stays on this laptop.</small></span><span class="v" id="asKeyV">—</span></button></div><div id="asClaudeBox"></div>
+      <h4>Claude</h4><div class="as-grp" style="margin-bottom:8px"><button class="as-row" data-sub="asSub-key" data-title="Claude key"><span class="l">Claude key<small>Paste it once. It stays on this laptop.</small></span><span class="v" id="asKeyV">—</span></button><button class="as-row" id="asClaudeModel" type="button"><span class="l">Model<small id="asClaudeModelS">Which Claude answers when you press a Claude button.</small></span><span class="v" id="asClaudeModelT">…</span></button><div id="asModelPick" hidden></div></div><div id="asClaudeBox"></div>
       <h4>Operator</h4><div id="asOpBox"></div>
       <h4>Monitoring</h4><div id="asMonBox"></div>
       <h4>Studio</h4><div class="as-grp">
@@ -3088,7 +3472,6 @@ async function asClick(e){ const t=e.target;
   const st=t.closest("[data-set]"); if(st){ $$(`#asPanel [data-set="${st.dataset.set}"]`).forEach(b=>b.setAttribute("aria-pressed",String(b===st))); await trSet(st.dataset.set,+st.dataset.v); asCamera(); return; }
   const sw=t.closest("[data-sw]"); if(sw){ const on=sw.getAttribute("aria-checked")!=="true"; sw.setAttribute("aria-checked",String(on));
     if(sw.dataset.sw==="eyes"){ try{ if(on){ await post("/api/focus/track"); toast("Focus follows your eyes.",2200); } else { await post("/api/autofocus"); toast("Focused once. It holds now.",2200); } }catch(err){ toast(err.message,3000); } await pollFocus(); asCamera(); }
-    if(sw.dataset.sw==="photolog"){ const c=$("#photoLog"); c.checked=on; c.dispatchEvent(new Event("change")); }
     if(sw.dataset.sw==="nd"){ try{ S.nd=await post("/api/nd",{on}); }catch(err){ toast(err.message,3000); } ndPoll(); asCamera(); }
     return; }
   if(t.closest('[data-act="refocus"]')){ $("#focusPill").click(); setTimeout(()=>{ if(AS.tab==="camera") asCamera(); },1500); return; }
@@ -3115,9 +3498,36 @@ const CL_NAMES={aperture:"Aperture",shutter_speed:"Shutter",iso:"ISO",white_bala
 const CL={busy:false, ans:null, err:null, state:{}, last:""};
 const CL_CARDS=[
   {k:"direct",t:"Direct this shot",l:"Sets the camera and places the light",art:'<rect width="80" height="50" fill="#22202e"/><circle cx="40" cy="27" r="9" fill="#e8dcc6"/><path d="M14 10l14 10" stroke="#b9a2ff" stroke-width="2"/><circle cx="12" cy="9" r="5" fill="#fff4e2"/><rect x="34" y="40" width="12" height="7" rx="2" fill="#b9a2ff"/>'},
-  {k:"review",t:"Review my last take",l:"What a director would say",art:'<rect width="80" height="50" fill="#22202e"/><rect x="10" y="9" width="40" height="28" rx="4" fill="#3a3550"/><circle cx="30" cy="22" r="7" fill="#e8dcc6"/><path d="M56 14h16M56 22h12M56 30h14" stroke="#b9a2ff" stroke-width="2.4" stroke-linecap="round"/>'},
+  {k:"review",t:"Review my last take",l:"What a director would say",modes:["video"],art:'<rect width="80" height="50" fill="#22202e"/><rect x="10" y="9" width="40" height="28" rx="4" fill="#3a3550"/><circle cx="30" cy="22" r="7" fill="#e8dcc6"/><path d="M56 14h16M56 22h12M56 30h14" stroke="#b9a2ff" stroke-width="2.4" stroke-linecap="round"/>'},
   {k:"plan",t:"Plan my light",l:"Where the lamp should go",art:'<rect width="80" height="50" fill="#22202e"/><circle cx="40" cy="25" r="7" fill="#e8dcc6"/><circle cx="16" cy="14" r="6" fill="#fff4e2"/><circle cx="64" cy="14" r="4" fill="#fff" opacity=".4"/><path d="M20 17l13 6" stroke="#b9a2ff" stroke-width="2" stroke-dasharray="3 2"/><rect x="35" y="40" width="10" height="6" rx="2" fill="#fff" opacity=".8"/>'},
-  {k:"best",t:"Pick the best take",l:"Sharp, eyes open, best look",art:'<rect width="80" height="50" fill="#22202e"/><rect x="6" y="12" width="20" height="26" rx="3" fill="#3a3550"/><rect x="30" y="8" width="20" height="34" rx="3" fill="#e8dcc6" stroke="#b9a2ff" stroke-width="2"/><rect x="54" y="12" width="20" height="26" rx="3" fill="#3a3550"/>'}];
+  {k:"best",t:"Pick the best take",l:"Sharp, eyes open, best look",modes:["video"],art:'<rect width="80" height="50" fill="#22202e"/><rect x="6" y="12" width="20" height="26" rx="3" fill="#3a3550"/><rect x="30" y="8" width="20" height="34" rx="3" fill="#e8dcc6" stroke="#b9a2ff" stroke-width="2"/><rect x="54" y="12" width="20" height="26" rx="3" fill="#3a3550"/>'}];
+/* the photo versions of the take cards (one card per mode, never two of the same) */
+CL_CARDS.push({...CL_CARDS.find(c=>c.k==="review"),t:"Review my last photo",l:"What a photographer would say",modes:["photo"]},
+              {...CL_CARDS.find(c=>c.k==="best"),t:"Pick the best photo",l:"Sharp, eyes open, the best moment",modes:["photo"]});
+const clCards=()=>CL_CARDS.filter(c=>!c.modes||c.modes.includes(S.mode==="video"?"video":"photo"));
+/* example chips: the tool in use first, then the mode */
+const CL_CHIPS={focusstack:["Which aperture is sharpest?","How many frames for this object?","Is the light even enough?"],
+  long:["Where should I draw?","Is the room dark enough?","How long should the shutter be?"],
+  double:["Where should photo 2 sit?","Is there enough dark area?","What would fit as photo 2?"],
+  pull:["Is the distance between A and B enough?","Which speed suits this move?","Will the depth of field work?"],
+  reel:["What makes a good moment before?","How should I start each photo?"],
+  sound:["What should I fix first?","Where should the microphone go?"],
+  teleprompter:["How do I read more naturally?","Where should I look?"],
+  shotlist:["How do I set up the next shot?","What is missing from my list?"],
+  photo:["Moody portrait","Softer background","Why is it grainy?"],
+  video:["Moody interview","Same as my last take","Why does it flicker?"]};
+function clTool(){ const p=(typeof PX!=="undefined"&&PX.st)||{};
+  if(S.ctxPanel==="focusstack") return "focusstack";
+  if(p.long&&p.long.on) return "long"; if(p.double&&p.double.on) return "double";
+  if(p.pull&&(p.pull.a||p.pull.b||p.pull.pick)) return "pull";
+  if(["sound","teleprompter","shotlist"].includes(S.ctxPanel)) return S.ctxPanel;
+  if(typeof PG!=="undefined"&&PG.reel&&PG.reel.on) return "reel";
+  return null; }
+const clChips=()=>CL_CHIPS[clTool()]||CL_CHIPS[S.mode==="video"?"video":"photo"];
+/* the page tells Studio which tool panel is open (names only): Claude's situation follows it */
+function ctxPanel(p){ if(S.ctxPanel===p) return; S.ctxPanel=p; post("/api/claude/context",{panel:p}).catch(()=>{}); }
+/* Photo/Video or a tool switched: the Claude panel follows without a reload (cards and chips only) */
+setInterval(()=>{ const k=(S.mode||"")+"|"+(clTool()||""); if(k!==S._clKey){ S._clKey=k; if(typeof clIsOpen==="function"&&clIsOpen()&&!CL.busy&&!CL.ans) clDraw(); } },800);
 (function clBuild(){
   const bottom=$(".dz-bottom"); if(!bottom) return;
   bottom.insertAdjacentHTML("afterbegin",`<button class="cl-btn glass" id="clBtn" aria-label="Claude" title="Claude (C)"><span class="cl-spark" id="clBtnSpark">${SPARK(20)}</span><b>Claude</b></button>`);
@@ -3142,14 +3552,14 @@ function clDraw(){ const b=$("#clBody"); if(!b) return;
   if(!ready){ b.innerHTML=keyBlock("cl"); return; }
   const ask=`<form class="cl-ask" id="clForm" autocomplete="off"><input id="clIn" placeholder="Tell Claude what you want" maxlength="600" value="${esc(CL.busy?CL.last:"")}" ${CL.busy?"disabled":""}><button type="submit" aria-label="Send" ${CL.busy?"disabled":""}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>`;
   let h="";
-  if(CL.busy) h=ask+`<div class="cl-work"><span class="cl-spark pulse">${SPARK(24)}</span><span>${esc(CL.busy)}</span></div>`+clFoot();
+  if(CL.busy) h=ask+`<div class="cl-work"><span class="cl-spark pulse">${SPARK(24)}</span><span>${esc(CL.busy)}${CL.applying?"":" This can take a minute or two."}</span></div>`+(CL.applying?"":`<div class="cl-acts"><button class="tbtn" data-cl="stopwait">Stop waiting</button></div>`)+clFoot();
   else if(CL.err) h=ask+`<p class="cl-err">${esc(CL.err)}</p><div class="cl-acts"><button class="tbtn" data-cl="again">Ask something else</button></div>`+clFoot();
   else if(CL.ans){ const a=CL.ans, ch=a.changes||[];
     h=`<div class="cl-ans">${esc(a.say||"Done.")}${a.tips?`<br><span style="color:var(--soft);font-size:15px">${esc(a.tips)}</span>`:""}</div>`+
       (ch.length?`<div class="cl-changes">${ch.map(c=>`<span>${esc(CL_NAMES[c.name]||c.name.replace(/_/g," ").replace(/^./,x=>x.toUpperCase()))} ${esc(c.from_label||"")} → ${esc(c.label)}</span>`).join("")}</div>`:"")+
       `<div class="cl-acts">${ch.length?`<button class="tbtn pri" data-cl="apply">Apply</button><button class="tbtn" data-cl="notnow">Not now</button>`:`<button class="tbtn pri" data-cl="notnow">Got it</button>`}${a.kind==="plan"?`<button class="tbtn" data-cl="showplan">Show the light plan</button>`:""}<button class="tbtn" data-cl="again">Ask something else</button></div>`; }
-  else h=(KEY.ok&&KEY.msg?`<p class="key-msg ok" style="margin:10px 6px 0">${esc(KEY.msg)}</p>`:"")+ask+`<div class="cl-chips">${["Moody interview","Softer background","Why is it grainy?"].map(c=>`<button data-chip="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-    <div class="cards cl-cards">${CL_CARDS.map(c=>`<button class="card" data-clk="${c.k}"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice">${c.art}</svg><b>${c.t}</b><span>${c.l}</span></button>`).join("")}</div>`+clFoot();
+  else h=(KEY.ok&&KEY.msg?`<p class="key-msg ok" style="margin:10px 6px 0">${esc(KEY.msg)}</p>`:"")+ask+`<div class="cl-chips">${clChips().map(c=>`<button data-chip="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    <div class="cards cl-cards">${clCards().map(c=>`<button class="card" data-clk="${c.k}"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice">${c.art}</svg><b>${c.t}</b><span>${c.l}</span></button>`).join("")}</div>`+clFoot();
   b.innerHTML=h;
   const f=$("#clForm"); if(f) f.onsubmit=e=>{ e.preventDefault(); const v=$("#clIn").value.trim(); if(v) clRun("direct",v); };
   $("#clBtnSpark").classList.toggle("pulse",!!CL.busy); }
@@ -3157,6 +3567,7 @@ $("#clBody").addEventListener("click",e=>{ const c=e.target.closest("[data-clk]"
   if(c) clRun(c.dataset.clk,""); else if(ch) clRun("direct",ch.dataset.chip);
   else if(a){ const k=a.dataset.cl; if(k==="apply") clApply(); else if(k==="notnow"){ CL.ans=null; clClose(); clDraw(); }
     else if(k==="again"){ CL.ans=null; CL.err=null; clDraw(); const i=$("#clIn"); if(i) i.focus(); }
+    else if(k==="stopwait"){ CL.run=(CL.run||0)+1; CL.busy=false; CL.err="Stopped waiting. Nothing was changed on the camera."; clState(); clDraw(); }
     else if(k==="showplan"){ CL.ans=null; clClose(); clDraw(); asOpen("light"); setTimeout(()=>{ const p=$("#plan"); if(p) p.scrollIntoView({block:"start",behavior:"smooth"}); },500); } } });
 const CL_WORK={direct:"Claude is looking at your picture…",review:"Claude is looking at your last take…",plan:"Claude is planning your light…",best:"Rating your takes, then Claude picks…"};
 async function clRun(kind,text){ if(CL.busy) return;
@@ -3164,6 +3575,7 @@ async function clRun(kind,text){ if(CL.busy) return;
     clClose(); asOpen("light"); setTimeout(()=>{ const g=$("#litGo"); const s=g&&(g.closest(".sec")||g); if(s) s.scrollIntoView({block:"start",behavior:"smooth"}); },500); return; }
 if(clBlocked()){ toast("Claude waits until the take is finished.",2500); return; }
   CL.busy=CL_WORK[kind]; CL.err=null; CL.ans=null; CL.last=text||""; CL.kind=kind; CL.title=text||(CL_CARDS.find(c=>c.k===kind)||{}).t||""; clDraw();
+  const run=CL.run=(CL.run||0)+1;   /* "Stop waiting" moves CL.run on: a late answer is then ignored */
   try{ let a;
     if(kind==="direct") a=await post("/api/claude/direct",{request:text,mode:S.mode});
     else if(kind==="review") a=await post("/api/claude/review",{});
@@ -3171,22 +3583,22 @@ if(clBlocked()){ toast("Claude waits until the take is finished.",2500); return;
     else if(kind==="plan"){ const p=await post("/api/lighting/plan",{refs:S.refs||[],include_live:true,request:text||"",mode:S.mode,use_gear:true});
       S.plan=p; if(typeof renderPlan==="function") renderPlan(p);
       a={kind:"plan",say:[p.title,p.look_analysis].filter(Boolean).join(": "),changes:(p.camera||[]).filter(c=>!c.same)}; }
-    CL.ans=a; }
-  catch(e){ CL.err=(typeof keyMsg==="function"?keyMsg(e.message):e.message)||"Claude didn't answer. Try again."; }
+    if(run!==CL.run) return; CL.ans=a; }
+  catch(e){ if(run!==CL.run) return; CL.err=(typeof keyMsg==="function"?keyMsg(e.message):e.message)||"Claude didn't answer. Try again."; }
   CL.busy=false; clState(); clDraw(); }
 function clStatus(a){ const first=String(a.say||"").replace(/^\(Simulator[^)]*\)\s*/,"").split(/(?<=[.!?])\s/)[0]||"";
   const what=CL.kind==="direct"&&CL.title&&CL.title!=="Direct this shot"?CL.title.replace(/[.?!]$/,"").toLowerCase():"";
   return (what?`Claude set “${CL.title.replace(/[.?!]$/,"")}”. `:"Claude changed the settings. ")+first; }
 async function clApply(){ const a=CL.ans; if(!a||!(a.changes||[]).length) return;
   if(clBlocked()){ toast("Claude waits until the take is finished.",2500); return; }
-  CL.busy="Applying and checking on the camera…"; clDraw();
+  CL.busy="Applying and checking on the camera…"; CL.applying=true; clDraw();
   const say=clStatus(a);
   try{ const r=await post("/api/claude/apply",{changes:a.changes.map(c=>({name:c.name,value:c.value})),say});
     await loadSettings();
     S.claudeIntent=Object.keys(r.values||{}).length?{values:r.values,say}:null;
     toast(r.mismatch&&r.mismatch.length?"Applied and locked. The camera didn't take: "+r.mismatch.map(n=>CL_NAMES[n]||n).join(", ")+".":"Applied and locked.",3200);
-    CL.busy=false; CL.ans=null; clClose(); }
-  catch(e){ CL.busy=false; CL.err="Couldn't apply: "+e.message; }
+    CL.busy=false; CL.applying=false; CL.ans=null; clClose(); }
+  catch(e){ CL.busy=false; CL.applying=false; CL.err="Couldn't apply: "+e.message; }
   clDraw(); renderDz(); }
 /* a change Claude made on his request is his choice: the status says what Claude did while those values stand */
 function clHolds(){ const i=S.claudeIntent; if(!i||!i.values) return false;

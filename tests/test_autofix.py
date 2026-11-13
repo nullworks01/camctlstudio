@@ -312,7 +312,7 @@ def test_switching_mode_is_a_full_fresh_setup_and_ends_locked(monkeypatch, tmp_p
         # video -> photo: the normal picture (log from video not carried over) unless "Match video" is on
         assert cam.p[presets.PROP_PICTURE_PROFILE].value == 0
         assert any("Preview: camera standard" in i["text"] for i in r["verdict"]["items"])
-        c.post("/api/post", json={"photo_log": True})
+        c.post("/api/post", json={"photo_log": True})     # the old switch's saved "on" becomes the Format row's S-Log3
         r = c.post("/api/post", json={"post": True, "mode": "photo"}).json()
         assert cam.p[presets.PROP_PICTURE_PROFILE].value == 8 and r["phase"] == "locked"
         assert any("Preview: S-Log3" in i["text"] for i in r["verdict"]["items"])

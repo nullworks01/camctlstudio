@@ -192,61 +192,6 @@ def _fpath(p: Path) -> str:
     return str(p).replace("\\", "/").replace(":", "\\:")
 
 
-def make_luts(look: dict | None, log: bool) -> tuple[Path | None, Path]:
-    d = OUT / "luts"
-    d.mkdir(parents=True, exist_ok=True)
-    tech = d / "slog3cine_to_rec709.cube"
-    if log and not tech.exists():
-        tech.write_text(lut.export_cube(None, "camctl S-Log3.Cine to Rec709", size=65, source="slog3cine"))
-    name = "look_" + re.sub(r"[^a-z0-9]+", "", json.dumps(look or DEFAULT_LOOK, sort_keys=True))[:40] + ".cube"
-    lk = d / name
-    if not lk.exists():
-        lk.write_text(lut.export_cube(look or DEFAULT_LOOK, "camctl look", size=65))
-    return (tech if log else None), lk
-
-
-def finish(raw: Path, look: dict | None = None, log: bool = True, ev: float = 0.0, cut: bool = True,
-           subtitles: Path | None = None, face_x: float = 0.5, progress=lambda s: None) -> dict:
-    """Grade + optional silence cut + optional burned subtitles; export 16:9 1080p and 9:16 1080x1920."""
-    OUT.mkdir(parents=True, exist_ok=True)
-    stem = raw.stem
-    tech, lk = make_luts(look, log)
-    segs = speech_segments(raw) if cut else [(0.0, probe(raw)["duration"])]
-    progress(f"{len(segs)} speaking part(s)")
-    sel = "+".join(f"between(t,{a:.3f},{b:.3f})" for a, b in segs)
-    pre = "scale=1920:1080:flags=lanczos:in_range=full:out_range=full:in_color_matrix=bt709,format=gbrp16le" if log \
-        else "scale=1920:1080:flags=lanczos,format=gbrp16le"
-    lift = int(round(ev * SLOG3_STOP * 65535)) if log else 0
-    grade = (f"lutrgb=r=val+{lift}:g=val+{lift}:b=val+{lift}," if lift else "") + "hqdn3d=2:1.5:4:3," \
-        + (f"lut3d=file='{_fpath(tech)}':interp=tetrahedral," if tech else "") \
-        + f"lut3d=file='{_fpath(lk)}':interp=tetrahedral,vignette=angle=0.42:mode=forward"
-    post = "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p"
-    vcut = f"select='{sel}',setpts=N/FRAME_RATE/TB," if cut else ""
-    acut = f"aselect='{sel}',asetpts=N/SR/TB" if cut else "anull"
-    subs = f",subtitles='{_fpath(subtitles)}':force_style='FontName=Segoe UI,FontSize=13,Outline=1,Shadow=0,MarginV=28'" if subtitles else ""
-    enc = ["-c:v", "libx264", "-preset", "medium", "-crf", "17", "-colorspace", "bt709", "-color_primaries", "bt709",
-           "-color_trc", "bt709", "-color_range", "tv", "-movflags", "+faststart", "-c:a", "aac", "-b:a", "192k"]
-    wide = OUT / f"{stem}_16x9.mp4"
-    has_audio = probe(raw)["audio"]
-    progress("Grading 16:9…")
-    fc = f"[0:v]{vcut}{pre},{grade},{post}{subs}[v]" + (f";[0:a]{acut}[a]" if has_audio else "")
-    r = _run(["-i", str(raw), "-filter_complex", fc, "-map", "[v]", *(["-map", "[a]"] if has_audio else []), *enc, str(wide)],
-             timeout=3600)
-    if r.returncode != 0:
-        raise RuntimeError("ffmpeg failed (16:9): " + r.stderr.strip().splitlines()[-1] if r.stderr else "ffmpeg failed")
-    progress("Making the 9:16 version…")
-    tall = OUT / f"{stem}_9x16.mp4"
-    cx = min(max(face_x, 0.28), 0.72)                       # keep the face in the vertical crop
-    crop = f"crop=608:1080:{int(cx * 1920 - 304)}:0,scale=1080:1920:flags=lanczos"
-    r = _run(["-i", str(wide), "-vf", crop, *enc, str(tall)], timeout=3600)
-    if r.returncode != 0:
-        raise RuntimeError("ffmpeg failed (9:16)")
-    thumb = OUT / f"{stem}_thumb.jpg"
-    _run(["-ss", "1", "-i", str(wide), "-frames:v", "1", "-vf", "scale=640:-2", str(thumb)], timeout=60)
-    return {"wide": wide.name, "tall": tall.name, "thumb": thumb.name, "parts": len(segs),
-            "kept_s": round(sum(b - a for a, b in segs), 1), "duration_s": round(probe(raw)["duration"], 1)}
-
-
 # ---------------------------------------------------------------- job runner
 class VideoJobs:
     def __init__(self):
@@ -293,24 +238,11 @@ class VideoJobs:
             time.sleep(3)
 
     def _imported(self, raw: Path, opts: dict) -> None:
-        """The clip is on the PC (in the shoot folder). Hand-off first; a graded draft only if asked."""
+        """The clip is on the PC (in the shoot folder): that is all; nothing is edited or graded."""
         self.status.update(state="imported", clip=raw.name, clip_path=str(raw),
-                           message=f"{raw.name} is in your shoot folder (untouched S-Log3). Ready for Resolve.")
-        if opts.get("quick_draft"):
-            self._process(raw, opts)
+                           message=f"{raw.name} is in your shoot folder, untouched. Ready for your editor.")
+        # no automatic edit or grade of any kind (removed 13 Nov 2026; an old saved "quick_draft" is ignored)
 
     def cancel(self) -> None:
         self.status.update(state="idle", message="")
 
-    def process_file(self, path: Path, opts: dict) -> None:
-        threading.Thread(target=self._process, args=(path, opts), daemon=True).start()
-
-    def _process(self, raw: Path, opts: dict) -> None:
-        self.status.update(state="processing", clip=raw.name, message="Finishing your video…")
-        try:
-            res = finish(raw, look=opts.get("look"), log=bool(opts.get("log", True)), ev=float(opts.get("ev", 0)),
-                         cut=bool(opts.get("cut", True)), face_x=float(opts.get("face_x", 0.5)),
-                         progress=lambda m: self.status.update(message=m))
-            self.status.update(state="done", message="Ready", result=res)
-        except Exception as exc:  # noqa: BLE001
-            self.status.update(state="error", error=str(exc))

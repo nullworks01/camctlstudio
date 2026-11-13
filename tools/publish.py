@@ -22,13 +22,16 @@ ROOT = Path(__file__).resolve().parents[1]
 INCLUDE = [
     "camctl/**/*.py", "camctl/studio_pro.html", "camctl/presets.json", "camctl/assets/*.ico",
     "tests/*.py", "tests/data/*.json", "tests/data/lineup_ref.jpg",
-    "tools/battery_guard.py", "tools/check_page.py", "tools/grade_clip.py", "tools/leave_as_set_up.py",
+    "tools/battery_guard.py", "tools/check_page.py", "tools/leave_as_set_up.py",
     "tools/publish.py", "tools/sim_studio.py", "tools/start_server.pyw", "tools/studio_app.pyw",
     "README.md", "LICENSE", "CONTRIBUTING.md", "requirements.txt", "requirements-optional.txt", "pyproject.toml", "start_studio.ps1",
     "Install or repair camctl Studio.cmd", ".gitignore", ".github/ISSUE_TEMPLATE/*.md",
 ]
 NEVER = re.compile(r"(\.bak$|\.r\d+\.bak$|__pycache__|\.pyc$|/logs/|/captures/|AUDIT\.md|publish_list\.txt|\.log$)", re.I)
 IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico"}     # a generated picture and the app icon
+# written WITHOUT a UTF-8 byte-order mark: GitHub reads the issue template's header only without one
+NO_BOM = re.compile(r"^(\.gitignore|\.github/.*)$")
+BOM = b"\xef\xbb\xbf"
 
 # the guard: nothing personal, nothing secret, nothing from his network or camera
 PATTERNS = {
@@ -101,7 +104,12 @@ def main() -> int:
         for p in fs:
             t = dest / p.relative_to(ROOT)
             t.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(p, t)
+            if NO_BOM.match(p.relative_to(ROOT).as_posix()):
+                data = p.read_bytes()
+                t.write_bytes(data[len(BOM):] if data.startswith(BOM) else data)
+                shutil.copystat(p, t)
+            else:
+                shutil.copy2(p, t)
         print(f"Copied {len(fs)} files to {dest}")
     return 0
 

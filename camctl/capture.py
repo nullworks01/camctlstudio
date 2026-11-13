@@ -1,7 +1,8 @@
 """Capture profiles: a technically perfect, NEUTRAL capture for grading in Resolve / Lightroom.
 
 Studio never colours files. Every profile:
-  - format (fixed): photos RAW (+ a JPEG reference, Extra fine, L); video S-Log3 (PP8), 4K at the best bitrate
+  - format: his choice in All settings › Camera › Format (formats.py), from what the camera offers; Studio's
+    choice (the default): photos RAW (+ a JPEG reference, Extra fine, L); video S-Log3 (PP8), 4K at the best bitrate
   - neutral colour: WB shift centred (192/192), picture effect off; never a creative look
   - white balance: locked (measured from a grey card / white paper) or AWB flagged "not locked"
   - shutter: video 180-degree rule for the frame rate; photo a safe handheld speed for the subject
@@ -84,6 +85,22 @@ def video_shutter_s(fps: int) -> float:
     return 1 / {24: 50, 25: 50, 30: 60, 50: 100, 60: 125, 100: 200, 120: 250}.get(fps, 50)
 
 
+def video_shutter(fps: int, hz: int = 50) -> tuple[float, bool]:
+    """(shutter in seconds, flicker-safe) for the frame rate: about 1/(2 x fps), in step with the mains lights
+    (a multiple of half the mains period) and never longer than one frame. 25p/50 Hz -> 1/50, 30p/50 Hz -> 1/50,
+    60p/50 Hz -> 1/100, 100p/50 Hz -> 1/100, 25p/60 Hz -> 1/60, 50p/60 Hz -> 1/120. Above twice the mains
+    frequency (120p under 50 Hz) no flicker-free shutter exists: 180 degrees, and the caller says so."""
+    fps = int(fps or 25)
+    ideal = 1 / (2 * fps)
+    if not hz:
+        return ideal, True
+    period = 1 / (2 * hz)
+    cands = [n * period for n in range(1, 13) if n * period <= 1 / fps * 1.001]
+    if not cands:
+        return ideal, False
+    return min(cands, key=lambda t: (abs(math.log2(t / ideal)), t)), True
+
+
 def best_movie_setting(choices: list[int], labels: dict[int, str], fps: int) -> int | None:
     """Highest bitrate at the current frame rate, 4K first."""
     def key(v):
@@ -102,20 +119,30 @@ def nearest_f(choices: list[int], target: float) -> int | None:
     return min(choices, key=lambda v: abs(v / 100 - target))
 
 
-def stops_error(level: float, target: float, log: bool) -> float:
+def _curve(curve: str | None) -> tuple[float, float]:
+    """(mid grey, one stop) in 0..255 code values for a log curve (S-Log3 unless the profile says S-Log2)."""
+    from .formats import LOG_CURVES
+    g, s = LOG_CURVES.get(curve or "slog3", LOG_CURVES["slog3"])
+    return g * 255, s * 255
+
+
+def stops_error(level: float, target: float, log: bool, curve: str | None = None) -> float:
     if log:
-        return (target - level) / presets.SLOG3_STOP
+        return (target - level) / _curve(curve)[1]
     return math.log2(presets._lin(target) / presets._lin(max(level, 1.0)))
 
 
-def target_level(log: bool, face: bool, photo: bool) -> float:
-    if log and photo:      # S-Log3 photo preview: expose the RAW at nominal (skin +1 stop), no extra ISO for ETTR
-        return presets.SLOG3_GREY + presets.SLOG3_STOP * (1.0 if face else 0.5)
+def target_level(log: bool, face: bool, photo: bool, curve: str | None = None, jpeg_only: bool = False) -> float:
     if log:
-        return presets.SLOG3_GREY + presets.SLOG3_STOP * (1.5 if face else 1.0)
+        grey, stop = _curve(curve)
+        if photo:          # log photo preview: expose the RAW at nominal (skin +1 stop), no extra ISO for ETTR
+            return grey + stop * (1.0 if face else 0.5)
+        return grey + stop * (1.5 if face else 1.0)
+    if photo and jpeg_only:
+        return 150.0 if face else 118.0            # JPEG only: no RAW headroom, so skin ~59 IRE and highlights kept
     if photo:
         return 166.0 if face else 128.0            # ETTR: skin ~65 IRE (RAW keeps highlight headroom)
-    return 158.0 if face else 118.0
+    return 158.0 if face else 118.0                # standard and HLG video: a normal picture
 
 
 # ---------------------------------------------------------------- the run
@@ -166,49 +193,69 @@ class CaptureRun:
                 notes.append("camera is not in movie mode: video settings not written")
                 return notes
             prof = self.profile()
-            log_pp = prof.get("log_pp") if (prof.get("builtin") or prof.get("log_confirmed")) else None
-            if log_pp is None:                     # an untested model: never assume which picture profile is log
-                notes.append("Log profile not confirmed on this model: the picture profile was left as it is")
-            elif not self._want(presets.PROP_PICTURE_PROFILE, log_pp):
-                notes.append("S-Log3 not available in this mode")
-            fmt = 0xD241
-            if 8 in _choices(props, fmt):
-                self._want(fmt, 8)                   # XAVC S 4K
-            ms = 0xD242
-            cur = props.get(ms)
-            fps = fps_of(self.label("movie_setting", cur.value)) if cur else 25
-            ch = _choices(self.props(), ms)
-            best = best_movie_setting(ch, {v: self.label("movie_setting", v) for v in ch}, fps)
-            if best is not None:
-                self._want(ms, best)
+            from . import formats as fm
+            photo_log = getattr(self, "photo_log", None) is True
+            want = lambda key: fm.wanted("video", key, self.props(), prof, self.label, photo_log)
+            pp_v, pp_note = want("picture_profile")
+            if pp_note:
+                notes.append(pp_note)
+            if pp_v is None:
+                if fm.chosen("video", "picture_profile") is None and fm._log_pp(prof) is None:
+                    # an untested model: never assume which picture profile is log
+                    notes.append("Log profile not confirmed on this model: the picture profile was left as it is")
+            elif not self._want(presets.PROP_PICTURE_PROFILE, pp_v):
+                notes.append(f"{fm.pp_name(prof, pp_v)} is not available in this mode")
+            for key in ("movie_format", "movie_setting"):      # the rate list depends on the file: in this order
+                v, n = want(key)
+                if n:
+                    notes.append(n)
+                if v is not None:
+                    self._want(fm.CODES[key], v)
+            fm.remember("video", self.props())
         else:
             if self.props()[PROPS["exposure_mode"]].value != PHOTO_M:
                 self._want(PROPS["exposure_mode"], PHOTO_M)
                 time.sleep(0.8)                      # photo-only settings unlock a moment after the mode change
-            for _ in range(3):
-                if self._want(0xD253, STILL_RAW_JPEG):
-                    break
-                time.sleep(0.6)
-            p = self.props().get(0xD253)
-            if p is not None and p.value != STILL_RAW_JPEG:
-                notes.append("RAW is not set: set the camera's File Format to RAW+JPEG")
-            q = _choices(self.props(), 0xD25F)
-            if q:
-                self._want(0xD25F, max(q))           # JPEG reference at the best quality (reference only)
-                self.intended.pop(0xD25F, None)      # not a read-back failure if the camera keeps its own
-            if 1 in _choices(self.props(), 0xD203):
-                self._want(0xD203, 1)                # image size L
-            # the photo picture profile only changes the preview / JPEG reference, never the RAW: it is his
-            # choice ("Match video (S-Log3)"), and is never reset silently
             prof = self.profile()
-            log_pp = prof.get("log_pp") if (prof.get("builtin") or prof.get("log_confirmed")) else None
-            if getattr(self, "photo_log", None) is True and log_pp is not None and log_pp in _choices(self.props(), presets.PROP_PICTURE_PROFILE):
-                self._want(presets.PROP_PICTURE_PROFILE, log_pp)
-            elif PP_OFF in _choices(self.props(), presets.PROP_PICTURE_PROFILE):
+            from . import formats as fm
+            photo_log = getattr(self, "photo_log", None) is True
+            want = lambda key: fm.wanted("photo", key, self.props(), prof, self.label, photo_log)
+            sf, n = want("still_format")
+            if n:
+                notes.append(n)
+            if sf is not None:
+                for _ in range(3):
+                    if self._want(fm.SP_STILL_FORMAT, sf):
+                        break
+                    time.sleep(0.6)
+                p = self.props().get(fm.SP_STILL_FORMAT)
+                if p is not None and p.value != sf:
+                    notes.append(f"{fm.STILL.get(sf, 'This file type')} is not set: set the camera's File Format to "
+                                 f"{fm.STILL.get(sf, 'it')} in the camera menu")
+            for key in ("jpeg_quality", "image_size"):  # his pick, else Studio's choice: best quality, largest size
+                v, n = want(key)
+                if n:
+                    notes.append(n)
+                p = self.props().get(fm.CODES[key])
+                if v is not None and p is not None and p.enabled:
+                    self._want(fm.CODES[key], v)
+                    self.intended.pop(fm.CODES[key], None)   # not a read-back failure if the camera keeps its own
+            asp, n = want("aspect")                  # only by his choice: Studio's choice leaves the ratio alone
+            if n:
+                notes.append(n)
+            if asp is not None:
+                self._want(fm.SP_ASPECT, asp)
+            # the photo picture profile only changes the preview / JPEG, never the RAW: his choice in Format (or
+            # "Photo preview like video"); Studio's choice only sets a log profile left on from video back to normal
+            pp, n = want("picture_profile")
+            if n:
+                notes.append(n)
+            if pp is not None:
                 cur = self.props().get(presets.PROP_PICTURE_PROFILE)
-                if cur is not None and camprofile.is_log(prof, cur.value):
-                    self._want(presets.PROP_PICTURE_PROFILE, PP_OFF)    # normal picture in photo (his choice)
+                if self._want(presets.PROP_PICTURE_PROFILE, pp) and cur is not None and cur.value != pp \
+                        and pp == PP_OFF and fm.chosen("photo", "picture_profile") is None:
                     self.notes_pp = "photo preview set back to the normal picture (log was left on from video / a test)"
+            fm.remember("photo", self.props())
             d = self.props().get(PROPS["drive_mode"])
             if d is not None and presets.DRIVE_SINGLE in (d.choices or []):
                 self._want(PROPS["drive_mode"], presets.DRIVE_SINGLE)
@@ -239,12 +286,8 @@ class CaptureRun:
         if mode == "video":
             ms = props.get(0xD242)
             fps = fps_of(self.label("movie_setting", ms.value)) if ms else 25
-            want = video_shutter_s(fps)
             hz = getattr(self, "mains_hz", 50)               # no flicker under mains lights: shutter in step with it
-            if hz == 50 and fps in (30, 60, 120):
-                want = 1 / 50 if fps == 30 else 1 / 100
-            elif hz == 60 and fps in (25, 50, 100):
-                want = 1 / 60 if fps == 25 else 1 / 120
+            want, self.flicker_safe = video_shutter(fps, hz)
         else:
             want = spec["min_shutter"]
         best = min((v for v in sh_choices if presets.shutter_seconds(v)), default=None,
@@ -281,6 +324,8 @@ class CaptureRun:
         """Measure -> adjust, up to 6 rounds. Photo: shutter (not slower than safe) then ISO; video: ISO only."""
         spec = prof[mode]
         cap = getattr(self, "cap_override", None) or ISO_CEILING[mode]
+        curve = getattr(self, "curve", None)                 # 'slog3' / 'slog2' when a log profile is active
+        jpeg = mode == "photo" and getattr(self, "jpeg_only", False)
         last = {}
         # start from the format's base ISO (S-Log3 has a high base on this camera: read it from the choices)
         props0 = self.props()
@@ -295,9 +340,11 @@ class CaptureRun:
             face = m.get("face")
             has_face = bool(face and face.get("mean") is not None)
             level = (face["mean"] if has_face else m["centre_weighted_ire"]) * 2.55
-            err = stops_error(level, target_level(log, has_face, mode == "photo"), log)
+            err = stops_error(level, target_level(log, has_face, mode == "photo", curve, jpeg), log, curve)
             clip = m["overall"]["clip_pct"]
             fclip = (face or {}).get("clip_pct", 0) or 0
+            if jpeg and not has_face and clip > 0.3 and err > -0.3:
+                err = min(err, -0.3 - min(clip, 10) / 10)   # JPEG only: no RAW to pull highlights back, keep them
             if fclip > 0.3 or (mode == "photo" and not has_face and clip > 1.0 and err > -0.3):
                 # protect skin; without a face, the important highlights. With a face (backlight, a window
                 # behind him) the face is exposed correctly and the verdict asks for fill light instead.
@@ -305,13 +352,15 @@ class CaptureRun:
             if log:
                 # S-Log3 guard: no face found (turned away, dark clothes in the centre) must not push the frame
                 # hot; the brightest tenth stays at or below ~66 IRE, skin highlights at or below ~70 IRE
-                stop_ire = presets.SLOG3_STOP / 2.55
+                grey, stop = _curve(curve)
+                stop_ire = stop / 2.55
+                shift = (grey - presets.SLOG3_GREY) / 2.55      # S-Log2 sits about 8 IRE lower than S-Log3
                 p90 = (m.get("overall") or {}).get("p90")
                 if p90 is not None and not has_face:
-                    err = min(err, (66.0 - p90) / stop_ire)
+                    err = min(err, (66.0 + shift - p90) / stop_ire)
                 fp90 = (face or {}).get("p90")
                 if has_face and fp90 is not None:
-                    err = min(err, (70.0 - fp90) / stop_ire)
+                    err = min(err, (70.0 + shift - fp90) / stop_ire)
             prev_err = last.get("err")
             last = {"err": round(err, 2), "level": level, "face": has_face, "clip": clip, "face_clip": fclip,
                     "ire": round(level / 2.55)}
@@ -487,37 +536,49 @@ def low_light(mode: str, shot: str | None, props, exp: dict, label, gear: str = 
             opts.append(f"Shoot 25p instead of {fps}p: the 1/50 shutter gains {math.log2(fps / 25):.0f} stop")
         nxt = [c for c in isos if iso_p and c > iso_p.value]
         if nxt:
-            opts.append(f"Last resort: ISO {nxt[0]} (+{math.log2(nxt[0] / iso_p.value):.1f} stop, visibly more noise in S-Log3)")
+            opts.append(f"Last resort: ISO {nxt[0]} (+{math.log2(nxt[0] / iso_p.value):.1f} stop, visibly more noise)")
     return {"shortfall": round(err, 1), "strategy": strategy, "options": opts, "widest_f": widest, "base_iso": base}
 
 
 def verdict(mode: str, exp: dict, props, wb_locked: bool, focus_ok: bool | None, notes: list[str],
             mismatch: list[str], label, shot: str | None = None, gear: str = "", fps: int = 25,
-            iso_cap: int | None = None, profile: dict | None = None) -> dict:
+            iso_cap: int | None = None, profile: dict | None = None, want: dict | None = None) -> dict:
     """Technical verdict for the picture: green/amber/red items and the one thing to change."""
     items = []
 
     def add(key, status, text, todo=""):
         items.append({"key": key, "status": status, "text": text, "todo": todo})
 
+    from . import formats as fm
     pp = props.get(presets.PROP_PICTURE_PROFILE)
     prof = profile or camprofile.for_model("ZV-E10")
-    if mode == "video" and not (prof.get("builtin") or prof.get("log_confirmed")):
-        add("format", "warn", "Log profile not confirmed on this model",
-            "Run All settings › Studio › Check this camera to find the log profile")
-        ms = props.get(0xD242)
-        add("quality", "ok", label("movie_setting", ms.value) + " ✓" if ms else "Movie format")
-    elif mode == "video":
-        ok = pp is not None and pp.value == prof.get("log_pp")
-        add("format", "ok" if ok else "bad", "S-Log3 ✓" if ok else "Not S-Log3", "" if ok else "S-Log3 isn't available: check the camera mode")
-        ms = props.get(0xD242)
-        add("quality", "ok", label("movie_setting", ms.value) + " ✓" if ms else "Movie format")
+    want = want or {}
+    log = pp is not None and camprofile.is_log(prof, pp.value)
+    ms = props.get(0xD242)
+    rate = fm.movie_setting_name(label("movie_setting", ms.value)) if ms else ""
+    if mode == "video":
+        want_pp = want.get("picture_profile", fm._log_pp(prof))
+        if want_pp is None and fm.chosen("video", "picture_profile") is None:
+            add("format", "warn", "Log profile not confirmed on this model",
+                "Run All settings › Studio › Check this camera to find the log profile")
+        else:
+            name = fm.pp_short(prof, want_pp)
+            ok = pp is not None and pp.value == want_pp
+            add("format", "ok" if ok else "bad", f"{name} ✓" if ok else f"Not {name}",
+                "" if ok else f"The camera didn't take {name} here: check the camera's mode")
+        add("quality", "ok", (rate + " ✓") if ms else "Movie format")
     else:
         sf = props.get(0xD253)
-        ok = sf is not None and sf.value == STILL_RAW_JPEG
-        pv = "S-Log3" if pp is not None and camprofile.is_log(prof, pp.value) else "camera standard"
-        add("format", "ok" if ok else "bad", f"RAW ✓ (+ JPEG reference) · Preview: {pv}" if ok else f"Not RAW · Preview: {pv}",
-            "" if ok else "The camera refused RAW here: set File Format to RAW+JPEG on the camera")
+        want_sf = want.get("still_format", prof.get("still_raw_jpeg", STILL_RAW_JPEG))
+        ok = sf is not None and sf.value == want_sf
+        kind = fm.pp_kind(prof, pp.value if pp is not None else None)
+        pv = fm.pp_short(prof, pp.value) if pp is not None and pp.value else "camera standard"
+        fname = fm.STILL.get(want_sf, "the chosen file type")
+        add("format", "ok" if ok else "bad", (f"{fname} ✓" + (" (+ JPEG reference)" if want_sf == 2 else "") + f" · Preview: {pv}")
+            if ok else f"Not {fname} · Preview: {pv}",
+            "" if ok else f"The camera didn't take {fname} here: set File Format to {fname} in the camera menu")
+        if sf is not None and sf.value == 3:
+            add("jpeg", "ok", "JPEG only: there is no RAW to recover bright parts later, so Studio keeps the highlights safe")
     iso_p = props.get(PROPS["iso"])
     iso = iso_p.value if iso_p is not None else None
     err = exp.get("err", 0.0)
@@ -528,12 +589,15 @@ def verdict(mode: str, exp: dict, props, wb_locked: bool, focus_ok: bool | None,
         at_cap = iso is not None and iso >= cap
         add("exposure", "bad" if err > 1 else "warn", f"Under-exposed by {err:.1f} stops",
             "Add light on the subject (a soft key light or face the window)" if at_cap or mode == "video" else "Add light")
-    elif mode == "video" and err >= -0.75 and not exp.get("clip", 0) > 0.5 and not exp.get("face_clip", 0) > 0.3:
-        add("exposure", "ok", f"Exposure ✓ ({exp.get('ire')} IRE, {-err:.1f} stop on the bright side: fine for S-Log3)")
+    elif mode == "video" and log and err >= -0.75 and not exp.get("clip", 0) > 0.5 and not exp.get("face_clip", 0) > 0.3:
+        add("exposure", "ok", f"Exposure ✓ ({exp.get('ire')} IRE, {-err:.1f} stop on the bright side: fine for log)")
     else:
         nd = max(1, round(-err))
+        sh = props.get(PROPS["shutter_speed"])
+        t = presets.shutter_seconds(sh.value) if sh is not None else None
+        keep = f"1/{round(1 / t)}" if t and t < 1 else "video"
         add("exposure", "bad" if err < -1 else "warn", f"Over-exposed by {-err:.1f} stops at base ISO",
-            (f"ND filter of {'at least' if exp.get('clip', 0) > 5 or (exp.get('ire') or 0) >= 85 else 'about'} {nd} stop{'s' if nd > 1 else ''} (ND{2 ** nd}) to keep the 1/50 shutter" if mode == "video"
+            (f"ND filter of {'at least' if exp.get('clip', 0) > 5 or (exp.get('ire') or 0) >= 85 else 'about'} {nd} stop{'s' if nd > 1 else ''} (ND{2 ** nd}) to keep the {keep} shutter" if mode == "video"
              else f"Less light, or an ND filter of about {nd} stop{'s' if nd > 1 else ''}"))
     if exp.get("face_clip", 0) > 0.3 or exp.get("clip", 0) > 2:
         behind = exp.get("face") and exp.get("face_clip", 0) <= 0.3
@@ -564,11 +628,14 @@ def verdict(mode: str, exp: dict, props, wb_locked: bool, focus_ok: bool | None,
                 (f"One lamp on your face (about +1.5 stops) would bring this to about ISO {lamp}" if shot != "product"
                  else f"A lamp on the object (about +1.5 stops) would bring this to about ISO {lamp}"))
     if mode == "video":
-        add("wb", "ok" if wb_locked else "bad", "White balance locked ✓ (baked into the S-Log3 video)" if wb_locked
+        add("wb", "ok" if wb_locked else "bad", "White balance locked ✓ (baked into the video)" if wb_locked
             else "White balance on auto: video bakes it in and it may drift", "" if wb_locked else "Tap “Set white balance” to lock it")
     else:
-        add("wb", "ok" if wb_locked else "warn", "White balance locked ✓ (RAW: still adjustable in post)" if wb_locked
-            else "White balance on auto (RAW can be fixed in post; lock it for consistent takes)",
+        raw = (props.get(0xD253).value if props.get(0xD253) is not None else 2) in (1, 2)
+        add("wb", "ok" if wb_locked else "warn", ("White balance locked ✓ (RAW: still adjustable in post)" if raw else
+                                                  "White balance locked ✓") if wb_locked
+            else ("White balance on auto (RAW can be fixed in post; lock it for consistent takes)" if raw else
+                  "White balance on auto: a JPEG keeps it, so lock it for consistent photos"),
             "" if wb_locked else "Tap “Set white balance” to lock it")
     if mode == "photo" and shot in PROFILES and iso is not None and 0 < iso < 0xFFFFFF:
         sh = props.get(PROPS["shutter_speed"])

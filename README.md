@@ -10,6 +10,47 @@ everything. After that nothing changes by itself; you decide when something chan
 **Status: useful, and early.** Tested on one camera. Photos, focus, exposure setup, saved setups and focus stacking
 work on that camera; video recording from the app is being verified after the latest fix.
 
+**Formats:** every format the camera offers can be chosen in All settings › Camera › Format (photo file, JPEG
+quality, image size, aspect ratio, picture profile; video file, frame rate and quality, picture profile), and Studio
+exposes for the one in use. Verified on the real camera so far: RAW + JPEG photos and the S-Log3 video setup. The other
+formats are built and tested on a simulated camera and still to be confirmed on the ZV-E10.
+
+**Sound:** a ten-second sound check before a take (More › This shoot › Sound check) listens through the laptop's
+microphone, not the camera's, so check the camera's own level on its screen. After the card import each clip gets a
+short sound report (loudness, clipping, background noise, long pauses), made from the copy in your shoot folder.
+
+**Looks:** six film-style looks of our own (More › Looks), only when you choose one: as a marked preview on the live
+picture (off every time Studio starts) or as a new copy of a finished photo or clip in your shoot's LOOKS folder.
+The camera's files are never changed; photos get the look from the camera's JPEG (the RAW file is left as it is).
+
+**Playground (experiments):** More › Playground. Each experiment is off until you switch it on and may change; every
+photo is your own press, results are new files in your shoot's PLAYGROUND folder, and your photos are never changed.
+- Day reel: Studio keeps the last 3 seconds of the live picture and saves them as a small silent clip when you take a
+  photo, then joins the day's clips and photos into one video (the clips come from the live picture, so they are small;
+  the photos in the reel are full quality).
+- Double exposure: two of your photos blended into one, with the first as a ghost over the live picture.
+- Paint with light: a real long exposure (10 / 20 / 30 s) set up only when you press Apply, plus a small "Practice"
+  version from the live picture. Long exposures over the cable are not yet checked on the ZV-E10.
+- Shoot for a mood: Claude suggests settings, framing and light for a mood you describe (one question per press,
+  nothing changes until you press Apply).
+- Focus pull: focus glides between two points you tap, at the speed you choose. Not yet checked on the real camera.
+
+## Capture card (optional, not yet tested on real hardware)
+
+With an HDMI capture card (for example an Elgato Cam Link) Studio can show the camera's HDMI picture as the live
+picture, at its full size and exactly as the camera sends it, and record it with its sound into your shoot's VIDEO
+folder on the laptop. Camera control stays on the USB cable or Wi-Fi. Choose it in All settings › Camera › Picture
+source, and "Record video to: This laptop" under Saving. The picture pauses for about a second when a recording on the
+laptop starts and stops. Nothing is opened until you pick the device by name; a webcam is never opened by itself.
+
+1. An HDMI cable from the camera to the capture card.
+2. The capture card into the laptop.
+3. On the camera, switch the HDMI information display off so the picture is clean (Studio does not change the
+   camera's menu).
+
+It is not known yet whether the ZV-E10 keeps sending HDMI while PC Remote is on. If you own a capture card, please
+tell us whether it works through the usual issue form (All settings › Studio › Check this camera › Share).
+
 ## Tested with
 
 - **Sony ZV-E10, firmware 2.03, on a Windows laptop.** Nothing else is tested yet.
@@ -44,6 +85,8 @@ is added to this table when it works.
 - The camera, and either Wi-Fi (no driver needed) or a USB cable.
 - Your own Claude key from console.anthropic.com (optional: without it Studio uses its own built-in setup and the
   Claude features stay off). Studio asks for it in the app; it is never part of this project.
+- Studio asks Claude Opus 5.5. You can choose Claude Fable 5.2 (most capable, slower, about twice the cost) in
+  All settings › Studio › Claude; if your key cannot use Fable, Studio answers with Opus 5.5 and says so.
 
 ## Install
 
@@ -86,6 +129,8 @@ entered on the laptop. Starting Studio normally again makes it laptop-only again
 - It never sends anything in the background: Claude is only asked when you press a Claude button, and a camera report
   is only shared if you submit it yourself.
 - It never installs drivers, never changes firewall or network settings, never deletes anything on the card.
+- The sound check never records or saves sound; only its numbers go to Claude, and only when you press the Claude
+  button under the result.
 - Your Claude key is stored encrypted for your Windows user, never shown again and never logged.
 
 ## For developers

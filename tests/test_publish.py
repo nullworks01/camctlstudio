@@ -31,3 +31,15 @@ def test_the_guard_catches_invented_personal_data():
     assert not publish.PATTERNS["home network address"].search("Sony access point 192.168.122.1")
     assert publish.PATTERNS["Claude key"].search(("sk-" + "ant-test-") + "x" * 20)        # invented test keys count too
     assert not publish.PATTERNS["Claude key"].search("your-key-here")
+
+
+def test_copy_writes_gitignore_and_issue_template_without_bom(tmp_path):
+    import subprocess
+    r = subprocess.run([sys.executable, str(publish.ROOT / "tools" / "publish.py"), "--copy", str(tmp_path / "out")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stdout + r.stderr
+    for rel in (".gitignore", ".github/ISSUE_TEMPLATE/camera-report.md"):
+        data = (tmp_path / "out" / rel).read_bytes()
+        assert data and not data.startswith(b"\xef\xbb\xbf"), rel
+    tpl = (tmp_path / "out" / ".github/ISSUE_TEMPLATE/camera-report.md").read_text(encoding="utf-8")
+    assert tpl.startswith("---")                                   # GitHub reads the header only like this

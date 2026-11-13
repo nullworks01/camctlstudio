@@ -65,3 +65,11 @@ def _camera_profiles_in_temp(monkeypatch, tmp_path_factory):
     d = tmp_path_factory.mktemp("prof")
     monkeypatch.setattr(camprofile, "BASE", d)
     monkeypatch.setattr(camprofile, "SAVED", d / "camera_profiles.json")
+
+
+@pytest.fixture(autouse=True)
+def _claude_model_choice_in_temp(monkeypatch, tmp_path_factory):
+    """His Claude model choice (prefs) is never read from or written to his real %APPDATA%."""
+    from camctl import assistant
+    d = tmp_path_factory.mktemp("prefs")
+    monkeypatch.setattr(assistant, "_prefs_file", lambda: d / "prefs.json")

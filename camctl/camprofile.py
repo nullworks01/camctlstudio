@@ -32,6 +32,13 @@ BUILTIN = {
         "tested": True,
         "log_pp": 8, "log_pps": [7, 8, 9], "log_kind": "slog3", "log_confirmed": True,   # PP8 = S-Log3 (camera default)
         "log_kinds": {7: "slog2", 8: "slog3", 9: "slog3"},
+        "hlg_pps": [10],
+        # the camera's factory picture profiles (Sony ZV-E10 defaults; an edited slot keeps its number)
+        "pp_names": {1: "Movie (video look)", 2: "Still (photo look)", 3: "Standard video (ITU709)",
+                     4: "Standard video, softer highlights (ITU709 800%)", 5: "Cine1 (soft film look)",
+                     6: "Cine2 (soft film look)", 7: "S-Log2 (log for grading)",
+                     8: "S-Log3 (log for grading, Cine colours)", 9: "S-Log3 (log for grading, wide colours)",
+                     10: "HLG (HDR for TVs)"},
         "log_min_iso": 500,
         "sensor_w_mm": 23.5,                       # APS-C (Sony spec), for the distance estimate
         "movie_m": 0x78053, "photo_m": 1,

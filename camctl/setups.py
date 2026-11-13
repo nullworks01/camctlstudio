@@ -38,7 +38,7 @@ def _path(sid: str) -> Path:
 
 
 EXTRA_KEYS = ("shot", "shot_name", "zoom", "shoot", "frame", "outline", "light", "light_measure", "distance",
-              "measure", "object", "focus", "camera", "nd")
+              "measure", "object", "focus", "camera", "nd", "formats")
 
 
 def _clean_measure(m: dict | None) -> dict:
@@ -113,6 +113,7 @@ def list_all() -> list[dict]:
             out.append({k: d.get(k) for k in ("id", "name", "notes", "mode", "created", "preset", "look", "thumb", "shot_name")}
                        | {"has_plan": bool(d.get("plan")), "refs": len(d.get("refs") or []),
                           "zoom_mm": (d.get("zoom") or {}).get("mm"), "shoot": (d.get("shoot") or {}).get("name"),
+                          "format": (d.get("formats") or {}).get("name"),
                           "key": {s["name"]: s["label"] for s in d.get("settings", [])
                                   if s["name"] in ("aperture", "shutter_speed", "iso", "white_balance", "color_temp",
                                                    "picture_profile")}})
