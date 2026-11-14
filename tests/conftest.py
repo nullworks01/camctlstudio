@@ -5,12 +5,14 @@ import pytest
 from camctl import webui
 
 _studios: list = []
+_module_studios: list = []                    # every Studio made in the current test file
 _orig_init = webui.Studio.__init__
 
 
 def _tracking_init(self, *a, **k):
     _orig_init(self, *a, **k)
     _studios.append(self)
+    _module_studios.append(self)
 
 
 webui.Studio.__init__ = _tracking_init
@@ -23,7 +25,17 @@ def _stop_pumps():
         st = _studios.pop()
         st.released = True
         st.last_view_req = 0.0
-        st._shut = True                       # the pump thread ends instead of idling forever
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _end_pumps_after_each_file():
+    """After a test file, its Studios' pump threads end for good (a file may share one Studio between its tests,
+    so this waits for the file's end); without it about a hundred idle threads pile up and the run stalls."""
+    yield
+    while _module_studios:
+        st = _module_studios.pop()
+        st.released = True
+        st._shut = True
         card = getattr(st, "card", None)
         if card is not None:                  # a capture-card / webcam ffmpeg left running by a test
             try:
