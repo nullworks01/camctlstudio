@@ -19,6 +19,8 @@ import subprocess
 import time
 from pathlib import Path
 
+from .drivers.base import RAW_EXTS
+
 from . import lut
 
 SHOOTS = Path(os.environ.get("USERPROFILE") or Path.home()) / "Pictures" / "camctl Shoots"
@@ -63,7 +65,7 @@ def add_file(src: Path, kind: str | None = None) -> Path:
     """Copy a photo/clip into the current shoot (never moves or deletes)."""
     sh = Path(ensure_shoot()["path"])
     ext = src.suffix.lower()
-    sub = kind or ("VIDEO" if ext in (".mp4", ".mov", ".mxf") else "PHOTO RAW" if ext in (".arw", ".dng") else "PHOTO JPEG")
+    sub = kind or ("VIDEO" if ext in (".mp4", ".mov", ".mxf") else "PHOTO RAW" if ext in RAW_EXTS else "PHOTO JPEG")
     dst = sh / sub / src.name
     if not dst.exists() or dst.stat().st_size != src.stat().st_size:
         shutil.copy2(src, dst)
@@ -82,7 +84,7 @@ def write_notes(sh: Path, settings: list[dict], notes: str = "", plan: dict | No
     lines += ["## Camera settings"] + [f"- {s.get('friendly') or s['name']}: {s['label']}" for s in settings] + [""]
     lines += ["## Colour (for the grade)",
               "- Video: Sony S-Gamut3.Cine / S-Log3 (PP8). In Resolve: input colour space 'S-Gamut3.Cine/S-Log3'.",
-              "- Photos: RAW (.ARW) in PHOTO RAW; JPEGs are only a reference.", ""]
+              "- Photos: RAW (.ARW, .CR3, .NEF...) in PHOTO RAW; JPEGs are only a reference.", ""]
     if plan:
         lines += [f"## Lighting: {plan.get('title', '')}", f"Key:fill {plan.get('key_fill_ratio', '')}, {plan.get('contrast', '')}", ""]
         lines += [f"{i + 1}. {L['role'].upper()}: {L['fixture']} ({L['modifier']}), {round(L['angle_deg'])} deg, "

@@ -200,6 +200,7 @@ class SonyCamera:
     """High-level control of a Sony camera in smartphone/remote mode."""
 
     kind = "sony-ptpip"
+    brand = "Sony"
 
     def __init__(self, host: str = DEFAULT_HOST, port: int = 15740, guid: bytes | None = None,
                  name: str = "camctl", timeout: float = 10.0):

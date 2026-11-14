@@ -106,6 +106,8 @@ def main() -> None:
     ap.add_argument("--no-key", action="store_true", help="with --fake-claude: start without a Claude key (to test adding one)")
     ap.add_argument("--fake-claude", action="store_true", help="canned Claude answers (simulator only, no API call) to test the Claude panel")
     ap.add_argument("--night", action="store_true", help="exposed for a dark room: f/4 1/125 ISO 6400 (noisy stills)")
+    ap.add_argument("--brand", choices=["canon", "nikon", "ptp"], help="a SIMULATED Canon / Nikon / plain-PTP camera "
+                    "through Studio's real (untested) driver for that maker (tests/fake_ptp_brands.py)")
     ap.add_argument("--split", type=float, default=0.0, help="stops darker on the shadow half of the face (key light from the side)")
     a = ap.parse_args()
     cam = ZVE10(ev=a.ev, mode="video" if a.video else "photo", battery=a.battery, model=a.model)
@@ -150,6 +152,18 @@ def main() -> None:
     webui.handoff.SHOOTS = tmp / "shoots"                    # simulated shoot folders, not his Pictures
     webui.handoff.STATE = tmp / "shoot.json"
     st = webui.Studio("usb")
+    if a.brand:                                            # the real driver code, on a simulated camera of that maker
+        from fake_ptp_brands import FakeCanon, FakeNikon, FakePlainPTP
+        from camctl.drivers.canon import CanonEOSCamera
+        from camctl.drivers.nikon import NikonCamera
+        from camctl.drivers.ptpstd import PTPCamera
+        cls, fake = {"canon": (CanonEOSCamera, FakeCanon), "nikon": (NikonCamera, FakeNikon),
+                     "ptp": (PTPCamera, FakePlainPTP)}[a.brand]
+        cam = cls(client=fake())
+        if a.brand == "ptp":
+            cam.brand = "Fujifilm"
+        cam.connect()
+        measure._faces_cv = lambda im: [(int(im.width * 0.4), int(im.height * 0.2), int(im.width * 0.2), int(im.height * 0.55))]
     st.cam = None if a.nocam else cam
 
     def _no_cam():

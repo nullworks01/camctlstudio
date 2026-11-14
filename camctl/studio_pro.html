@@ -1492,8 +1492,10 @@ function updateMeter(){ }
 async function pollHealth(){
   try{ const h=await api("/api/health"); S.health=h; renderOffline(h);
     const show=["unresponsive","absent"].includes(h.state) || (h.state==="recovering" && (S.fails||0)>=2);
-    const b=$("#lostBanner"); b.style.display=show&&!S.released&&!$("#offline").classList.contains("on")?"block":"none";
-    if(show) b.innerHTML=`<div style="font-size:14px">${esc(h.message)}</div>${h.down_s?`<div style="font-weight:400;font-size:11px;margin-top:4px;color:var(--muted)">no answer for ${Math.round(h.down_s)} s · retrying automatically</div>`:""}`;
+    const np=h.state==="ok" && h.no_picture;   /* connected, but this camera sends no live picture: said in words */
+    const b=$("#lostBanner"); b.style.display=(show||np)&&!S.released&&!$("#offline").classList.contains("on")?"block":"none";
+    if(np) b.innerHTML=`<div style="font-size:14px">${esc(h.no_picture)}</div>`;
+    else if(show) b.innerHTML=`<div style="font-size:14px">${esc(h.message)}</div>${h.down_s?`<div style="font-weight:400;font-size:11px;margin-top:4px;color:var(--muted)">no answer for ${Math.round(h.down_s)} s · retrying automatically</div>`:""}`;
   }catch(e){ const b=$("#lostBanner"); b.style.display="block"; b.textContent="Studio is not running. Start it again with the camctl Studio shortcut."; }
 }
 setInterval(pollHealth,2000);

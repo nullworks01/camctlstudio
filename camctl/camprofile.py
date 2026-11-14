@@ -73,7 +73,10 @@ def save_result(model: str, **changes) -> dict:
 
 def model_key(name: str | None) -> str:
     """'ZV-E10' from 'Sony ZV-E10', 'ZV-E10 (simulated)' etc."""
-    n = (name or "").replace("Sony", "").strip()
+    n = (name or "").strip()
+    for brand in ("Sony", "Canon", "Nikon", "Fujifilm", "Panasonic", "OM System", "Olympus", "Ricoh", "Pentax", "Leica"):
+        if n.lower().startswith(brand.lower() + " "):
+            n = n[len(brand):].strip()
     return n.split(" (")[0].strip() or "unknown"
 
 
@@ -118,14 +121,14 @@ def of(studio) -> dict:
     name = getattr(cam, "name", None) or getattr(studio, "_profile_name", None)
     cached = getattr(studio, "_profile", None)
     if cached is None or cached.get("_name") != name:
-        cached = {**for_model(name), "_name": name}
+        cached = {**for_model(name), "_name": name, "brand": getattr(cam, "brand", None) or "Sony"}
         try:
             studio._profile, studio._profile_name = cached, name
         except Exception:  # noqa: BLE001
             pass
         try:                                             # prompts and texts name what is connected
             from . import assistant
-            assistant.CAMERA_NAME = f"Sony {cached.get('model')}" if name else "Sony camera"
+            assistant.CAMERA_NAME = f"{cached['brand']} {cached.get('model')}" if name else f"{cached['brand']} camera"
             lens = (cached.get("lens") or {}).get("name")
             assistant.CAMERA_LENS = ("kit zoom 16-50 mm f/3.5-5.6" if cached.get("model") == "ZV-E10" else
                                      (lens or "the lens the camera reports"))
@@ -136,7 +139,7 @@ def of(studio) -> dict:
 
 def camera_text(profile: dict, aperture_choices: list | None = None) -> str:
     """How prompts and texts name the camera: the model and lens it reports, never a fixed 'ZV-E10'."""
-    name = f"Sony {profile.get('model', 'camera')}"
+    name = f"{profile.get('brand') or 'Sony'} {profile.get('model', 'camera')}"
     lens = (profile.get("lens") or {}).get("name")
     if not lens and aperture_choices:
         fs = sorted(v / 100 for v in aperture_choices if v and v < 0xFFFF)

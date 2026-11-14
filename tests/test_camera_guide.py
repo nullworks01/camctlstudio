@@ -14,8 +14,10 @@ def test_untested_sony_points_to_check_this_camera():
 
 
 def test_another_brand_is_said_plainly_and_not_faked():
-    g = base.guide("Canon", None, connected=False)
+    g = base.guide("GoPro", None, connected=False)
     assert g["kind"] == "unsupported" and "not supported yet" in g["title"] and "report" in g["text"]
+    g = base.guide("Canon", None, connected=False)                       # a driver exists, but never run on a Canon
+    assert g["kind"] == "untested" and "has not been tested" in g["text"]
     assert base.brand_of(0x04A9) == "Canon" and base.brand_of(0x1234) is None
 
 
@@ -35,5 +37,6 @@ def test_ready_says_another_brand_plainly(monkeypatch):
     st = webui.Studio("usb")
     with TestClient(webui.build_app(st, start_auto=False)) as c:
         r = c.get("/api/ready").json()
-    assert r["show"] and r["camera"]["guide"]["kind"] == "unsupported"
-    assert r["camera"]["text"].startswith("camctl Studio can't control Nikon cameras yet")
+    assert r["show"] and r["camera"]["guide"]["kind"] == "untested"
+    assert r["camera"]["text"].startswith("Studio can control Nikon cameras over the USB cable")
+    assert "never installs drivers" in r["camera"]["text"]

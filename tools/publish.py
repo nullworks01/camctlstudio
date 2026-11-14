@@ -26,7 +26,7 @@ INCLUDE = [
     "tools/publish.py", "tools/sim_studio.py", "tools/start_server.pyw", "tools/studio_app.pyw",
     "README.md", "LICENSE", "CONTRIBUTING.md", "requirements.txt", "requirements-optional.txt", "pyproject.toml", "start_studio.ps1",
     "Install or repair camctl Studio.cmd", ".gitignore", ".github/ISSUE_TEMPLATE/*.md",
-    "docs/guide.md", "docs/photo-credits.md", "docs/img/*.jpg",
+    "docs/guide.md", "docs/photo-credits.md", "docs/cameras.md", "docs/img/*.jpg", "camctl/drivers/cameras.json",
 ]
 NEVER = re.compile(r"(\.bak$|\.r\d+\.bak$|__pycache__|\.pyc$|/logs/|/captures/|AUDIT\.md|publish_list\.txt|\.log$)", re.I)
 IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico",     # a generated picture and the app icon

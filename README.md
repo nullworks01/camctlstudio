@@ -64,7 +64,10 @@ tell us whether it works through the usual issue form (All settings › Studio �
 - **Sony ZV-E10, firmware 2.03, on a Windows laptop.** Nothing else is tested yet.
 - Other Sony cameras are **untested**. "Check this camera" (All settings › Studio) tests, without taking a photo, what
   works on yours and what to change.
-- Other brands are **not supported yet**. Studio says so plainly when one is connected.
+- **Canon EOS, Nikon and other makers: new and untested.** Studio has drivers for Canon EOS / EOS R and Nikon
+  (settings, live picture, photo, video, focus over the USB cable) and plain PTP for other makers (settings and the
+  shutter, no live picture). They were written from the public PTP codes and tested only against simulated cameras.
+  Details, and what each route can do: [docs/cameras.md](docs/cameras.md).
 
 ## Help add your camera
 

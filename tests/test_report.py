@@ -108,4 +108,4 @@ def test_another_brand_report_has_only_what_could_be_read(monkeypatch, tmp_path)
     saved = json.loads((tmp_path / "reports" / r["file_name"]).read_text(encoding="utf-8"))
     assert saved["brand"] == "Nikon" and saved["usb"] == {"vendor_id": "0x04B0", "product_id": "0x0442", "class": "<text removed>"} or \
         saved["usb"]["vendor_id"] == "0x04B0"
-    assert "owner's camera" not in json.dumps(saved) and "no driver for Nikon" in json.dumps(saved["checks"])
+    assert "owner's camera" not in json.dumps(saved) and "could not open the Nikon camera" in json.dumps(saved["checks"])

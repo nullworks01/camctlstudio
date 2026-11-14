@@ -19,7 +19,9 @@ from pathlib import Path
 from . import handoff
 
 VIDEO_EXT = {".mp4", ".mov", ".mxf"}
-PHOTO_EXT = {".arw", ".jpg", ".jpeg", ".heif", ".hif"}
+from .drivers.base import RAW_EXTS  # noqa: E402
+
+PHOTO_EXT = RAW_EXTS | {".jpg", ".jpeg", ".heif", ".hif"}
 MATCH_TOLERANCE_S = 15 * 60          # camera clock vs PC clock
 
 
@@ -187,7 +189,7 @@ class Importer:
         try:
             for f in new:
                 ext = f.suffix.lower()
-                sub = "VIDEO" if ext in VIDEO_EXT else "PHOTO RAW" if ext == ".arw" else "PHOTO JPEG"
+                sub = "VIDEO" if ext in VIDEO_EXT else "PHOTO RAW" if ext in RAW_EXTS else "PHOTO JPEG"
                 try:
                     dst = copy_verified(f, folder / sub / f.name)
                 except OSError as exc:

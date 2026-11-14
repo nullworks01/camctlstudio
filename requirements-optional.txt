@@ -1,3 +1,5 @@
 # NOT installed by "Install or repair camctl Studio". Ideas that were never approved; listed only so they are not
 # forgotten. Nothing reads this file automatically.
 # rawpy   (would let Studio read RAW files directly; not approved)
+# gphoto2 (optional camera route for Linux / macOS through libgphoto2; no Windows build. Used only when it is
+#          already installed and CAMCTL_ROUTE=gphoto2 is set; see docs/cameras.md)

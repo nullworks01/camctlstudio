@@ -36,6 +36,7 @@ from starlette.routing import Route
 from .drivers.sony import (SP_FLASH_COMP, SP_DRO, SP_IMAGE_SIZE, SP_SHUTTER, SP_STATUS, SP_COLOR_TEMP, SP_WB_SHIFT_GM, SP_ASPECT, SP_FOCUS_INDICATION, SP_PENDING_IMAGES, SP_AF_LOCK, SP_BATTERY, SP_PICTURE_EFFECT, SP_WB_SHIFT_AB, SP_REC_STATE, SP_ISO, SP_SAVE_TO, SP_FOCUS_AREA, SP_PICTURE_PROFILE, SP_MOVIE_FORMAT, SP_MOVIE_SETTING, SP_SHOOT_CLASS, SP_MEDIA_STATUS, SP_SHOTS_LEFT, SP_REC_TIME_LEFT, SP_FOCUS_POSITION, SP_STILL_FORMAT, SP_ZOOM_POSITION, SP_JPEG_QUALITY, SP_LIVE_VIEW_QUALITY, SC_STILL_D2C7)  # noqa: E402,F401  Sony codes by name
 from . import assistant, audiocheck, autofix, capture_card, looks, playground, reel, camprofile, automation, capture, coach, director, followlight, formats, handoff, importer, lut, measure, presets, scene, setups, shotplan, smartphoto, video, wbauto, wifi
 from .drivers.sony import PROPS, SonyCamera, format_value
+from .drivers.ptpstd import Unsupported  # noqa: E402  (a driver that cannot do something, not a lost link)
 from .ptpip import PTPError
 
 CAPTURE_DIR = Path(__file__).resolve().parent.parent / "captures"
@@ -138,6 +139,7 @@ class Studio:
         self.frame: bytes | None = None
         self.frame_seq = 0
         self.frame_error = ""
+        self.no_picture = ""                 # why a connected camera shows no picture (said on the screen)
         self.fps = 0.0
         self.last_view_req = 0.0
         self.released = False
@@ -158,6 +160,16 @@ class Studio:
             self.choice = "auto"
         self.route_at = 0.0
         threading.Thread(target=self._pump, daemon=True, name="liveview-pump").start()
+
+    @property
+    def cam(self):
+        return self._cam
+
+    @cam.setter
+    def cam(self, value) -> None:
+        self._cam = value
+        if value is not None:                     # RAW files are named by the maker of the connected camera
+            ACTIVE_BRAND["brand"] = getattr(value, "brand", None) or "Sony"
 
     # -- connection health / auto-recovery ---------------------------------
     RETRY_MAX_S = 10.0
@@ -188,8 +200,7 @@ class Studio:
             if self.host == "usb":
                 h = wifi.load().get("host")
                 return h if h and h != "usb" and wifi.reachable(h, timeout=0.6) else None
-            from .ptpusb import SONY_VID, find_ptp_cameras
-            return "usb" if find_ptp_cameras(SONY_VID) else None
+            return "usb" if _camera_on_usb() else None
         except Exception:  # noqa: BLE001
             return None
 
@@ -237,7 +248,10 @@ class Studio:
 
     def _new_cam(self) -> SonyCamera:
         if self.host == "usb":
-            return SonyCamera("usb")
+            # the camera on the cable picks the driver (a Sony always gets the Sony driver, as before);
+            # CAMCTL_ROUTE=gphoto2 uses the optional gphoto2 route where it is installed (Linux / macOS)
+            from .drivers import registry
+            return registry.make_usb_driver(prefer=os.environ.get("CAMCTL_ROUTE"), sony=SonyCamera)
         # Wi-Fi: the same GUID every time (the camera paired with it); a long first wait
         # leaves time to confirm the pairing prompt on the camera.
         ip, port = wifi.split(self.host)
@@ -288,8 +302,7 @@ class Studio:
         if time.time() - self._present_at > 2.0:
             try:
                 if self.host == "usb":
-                    from .ptpusb import SONY_VID, find_ptp_cameras
-                    self._present_cache = bool(find_ptp_cameras(SONY_VID))
+                    self._present_cache = _camera_on_usb()
                 else:
                     self._present_cache = wifi.reachable(self.host) if self.cam is None else True
             except Exception:  # noqa: BLE001
@@ -304,6 +317,8 @@ class Studio:
         if not self.fail_since and self.cam is None and self.last_error:
             self.fail_since = time.time()          # Studio started with the camera off: that is a failure too, said plainly
         if not self.fail_since:
+            if self.no_picture and self.cam is not None:
+                return {"state": "ok", "message": "", "no_picture": self.no_picture + " Settings and the shutter work."}
             return {"state": "ok", "message": ""}
         down = time.time() - self.fail_since
         if down < self.WATCHDOG_S:
@@ -392,6 +407,8 @@ class Studio:
                     out = fn(self.camera())
                     self._mark_ok()
                     return out
+                except Unsupported:
+                    raise                  # the camera is fine; this driver just cannot do that (said in words)
                 except (PTPError, OSError) as exc:
                     if not isinstance(exc, _Backoff):
                         self.last_error = str(exc)
@@ -448,6 +465,12 @@ class Studio:
             try:
                 if jpg is None:
                     jpg = self.run(lambda c: c.live_view(), keep_cache=True)
+            except Unsupported as exc:            # e.g. a plain-PTP camera: connected, but it sends no picture
+                self.frame_error = self.no_picture = str(exc)
+                with self.frame_cond:
+                    self.frame_cond.notify_all()
+                _real_sleep(5.0)
+                continue
             except Exception as exc:  # noqa: BLE001
                 self.frame_error = str(exc) or exc.__class__.__name__
                 with self.frame_cond:
@@ -464,6 +487,7 @@ class Studio:
                 stamps.popleft()
             span = stamps[-1] - stamps[0]
             self.fps = (len(stamps) - 1) / span if len(stamps) > 2 and span > 0 else self.fps
+            self.no_picture = ""
             with self.frame_cond:
                 self.frame, self.frame_error = jpg, ""
                 self.frame_t = now                       # when it arrived from the camera (for latency measuring)
@@ -497,6 +521,14 @@ class Studio:
 
 
 PROP_LIVE_VIEW_QUALITY = SP_LIVE_VIEW_QUALITY   # Sony "Live View image quality" (1 standard, 2 high) on bodies that have it
+
+
+def _camera_on_usb() -> bool:
+    """Is a camera Studio can drive (any maker with a driver) on the USB bus? Errors are passed on (= can't tell)."""
+    from .drivers import registry
+    from .ptpusb import find_ptp_cameras
+    vids = registry.controllable_vendors()
+    return any(d.idVendor in vids for d in find_ptp_cameras(None))
 
 
 def _best_live_view_quality(cam) -> None:
@@ -610,13 +642,17 @@ def status_view(props) -> dict:
             "recording": bool(rec) if rec is not None else None}
 
 
+ACTIVE_BRAND = {"brand": "Sony"}          # maker of the connected camera (for RAW file endings)
+
+
 def save_files(files) -> list[str]:
-    """Save transferred photos (JPEG / ARW) into the captures folder; returns file names."""
+    """Save transferred photos (JPEG / RAW) into the captures folder; returns file names."""
+    from .drivers.base import file_ext
     CAPTURE_DIR.mkdir(exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     saved = []
     for i, (fmt, data) in enumerate(files):
-        ext = ".jpg" if data[:2] == b"\xff\xd8" else (".arw" if data[:4] == b"II*\x00" else ".bin")
+        ext = file_ext(data, ACTIVE_BRAND["brand"])
         path = CAPTURE_DIR / f"{stamp}_{i + 1}{ext}"
         n = 2
         while path.exists():
@@ -1731,13 +1767,15 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         return JSONResponse(handoff.send_to_resolve(sh))
 
     def _raw_for(stem: str):
-        """The ARW of the same shot: same name, or same time stamp (files are saved as <time>_1.arw, <time>_2.jpg)."""
-        for e in (".arw", ".ARW"):
-            q = CAPTURE_DIR / f"{stem}{e}"
-            if q.exists():
-                return q
+        """The RAW of the same shot (ARW, CR3, NEF...): same name, or same time stamp (files are saved as
+        <time>_1.arw, <time>_2.jpg)."""
+        from .drivers.base import RAW_EXTS
+        for e in sorted(RAW_EXTS):
+            for q in (CAPTURE_DIR / f"{stem}{e}", CAPTURE_DIR / f"{stem}{e.upper()}"):
+                if q.exists():
+                    return q
         base = stem.rsplit("_", 1)[0] if "_" in stem else stem
-        return next(iter(sorted(CAPTURE_DIR.glob(base + "_*.arw"))), None)
+        return next(iter(sorted(p for p in CAPTURE_DIR.glob(base + "_*") if p.suffix.lower() in RAW_EXTS)), None)
 
     async def photoshop(request: Request):
         body = await request.json()
@@ -2794,7 +2832,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                     ready_cache.update(t=now, usb=[])
             other = ready_cache.get("usb") or []
         g = (drvbase.guide(other[0]["brand"], None, False) if other else
-             drvbase.guide("Sony", model, cam_ok) if cam_ok else drvbase.guide("Sony", "ZV-E10", False))
+             drvbase.guide(getattr(studio.cam, "brand", "Sony"), model, cam_ok) if cam_ok else drvbase.guide("Sony", "ZV-E10", False))
         text = (f"Connected: {studio.cam.name}" if cam_ok and studio.cam else
                 (g["text"] if other else h.get("message") or "Looking for the camera on the USB cable and on Wi-Fi…"))
         return JSONResponse({
@@ -3203,7 +3241,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             check_state.update(running=False, done=time.time(), passed=ok)
 
     def _report_key(prof: dict, fw: str) -> str:
-        return f"Sony|{prof.get('model')}|{fw}"
+        return f"{prof.get('brand') or 'Sony'}|{prof.get('model')}|{fw}"
 
     async def camera_report(request: Request):
         """"Save report" / "Share report": build the camera report (nothing personal), save it, and give the issue
@@ -3218,9 +3256,13 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 di = None
             props = studio.props(max_age=0) if studio.cam else {}
             other = (ready_cache.get("usb") or [None])[0] if studio.cam is None else None
-            brand = other["brand"] if other else "Sony"
+            from .drivers import base as drvbase
+            brand = other["brand"] if other else getattr(studio.cam, "brand", None) or "Sony"
             checks = list(check_state.get("steps") or []) if not other else [
-                {"name": "Connect", "ok": False, "detail": f"Studio has no driver for {brand} cameras yet", "ms": 0, "command": ""}]
+                {"name": "Connect", "ok": False, "ms": 0, "command": "",
+                 "detail": (f"Studio could not open the {brand} camera (untested driver; on Windows the camera needs the "
+                            "WinUSB driver, which Studio never installs)") if drvbase.driver_ok(brand) else
+                 f"Studio has no driver for {brand} cameras yet"}]
             fm = None
             if studio.cam is not None:
                 try:
@@ -4705,8 +4747,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             if now - alt_cache.get("t", 0) > 5:
                 usb = None
                 try:
-                    from .ptpusb import SONY_VID, find_ptp_cameras
-                    usb = bool(find_ptp_cameras(SONY_VID))
+                    usb = _camera_on_usb()
                 except Exception:  # noqa: BLE001
                     pass
                 saved = wifi.load().get("host")

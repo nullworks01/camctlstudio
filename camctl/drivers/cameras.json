@@ -1,0 +1,48 @@
+{
+  "about": "What camctl Studio knows per camera maker and model. 'tested' means checked with a real camera; everything else is untested and says so on screen. Sources: the PTP standard (ISO 15740), libgphoto2's camlibs/ptp2 (codes only), Sony Camera Remote SDK, Canon EDSDK / CCAPI and Nikon SDK documentation (references only, nothing from them is bundled). Updated 14 Nov 2026.",
+  "brands": {
+    "Sony":      {"vendor_id": "0x054C", "driver": "sony",   "usb": true, "wifi": true,
+                  "status": "tested on one ZV-E10 (firmware 2.03); other models untested",
+                  "camera_setup": ["MENU > Network > PC Remote Function > PC Remote: On.",
+                                   "USB: PC Remote Function > USB connection: PC Remote."],
+                  "windows": "USB needs the WinUSB driver for the camera (Zadig); Studio never installs drivers. Wi-Fi needs none."},
+    "Canon":     {"vendor_id": "0x04A9", "driver": "canon",  "usb": true, "wifi": false,
+                  "status": "untested: written from the public PTP codes, never run on a Canon",
+                  "camera_setup": ["Switch the camera on, mode dial to M (Studio cannot turn the dial).",
+                                   "Wi-Fi / Bluetooth off while the USB cable is used."],
+                  "notes": "EOS and EOS R bodies only (older PowerShots have no remote mode). Mode dial and the AF/MF switch stay on the camera.",
+                  "windows": "USB needs the WinUSB driver for the camera (Zadig); Studio never installs drivers."},
+    "Nikon":     {"vendor_id": "0x04B0", "driver": "nikon",  "usb": true, "wifi": false,
+                  "status": "untested: written from the public PTP codes, never run on a Nikon",
+                  "camera_setup": ["Switch the camera on, mode dial (or exposure mode) to M.",
+                                   "Some Z bodies: MENU > Setup > USB: MTP/PTP."],
+                  "windows": "USB needs the WinUSB driver for the camera (Zadig); Studio never installs drivers."},
+    "Fujifilm":  {"vendor_id": "0x04CB", "driver": "ptp-generic", "usb": true, "wifi": false,
+                  "status": "untested: standard PTP only (settings it lists, shutter); no live picture",
+                  "camera_setup": ["Connection setting: USB Tether Shooting (Auto)."]},
+    "Panasonic": {"vendor_id": "0x04DA", "driver": "ptp-generic", "usb": true, "wifi": false,
+                  "status": "untested: standard PTP only; no live picture",
+                  "camera_setup": ["USB Mode: PC (Tether)."]},
+    "OM System / Olympus": {"vendor_id": "0x07B4", "driver": "ptp-generic", "usb": true, "wifi": false,
+                  "status": "untested: standard PTP only; no live picture",
+                  "camera_setup": ["On connecting choose: PC (tether / control)."]},
+    "Ricoh / Pentax": {"vendor_id": "0x25FB", "driver": "ptp-generic", "usb": true, "wifi": false,
+                  "status": "untested: standard PTP only; no live picture", "camera_setup": []},
+    "Leica":     {"vendor_id": "0x1A98", "driver": "ptp-generic", "usb": true, "wifi": false,
+                  "status": "untested: standard PTP only; no live picture", "camera_setup": []},
+    "GoPro":     {"vendor_id": "0x2672", "driver": null, "status": "not supported (no PTP camera control)"},
+    "Blackmagic":{"vendor_id": "0x0A12", "driver": null, "status": "not supported (controlled over its own Bluetooth / REST API)"}
+  },
+  "models": [
+    {"brand": "Sony", "model": "ZV-E10", "usb_product_id": "0x0D97", "status": "tested", "firmware": "2.03",
+     "checked": "connect, settings, live view, photo, Photo/Video, power zoom, focus tap, saved setups (11-12 Nov 2026)"}
+  ],
+  "routes": {
+    "sony":        {"what": "Sony's PTP extension (the same protocol Sony's Camera Remote SDK uses), USB or Wi-Fi", "bundled": true},
+    "canon":       {"what": "Canon EOS PTP extension over USB: settings, live view, photo, video, focus", "bundled": true},
+    "nikon":       {"what": "Standard PTP plus Nikon's extension over USB: settings, live view, photo, video, focus", "bundled": true},
+    "ptp-generic": {"what": "Plain ISO 15740 PTP over USB: the settings a camera lists, shutter release, files", "bundled": true},
+    "gphoto2":     {"what": "Any camera libgphoto2 knows, through the optional gphoto2 package (Linux / macOS only)", "bundled": false},
+    "sdk":         {"what": "Official maker SDKs (Sony Camera Remote SDK, Canon EDSDK, Nikon SDK): plug-in point only. Their licences do not allow shipping them in this MIT project; a user who registered can add an adapter on their own computer.", "bundled": false}
+  }
+}
