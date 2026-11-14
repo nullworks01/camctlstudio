@@ -2,9 +2,10 @@
 
 How to use Studio, screen by screen. For installing it, see the [README](../README.md#install).
 
-> The screenshots come from Studio's built-in simulator, so the picture in the middle is a drawn test card. With your
-> camera connected you see its live picture there. Claude's answers in the screenshots are made up by the simulator and
-> say so.
+> The screenshots come from Studio's built-in simulator. The person in them is an example photo (by
+> [Vitaly Gariev on Unsplash](https://unsplash.com/photos/young-man-with-glasses-smiles-at-the-camera-xhQUcSQpotU))
+> standing in for the camera's picture; with your camera connected you see its live picture there. Claude's answers in
+> the screenshots are made up by the simulator and say so.
 
 **Contents**
 
@@ -38,8 +39,8 @@ Switch the camera on, connect it by USB cable or Wi-Fi, and start Studio (`tools
   **Continue without Claude**. Without a key you still have Studio's own setup, focus, zoom, shooting and the special
   shots.
 
-No camera at hand? `python tools/sim_studio.py` starts Studio on a simulated camera, which is how these pictures were
-made.
+No camera at hand? `python tools/sim_studio.py` starts Studio on a simulated camera. Its picture is a plain drawn test
+card; for this guide the example photo was put in its place.
 
 ## 2. The main screen
 
@@ -69,10 +70,12 @@ When the camera connects, Studio looks at the picture, measures the light, and s
 the file format the way a photographer would for this kind of shot. Then it **locks**: the status line shows a blue
 lock and the reason for the choice.
 
+![The main screen, set up and locked](img/main.jpg)
+
 After that nothing changes by itself. If the light changes, Studio only suggests something, and waits for your tap:
 you see the suggestion next to the Claude button with its buttons below.
 
-Tap the shot pill (here **Low light**) to tell Studio what you are shooting. It marks the kind of shot it sees itself.
+Tap the shot pill (here **Portrait**) to tell Studio what you are shooting. It marks the kind of shot it sees itself.
 
 ![What are you shooting: portrait, interview, product, daylight, low light](img/shot.jpg)
 

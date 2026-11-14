@@ -7,7 +7,11 @@ what is in front of it: talking-head video, shorts, photos and video calls. Stud
 looks at the picture, measures the light, sets exposure, focus, white balance and the file format, and then **locks**
 everything. After that nothing changes by itself; you decide when something changes.
 
-![The main screen of camctl Studio](docs/img/main.jpg)
+![camctl Studio: the main screen on the laptop, and on an iPad as a second screen](docs/img/cover.jpg)
+
+<sub>The screens come from Studio's built-in simulator. The person is an example photo by
+[Vitaly Gariev on Unsplash](https://unsplash.com/photos/young-man-with-glasses-smiles-at-the-camera-xhQUcSQpotU),
+standing in for the camera's picture.</sub>
 
 **New here?** The [visual guide](docs/guide.md) shows every screen and how to use it, step by step.
 

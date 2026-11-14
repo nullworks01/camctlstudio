@@ -30,10 +30,11 @@ INCLUDE = [
 ]
 NEVER = re.compile(r"(\.bak$|\.r\d+\.bak$|__pycache__|\.pyc$|/logs/|/captures/|AUDIT\.md|publish_list\.txt|\.log$)", re.I)
 IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico"}     # a generated picture and the app icon
-# the visual guide's pictures (docs/img): screenshots of the SIMULATOR only (the drawn test card, never a camera frame),
-# each one named here so that no other picture can slip in
+# the visual guide's pictures (docs/img): screenshots of the SIMULATOR only, never a camera frame. The person in them is
+# a free stock photo (Vitaly Gariev on Unsplash, Unsplash License) put in the place of the simulator's test card.
+# Each picture is named here so that no other picture can slip in
 GUIDE_PICS = (
-    "claude", "claude-answer", "focus-stack", "getting-ready", "ipad", "iso", "looks", "main", "main-numbered",
+    "claude", "claude-answer", "cover", "focus-stack", "getting-ready", "ipad", "iso", "looks", "main", "main-numbered",
     "more", "photo-review", "photo-viewer", "playground", "recording", "settings-camera", "settings-format",
     "settings-light", "settings-setups", "shoot-handoff", "shot", "sound-check", "special-shots", "teleprompter",
     "video", "white-balance",
