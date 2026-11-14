@@ -39,7 +39,7 @@ def test_every_library_studio_imports_is_on_the_list():
             elif isinstance(n, ast.ImportFrom) and n.module and n.level == 0:
                 used.add(n.module.split(".")[0])
     third = {m for m in used if m not in sys.stdlib_module_names
-             and m not in ("camctl", "zve10_sim", "fake_ptp_brands", "battery_guard")}
+             and m not in ("camctl", "zve10_sim", "fake_ptp_brands", "fake_wifi_brands", "battery_guard")}
     # optional routes Studio never installs (named in requirements-optional.txt, e.g. gphoto2 for Linux / macOS):
     # the code only uses them when they are already there
     import re

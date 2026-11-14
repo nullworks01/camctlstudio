@@ -110,6 +110,9 @@ def main() -> None:
                     "through Studio's real (untested) driver for that maker (tests/fake_ptp_brands.py)")
     ap.add_argument("--webcam", action="store_true", help="with --brand ptp: a SIMULATED Fujifilm webcam-mode device "
                     "(ffmpeg's test pattern) so Studio's picture-route choice can be seen")
+    ap.add_argument("--wifi", choices=["lumix", "olympus", "ricoh", "fuji"], help="a SIMULATED Wi-Fi camera of another "
+                    "maker through Studio's real (untested) Wi-Fi driver (tests/fake_wifi_brands.py); the network search "
+                    "lists made-up example cameras")
     ap.add_argument("--split", type=float, default=0.0, help="stops darker on the shadow half of the face (key light from the side)")
     a = ap.parse_args()
     cam = ZVE10(ev=a.ev, mode="video" if a.video else "photo", battery=a.battery, model=a.model)
@@ -170,6 +173,31 @@ def main() -> None:
         capture_card.list_devices = (lambda: {"video": ["FUJIFILM X Webcam"], "audio": [], "ffmpeg": True}) \
             if a.webcam else (lambda: {"video": [], "audio": [], "ffmpeg": True})
         measure._faces_cv = lambda im: [(int(im.width * 0.4), int(im.height * 0.2), int(im.width * 0.2), int(im.height * 0.55))]
+    if a.wifi:                                             # another maker's Wi-Fi route, on a simulated camera
+        import fake_wifi_brands as fw
+        from camctl import wifi
+        fake, brand = {"lumix": (fw.FakeLumix, "Panasonic"), "olympus": (fw.FakeOlympus, "OM System / Olympus"),
+                       "ricoh": (fw.FakeRicoh, "Ricoh / Pentax"), "fuji": (fw.FakeFuji, "Fujifilm")}[a.wifi]
+        fw.LABEL = f"{brand} over Wi-Fi (simulated)"
+        fake = fake()
+        measure._faces_cv = lambda im: []
+        wifi.discover = lambda scan_lan=True: [           # made-up example answers (simulator only, no network search)
+            {"ip": "127.0.0.1", "host": fake.host, "name": "simulated camera", "model": "", "via": "camera network",
+             "brand": brand, "usable": True, "ptpip": False, "remembered": True},
+            {"ip": "10.0.0.38", "host": "10.0.0.38", "name": "ZV-E10 (example)", "model": "", "via": "ssdp",
+             "brand": "Sony", "usable": True, "ptpip": True, "remembered": False},
+            {"ip": "10.0.0.41", "host": "10.0.0.41", "name": "EOS R6 (example)", "model": "", "via": "ssdp",
+             "brand": "Canon", "usable": True, "ptpip": True, "remembered": False}]
+        st.set_connection("wifi", fake.host, brand=brand)
+        app = webui.build_app(st, start_auto=False)
+        import gc
+        from camctl import autofix
+        for o in gc.get_objects():
+            if isinstance(o, autofix.AutoFix) and o.studio is st:
+                o.start()
+        print(f"SIMULATED {brand} Wi-Fi camera Studio on http://127.0.0.1:{a.port}")
+        uvicorn.run(app, host="127.0.0.1", port=a.port, log_level="warning")
+        return
     st.cam = None if a.nocam else cam
 
     def _no_cam():

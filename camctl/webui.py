@@ -258,13 +258,19 @@ class Studio:
             return registry.make_usb_driver(prefer=os.environ.get("CAMCTL_ROUTE"), sony=SonyCamera)
         # Wi-Fi: the same GUID every time (the camera paired with it); a long first wait
         # leaves time to confirm the pairing prompt on the camera.
-        ip, port = wifi.split(self.host)
-        return SonyCamera(ip, port, guid=wifi.guid(), name=wifi.client_name(), timeout=60.0)
+        brand = wifi.brand_for(self.host)
+        if not brand or brand == "Sony":                 # a Sony (or no maker saved): exactly as before
+            ip, port = wifi.split(self.host)
+            return SonyCamera(ip, port, guid=wifi.guid(), name=wifi.client_name(), timeout=60.0)
+        from .drivers import registry                    # another maker's Wi-Fi route (untested on real cameras)
+        return registry.make_wifi_driver(brand, self.host, sony=SonyCamera, guid=wifi.guid(), name=wifi.client_name())
 
     def _wifi_ready(self) -> bool:
         """Is the camera reachable on Wi-Fi? If not, look for it again (its IP may have changed)."""
         if wifi.reachable(self.host):
             return True
+        if wifi.split(self.host)[1] != wifi.PTPIP_PORT:   # only a PTP/IP camera is looked for again on the network
+            return False
         if time.time() - self._rescan_at < 30:
             return False
         self._rescan_at = time.time()
@@ -280,14 +286,23 @@ class Studio:
         self.choice = choice if choice in ("auto", "usb", "wifi") else "auto"
         wifi.save(choice=self.choice)
 
-    def set_connection(self, mode: str, host: str | None = None) -> None:
-        """Switch between USB and Wi-Fi (closes the current session cleanly first)."""
+    def set_connection(self, mode: str, host: str | None = None, brand: str | None = None) -> None:
+        """Switch between USB and Wi-Fi (closes the current session cleanly first). brand: the camera maker on
+        Wi-Fi (None keeps the one saved for that address; Sony when none was saved)."""
         self.choice = "usb" if mode == "usb" else "wifi"     # his pick wins over Automatic
         wifi.save(choice=self.choice)
         self.shutdown()
         self.host = "usb" if mode == "usb" else (host or wifi.load().get("host") or "")
         if mode != "usb" and not self.host:
             raise ValueError("No camera IP yet: search for the camera first.")
+        if mode != "usb" and brand is not None:
+            from .drivers import registry
+            info = registry.wifi_brands().get(brand)
+            if brand != "Sony" and not info:
+                raise ValueError(f"Studio has no Wi-Fi route for {brand} cameras.")
+            if info and ":" not in self.host and info.get("port") and info["port"] != wifi.PTPIP_PORT:
+                self.host = f"{self.host}:{info['port']}"        # Fujifilm 55740, the HTTP cameras 80
+            wifi.remember_brand(self.host, brand)
         wifi.save(mode="usb" if self.host == "usb" else "wifi", **({} if self.host == "usb" else {"host": self.host}))
         self._fails, self._retry_at, self.fail_since, self.frame_error = 0, 0.0, 0.0, ""
         self._present_at = 0.0
@@ -571,6 +586,17 @@ def _usb_mode_of(instance: str) -> dict | None:
         return None
     from .drivers import registry
     return registry.lookup_usb(int(m[1], 16), int(m[2], 16))
+
+
+def _wifi_brand_help() -> dict:
+    """Makers with a Wi-Fi route: {brand: {"setup": [steps], "ip": the camera's own address or None, "tested": bool}}."""
+    try:
+        from .drivers import registry
+        data = registry.data()["brands"]
+        return {b: {"setup": data[b].get("wifi_setup") or [], "ip": i.get("ip"), "tested": b == "Sony"}
+                for b, i in registry.wifi_brands().items()}
+    except Exception:  # noqa: BLE001
+        return {"Sony": {"setup": [], "ip": None, "tested": True}}
 
 
 def _camera_on_usb() -> bool:
@@ -4674,6 +4700,9 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         finally:
             play.update(long_phase=None, long_open_until=0.0)      # no retry, no second press by Studio
         saved = save_files(files)
+        if not saved and getattr(studio.cam, "kept_on_card", False):   # this camera keeps it on its card
+            return {"saved": [], "shoot": [], "take": None, "format_fixed": fmt, "on_card": True,
+                    "note": "Photo taken. It stays on the camera's card: Studio cannot copy it over Wi-Fi from this camera yet."}
         if not saved:                         # nothing arrived: say so in words, and log no empty take
             return {"saved": [], "shoot": [], "take": None, "format_fixed": fmt, "failed": True,
                     "note": "The camera did not take the picture (nothing arrived from it). Check the card and press again."}
@@ -4827,7 +4856,8 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                     studio.set_choice("auto")
                 else:
                     await anyio.to_thread.run_sync(lambda: studio.set_connection(
-                        "wifi" if body.get("mode") == "wifi" else "usb", (body.get("host") or "").strip() or None))
+                        "wifi" if body.get("mode") == "wifi" else "usb", (body.get("host") or "").strip() or None,
+                        (body.get("brand") or "").strip() or None))
             except ValueError as exc:
                 return JSONResponse({"error": str(exc)}, status_code=400)
         cfg = wifi.load()
@@ -4835,6 +4865,8 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                              "route_at": studio.route_at,
                              "camera": studio.cam.name if studio.cam else "", "health": studio.health(),
                              "saved_host": cfg.get("host"), "saved_name": cfg.get("name", ""),
+                             "brand": wifi.brand_for(studio.host) or ("Sony" if studio.host != "usb" else None),
+                             "wifi_brands": _wifi_brand_help(),
                              "client_name": wifi.client_name()})
 
     async def wifi_discover(_: Request):

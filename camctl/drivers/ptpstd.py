@@ -172,14 +172,18 @@ class PTPCamera:
         DP_BATTERY: (S_BATTERY, None, None),        # special: converted with its range
     }
 
-    def __init__(self, host: str = "usb", client=None, vendor: int | None = None):
+    def __init__(self, host: str = "usb", client=None, vendor: int | None = None, port: int | None = None,
+                 name: str = "camctl", guid: bytes | None = None):
         if client is not None:
             self.client = client
         elif host == "usb":
             from ..ptpusb import PTPUSBClient
             self.client = PTPUSBClient(vendor=vendor if vendor is not None else self.vendor_id)
-        else:
-            raise Unsupported(f"{self.brand} cameras are only reachable over the USB cable in Studio for now.")
+        else:                                       # Wi-Fi: standard PTP/IP (Canon EOS, Nikon and others)
+            from ..ptpip import PTPIP_PORT, PTPIPClient
+            ip, _, p = host.partition(":")
+            self.client = PTPIPClient(ip, port or (int(p) if p.isdigit() else PTPIP_PORT), name=name, guid=guid,
+                                      timeout=60.0)
         self.info: dict = {}
         self._native: dict[int, PropInfo] = {}       # native code -> PropInfo as the camera reports it
         self._prop_cache: dict[int, PropInfo] = {}    # Studio id -> PropInfo in Studio's units

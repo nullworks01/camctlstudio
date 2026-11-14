@@ -58,8 +58,8 @@ class NikonCamera(PTPCamera):
     STD_MAP[DP_NIKON_SHUTTER] = (S_SHUTTER, _nikon_shutter,
                                  lambda s: s if s else 0xFFFFFFFF)
 
-    def __init__(self, host: str = "usb", client=None, vendor: int | None = None):
-        super().__init__(host, client, vendor)
+    def __init__(self, host: str = "usb", client=None, vendor: int | None = None, **wifi):
+        super().__init__(host, client, vendor, **wifi)
         self.lv_on = False
         self.lv_size = (640, 424)
 

@@ -159,3 +159,44 @@ def make_usb_driver(prefer: str | None = None, sony=None):
     drv = cls("usb", vendor=vid) if cls.__name__ != "Gphoto2Camera" else cls("usb")
     drv.brand = drv.brand if drv.brand != "Camera" else brand
     return drv
+
+
+# -- Wi-Fi ----------------------------------------------------------------------------------------------------------
+def wifi_brands() -> dict[str, dict]:
+    """Makers Studio can reach over Wi-Fi: brand -> {driver, port, ip (the camera's own access-point address)}."""
+    return {b: {"driver": v["wifi_driver"], "port": v.get("wifi_port"), "ip": v.get("wifi_ip")}
+            for b, v in data()["brands"].items() if v.get("wifi") and v.get("wifi_driver")}
+
+
+def wifi_driver_class(name: str | None):
+    if name == "fuji":
+        from .fuji import FujiCamera
+        return FujiCamera
+    if name == "lumix":
+        from .lumix import LumixCamera
+        return LumixCamera
+    if name == "olympus":
+        from .olympus import OlympusCamera
+        return OlympusCamera
+    if name == "ricoh":
+        from .ricoh import RicohCamera
+        return RicohCamera
+    return driver_class(name)
+
+
+def make_wifi_driver(brand: str | None, host: str, sony=None, guid: bytes | None = None, name: str = "camctl"):
+    """The driver for a camera on the network. No brand (or Sony) = the Sony driver exactly as before."""
+    if sony is None:
+        from .sony import SonyCamera as sony
+    info = wifi_brands().get(brand or "Sony")
+    ip, _, p = host.partition(":")
+    port = int(p) if p.isdigit() else (info or {}).get("port") or 15740
+    if not info or info["driver"] == "sony":
+        return sony(ip, port, guid=guid, name=name, timeout=60.0)
+    cls = wifi_driver_class(info["driver"])
+    if cls is None:
+        raise ValueError(f"No Wi-Fi driver for {brand}")
+    drv = cls(ip, port=port, name=name, guid=guid)
+    if getattr(drv, "brand", "Camera") in ("Camera", ""):
+        drv.brand = brand
+    return drv

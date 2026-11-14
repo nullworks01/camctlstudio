@@ -13,11 +13,20 @@ only when you press Submit on the issue page yourself.
 | Canon EOS PTP | Canon EOS DSLRs and EOS R (USB) | settings, live picture, photo (RAW + JPEG to the PC), video start / stop, focus steps, tap to focus | **untested** | yes |
 | Nikon PTP | Nikon DSLRs and Z (USB) | settings, live picture, photo to the PC, video start / stop, focus steps, tap to focus | **untested** | yes |
 | Plain PTP | Fujifilm, Panasonic, OM System / Olympus, Ricoh / Pentax, Leica (USB) | the settings the camera lists as standard PTP, the shutter, the files; **no live picture** | **untested** | yes |
+| Canon / Nikon PTP/IP | Canon EOS and Nikon with Wi-Fi remote control (same drivers as on USB, over the network, port 15740) | as on USB | **untested** | yes |
+| Fujifilm Wi-Fi | Fujifilm X / GFX with PC Shoot over Wi-Fi (ports 55740-55742) | standard PTP settings, shutter, live picture, video start / stop | **untested** | yes |
+| Panasonic Wi-Fi | LUMIX with Remote Shooting (HTTP on the camera's own network, 192.168.54.1) | shutter speed, aperture, ISO, battery, live picture, photo (stays on the card), video, power zoom, focus, tap to focus | **untested** | yes |
+| OM System / Olympus Wi-Fi | OM-D / PEN / TG with OI.Share remote (HTTP, 192.168.0.10) | shutter, aperture, ISO, exposure compensation, mode, live picture, photo (RAW + JPEG to the PC), tap to focus | **untested** | yes |
+| Ricoh / Pentax Wi-Fi | GR II / III / IIIx, Pentax K-1 / KP / K-3 III (JSON over HTTP, 192.168.0.1) | aperture, shutter, ISO, compensation, white balance, battery, live picture, photo (RAW + JPEG to the PC), video, tap to focus | **untested** | yes |
 | gphoto2 | the cameras libgphoto2 supports | settings, live picture, photo | **untested**, Linux / macOS only | no: only if the `gphoto2` Python package is already installed, and `CAMCTL_ROUTE=gphoto2` is set |
 | Maker SDK | Sony Camera Remote SDK, Canon EDSDK, Nikon SDK | whatever the adapter provides | plug-in point only | no |
 
 Not supported: GoPro and Blackmagic cameras (they are controlled through their own apps / APIs, not PTP), Canon
-PowerShots without EOS remote mode, Wi-Fi for Canon and Nikon.
+PowerShots without EOS remote mode, Leica over Wi-Fi, Canon's CCAPI (needs a key from Canon).
+
+Wi-Fi: All settings › Studio › Connection › Wi-Fi. Pick the camera maker, then Find camera (it looks for every maker
+above: SSDP, the cameras' own network addresses, and the PTP/IP and Fujifilm ports on your network) or type the
+address. Sony is the default, and a Sony works exactly as before.
 
 ## The live picture, per camera
 
@@ -60,6 +69,11 @@ but cannot be opened. Sony cameras can use Wi-Fi instead, which needs no driver.
 - The PTP standard (ISO 15740) for the plain PTP route.
 - libgphoto2's `camlibs/ptp2` (`ptp.h`, `ptp-pack.c`, `config.c`, `library.c`), checked 14 November 2026, for the Canon
   and Nikon operation and property codes and the Canon event layout. Only the numbers are used; no code is copied.
+- Wi-Fi, all checked 15 November 2026, numbers, names and packet layouts only, no code copied:
+  libgphoto2 `camlibs/ptp2/fujiptpip.c` and `library.c` (Fujifilm Wi-Fi) and `camlibs/lumix/lumix.c` (Panasonic);
+  the open LUMIX remote projects such as jayem1427/lumix-remote; the OPC protocol notes collected for the E-M10 and
+  TG-5 (olympus-wifi, libqt-omd); CursedHardware/ricoh-wireless-protocol (an OpenAPI description of the Ricoh / Pentax
+  camera API, from the Image Sync app).
 - Sony's own PTP extension, as before (the protocol Sony's Camera Remote SDK also uses).
 
 The per-maker data (vendor ids, which driver, setup steps, what is tested) is in
@@ -80,3 +94,7 @@ registered, it is used for that maker before Studio's own driver. None is includ
 
 runs Studio on a simulated camera of that maker through the real driver code (tests/fake_ptp_brands.py). The simulated
 cameras follow the documented codes; a real camera may differ, which is why every one of these routes is untested.
+
+    python tools/sim_studio.py --wifi lumix      # or olympus, ricoh, fuji
+
+does the same for the Wi-Fi routes (tests/fake_wifi_brands.py).

@@ -1,4 +1,6 @@
-"""Wi-Fi connection for Sony cameras in PC Remote 'Access Point' mode (camera on the home Wi-Fi).
+"""Wi-Fi connection: Sony cameras in PC Remote 'Access Point' mode (camera on the home Wi-Fi), and the other
+makers' Wi-Fi routes (Canon / Nikon PTP/IP, Fujifilm PC Shoot, and the HTTP cameras that are their own access point:
+Panasonic LUMIX, OM System / Olympus, Ricoh / Pentax). The other makers are UNTESTED ON REAL CAMERAS.
 
 - A stable GUID for this PC: Sony cameras pair with the GUID sent in the PTP/IP Init
   Command Request, so the same GUID must be used every time (else it asks again).
@@ -19,6 +21,13 @@ import uuid
 from pathlib import Path
 
 PTPIP_PORT = 15740
+FUJI_PORT = 55740
+# cameras that are their own access point, and how to recognise them (path, word in the answer)
+AP_CAMERAS = [("Panasonic", "192.168.54.1", "cam.cgi?mode=getstate", "<camrply"),
+              ("OM System / Olympus", "192.168.0.10", "get_caminfo.cgi", "<model"),
+              ("Ricoh / Pentax", "192.168.0.1", "v1/props", '"model"')]
+SSDP_MAKERS = [("Sony", ("sony", "ilce", "zv-")), ("Canon", ("canon",)), ("Nikon", ("nikon",)),
+               ("Panasonic", ("panasonic", "lumix")), ("Fujifilm", ("fujifilm",))]
 BASE = Path(os.environ.get("APPDATA") or Path.home()) / "camctl"
 CONFIG = BASE / "wifi.json"
 
@@ -71,6 +80,23 @@ def guid() -> bytes:
     return bytes.fromhex(g)
 
 
+def brand_for(host: str | None) -> str | None:
+    """The maker he picked for this camera address (None = Sony, as before)."""
+    if not host or host == "usb":
+        return None
+    return (load().get("brands") or {}).get(split(host)[0])
+
+
+def remember_brand(host: str, brand: str | None) -> None:
+    brands = dict(load().get("brands") or {})
+    ip = split(host)[0]
+    if brand and brand != "Sony":
+        brands[ip] = brand
+    else:
+        brands.pop(ip, None)
+    save(brands=brands)
+
+
 def client_name() -> str:
     """Name shown on the camera's pairing prompt."""
     return f"camctl Studio ({socket.gethostname()[:20]})"
@@ -115,7 +141,7 @@ def scan(subnets: list[str] | None = None, port: int = PTPIP_PORT, timeout: floa
 
 
 def ssdp(timeout: float = 2.0) -> list[dict]:
-    """UPnP devices that look like Sony cameras: [{ip, name, model, udn, location}]."""
+    """UPnP devices that look like cameras: [{ip, name, model, udn, manufacturer, brand}]."""
     msg = ("M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\n"
            "MX: 2\r\nST: ssdp:all\r\n\r\n").encode()
     found: dict[str, dict] = {}
@@ -141,9 +167,11 @@ def ssdp(timeout: float = 2.0) -> list[dict]:
     for ip, d in found.items():
         info = _describe(d["location"]) if d["location"] else {}
         blob = (d["raw"] + json.dumps(info)).lower()
-        if "sony" in blob or "ilce" in blob or "zv-" in blob:
+        brand = next((b for b, words in SSDP_MAKERS if any(w in blob for w in words)), None)
+        if brand:
             out.append({"ip": ip, "name": info.get("friendlyName", ""), "model": info.get("modelName", ""),
-                        "udn": info.get("UDN", ""), "manufacturer": info.get("manufacturer", ""), "via": "ssdp"})
+                        "udn": info.get("UDN", ""), "manufacturer": info.get("manufacturer", ""), "via": "ssdp",
+                        "brand": brand})
     return out
 
 
@@ -157,18 +185,61 @@ def _describe(location: str) -> dict:
             if (m := re.search(rf"<{k}>([^<]*)</{k}>", xml))}
 
 
+def _http_probe(ip: str, path: str, word: str, timeout: float = 1.0) -> bool:
+    try:
+        req = urllib.request.Request(f"http://{ip}/{path}", headers={"User-Agent": "OI.Share v2", "Host": ip})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return word in r.read(8192).decode("utf-8", "ignore")
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def access_point_cameras(subnets: list[str] | None = None) -> list[dict]:
+    """Cameras that are their own Wi-Fi access point, when this PC is on that network (asks only those IPs)."""
+    nets = set(subnets if subnets is not None else local_subnets())
+    out = []
+    for brand, ip, path, word in AP_CAMERAS:
+        if ip.rsplit(".", 1)[0] in nets and _http_probe(ip, path, word):
+            out.append({"ip": ip, "host": f"{ip}:80", "name": "", "model": "", "udn": "", "via": "camera network",
+                        "brand": brand, "usable": True})
+    return out
+
+
 def discover(scan_lan: bool = True) -> list[dict]:
-    """Cameras on the network: SSDP first, then a PTP/IP port scan of the local /24."""
-    cams = {c["ip"]: c for c in ssdp()}
-    for c in cams.values():
-        c["ptpip"] = _port_open(c["ip"], PTPIP_PORT, 0.6)
+    """Cameras on the network: SSDP first, the cameras that are their own access point, then a port scan of the
+    local /24 (PTP/IP 15740 for Sony / Canon / Nikon, 55740 for Fujifilm). Each hit says its maker (brand, None
+    when only the PTP/IP port answered: Sony is assumed, as before) and the address to use (host)."""
+    cams: dict[str, dict] = {}
+    for c in ssdp():
+        c.setdefault("brand", "Sony")
+        if c["brand"] == "Panasonic":
+            c["host"], c["usable"] = f"{c['ip']}:80", True
+            c["ptpip"] = False
+        elif c["brand"] == "Fujifilm":
+            c["usable"] = _port_open(c["ip"], FUJI_PORT, 0.6)
+            c["host"], c["ptpip"] = f"{c['ip']}:{FUJI_PORT}", False
+        else:
+            c["ptpip"] = c["usable"] = _port_open(c["ip"], PTPIP_PORT, 0.6)
+            c["host"] = c["ip"]
+        cams[c["ip"]] = c
+    for c in access_point_cameras():
+        cams.setdefault(c["ip"], c)
     if scan_lan:
         for ip in scan(skip=set(cams)):
-            cams[ip] = {"ip": ip, "name": "", "model": "", "udn": "", "via": "port scan", "ptpip": True}
-    remembered = load().get("host")
+            cams[ip] = {"ip": ip, "host": ip, "name": "", "model": "", "udn": "", "via": "port scan", "ptpip": True,
+                        "usable": True, "brand": None}
+        for ip in scan(port=FUJI_PORT, skip=set(cams)):
+            cams[ip] = {"ip": ip, "host": f"{ip}:{FUJI_PORT}", "name": "", "model": "", "udn": "", "via": "port scan",
+                        "ptpip": False, "usable": True, "brand": "Fujifilm"}
+    cfg = load()
+    remembered, brands = cfg.get("host"), cfg.get("brands") or {}
     for c in cams.values():
-        c["remembered"] = c["ip"] == remembered
-    return sorted(cams.values(), key=lambda c: (not c.get("ptpip"), c["via"] != "ssdp", c["ip"]))
+        c.setdefault("ptpip", False)
+        c.setdefault("usable", bool(c.get("ptpip")))
+        c["remembered"] = remembered is not None and split(c["host"])[0] == split(remembered)[0]
+        if c.get("brand") is None and c["ip"] in brands:
+            c["brand"] = brands[c["ip"]]
+    return sorted(cams.values(), key=lambda c: (not c.get("usable"), c["via"] == "port scan", c["ip"]))
 
 
 def split(host: str) -> tuple[str, int]:

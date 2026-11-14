@@ -1147,9 +1147,10 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
       <div class="sec"><h3>CONNECTION <small id="connNow"></small></h3>
         <div class="seg" id="connSeg" style="margin-bottom:8px"><button data-c="auto">Automatic</button><button data-c="usb">USB cable</button><button data-c="wifi">Wi-Fi</button></div>
         <div id="wifiBox" style="display:none">
-          <div class="row" style="flex-wrap:nowrap"><input id="wifiHost" class="grow" placeholder="Camera IP, e.g. 10.0.0.38"><button id="wifiFind">Find camera</button><button id="wifiGo" class="btn-accent">Connect</button></div>
+          <div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><span class="muted" style="flex:none">Camera maker</span><select id="wifiBrand" class="grow" style="min-width:0"><option value="Sony">Sony</option></select></div>
+          <div class="row" style="flex-wrap:nowrap"><input id="wifiHost" style="min-width:0" class="grow" placeholder="Camera IP, e.g. 10.0.0.38"><button id="wifiFind">Find camera</button><button id="wifiGo" class="btn-accent">Connect</button></div>
           <div id="wifiList" style="margin-top:6px"></div>
-          <div class="dimtxt" style="font-size:11px;margin-top:6px">Camera: MENU › Network › PC Remote Function › PC Remote On, connection method <b>Access Point</b> (camera on your home Wi-Fi). First time: choose <b>Pairing</b> on the camera, press Connect here, then confirm on the camera.</div>
+          <div id="wifiHelp" class="dimtxt" style="font-size:11px;margin-top:6px">Camera: MENU › Network › PC Remote Function › PC Remote On, connection method <b>Access Point</b> (camera on your home Wi-Fi). First time: choose <b>Pairing</b> on the camera, press Connect here, then confirm on the camera.</div>
         </div>
         <div id="connMsg" class="muted" style="margin-top:6px;font-size:11.5px"></div>
       </div>
@@ -2010,8 +2011,8 @@ function renderOffline(h){
   $("#offStat").textContent=`${wifi?"Wi-Fi":"USB"} · retrying automatically · ${Math.round(h.down_s||0)} s`;
 }
 $("#offFind").onclick=async()=>{ $("#offStat").textContent="Searching your network…";
-  try{ const l=await post("/api/wifi/discover"); const c=l.find(x=>x.ptpip);
-    if(c){ toast("Found the camera at "+c.ip+", connecting…",3000); switchConn("wifi",c.ip); } else toast("No camera on the network yet. Is it switched on with PC Remote enabled?",4000); }
+  try{ const l=await post("/api/wifi/discover"); const c=l.find(x=>x.usable||x.ptpip);
+    if(c){ toast("Found "+(c.brand?"a "+c.brand+" camera":"the camera")+" at "+c.ip+", connecting…",3000); switchConn("wifi",c.host||c.ip,c.brand||undefined); } else toast("No camera on the network yet. Is it switched on with PC Remote enabled?",4000); }
   catch(e){ toast(e.message,3000); } };
 $("#offUsb").onclick=()=>switchConn("usb");
 $("#offWifi").onclick=()=>api("/api/connection").then(c=>switchConn("wifi",c.saved_host||undefined));
@@ -2357,7 +2358,7 @@ document.addEventListener("click",e=>{ const el=e.target.closest("button,select,
 /* ------------------------------------------------------------ CONNECTION (USB / Wi-Fi) */
 let connView="usb";
 function renderConn(c){
-  connView=c.mode; const pick=c.choice||"auto"; $$("#connSeg button").forEach(b=>b.classList.toggle("on",b.dataset.c===pick));
+  fillBrands(c); connView=c.mode; const pick=c.choice||"auto"; $$("#connSeg button").forEach(b=>b.classList.toggle("on",b.dataset.c===pick));
   $("#wifiBox").style.display=pick==="wifi"?"block":"none";
   /* Automatic found the camera on the other route: say it once, in one sentence */
   if(c.route_at && c.route_at!==S.routeAt){ if(S.routeAt!==undefined) S.dzFlash={label:"Connected",say:`Connected by ${c.mode==="usb"?"USB cable":"Wi-Fi"}.`,until:Date.now()+5000}; S.routeAt=c.route_at; }
@@ -2367,23 +2368,33 @@ function renderConn(c){
   const h=c.health||{}; $("#connMsg").innerHTML=h.state==="ok"?`<span class="okc">Connected by ${c.mode==="usb"?"USB cable":"Wi-Fi"}${c.camera?" to "+esc(c.camera):""}${pick==="auto"?" (Automatic)":""}.</span>`:esc(h.message||"");
 }
 async function loadConn(){ try{ renderConn(await api("/api/connection")); }catch(e){} }
-async function switchConn(mode,host){
+const SONY_WIFI_HELP=$("#wifiHelp").innerHTML; let wifiBrands=null;
+function wifiHelp(){ const b=$("#wifiBrand").value, i=(wifiBrands||{})[b];
+  if(b==="Sony"||!i){ $("#wifiHelp").innerHTML=SONY_WIFI_HELP; return; }
+  $("#wifiHelp").innerHTML=`<span class="warn">Untested: Studio's ${esc(b)} Wi-Fi route was written from public protocol notes and tried on a simulated camera only.</span><br>`+
+    (i.setup||[]).map(esc).join("<br>")+(i.ip?`<br>The camera is its own Wi-Fi network: join it from this PC; its address is <b style="font-family:var(--mono)">${esc(i.ip)}</b>.`:"");
+  if(i.ip && !$("#wifiHost").value) $("#wifiHost").value=i.ip; }
+function fillBrands(c){ if(wifiBrands||!c.wifi_brands) return; wifiBrands=c.wifi_brands;
+  $("#wifiBrand").innerHTML=Object.keys(wifiBrands).map(b=>`<option value="${esc(b)}">${esc(b)}${wifiBrands[b].tested?"":" (untested)"}</option>`).join("");
+  $("#wifiBrand").value=c.brand||"Sony"; wifiHelp(); }
+$("#wifiBrand").onchange=()=>{ const i=(wifiBrands||{})[$("#wifiBrand").value]; if(i&&i.ip) $("#wifiHost").value=i.ip; wifiHelp(); };
+async function switchConn(mode,host,brand){
   $("#connMsg").textContent=mode==="wifi"?"Connecting over Wi-Fi… if the camera shows a pairing prompt, confirm it on the camera.":"Switching to USB…";
-  try{ renderConn(await post("/api/connection",{mode,host})); frameSeq=-1; S.released=false; }
+  try{ renderConn(await post("/api/connection",brand?{mode,host,brand}:{mode,host})); frameSeq=-1; S.released=false; }
   catch(e){ $("#connMsg").innerHTML=`<span class="warn">${esc(e.message)}</span>`; }
 }
 $$("#connSeg button").forEach(b=>b.onclick=()=>{ if(b.dataset.c==="auto"){ post("/api/connection",{choice:"auto"}).then(renderConn).then(()=>toast("Automatic: Studio uses whichever connection answers.",3000)).catch(e=>toast(e.message,3000)); return; }
   if(b.dataset.c==="usb") switchConn("usb");
   else { connView="wifi"; $$("#connSeg button").forEach(x=>x.classList.toggle("on",x===b)); $("#wifiBox").style.display="block";
     api("/api/connection").then(c=>{ if(!$("#wifiHost").value) $("#wifiHost").value=c.saved_host||""; if(c.saved_host) switchConn("wifi",c.saved_host); }); } });
-$("#wifiGo").onclick=()=>{ const h=$("#wifiHost").value.trim(); if(!h){ toast("Find the camera first or type its IP.",2500); return; } switchConn("wifi",h); };
+$("#wifiGo").onclick=()=>{ const h=$("#wifiHost").value.trim(); if(!h){ toast("Find the camera first or type its IP.",2500); return; } switchConn("wifi",h,$("#wifiBrand").value); };
 $("#wifiFind").onclick=async()=>{
-  const btn=$("#wifiFind"); btn.disabled=true; $("#wifiList").innerHTML='<span class="muted">Searching your network (SSDP + port 15740 scan, ~5 s)…</span>';
+  const btn=$("#wifiFind"); btn.disabled=true; $("#wifiList").innerHTML='<span class="muted">Searching your network for cameras of every maker Studio knows (~6 s)…</span>';
   try{ const list=await post("/api/wifi/discover");
-    $("#wifiList").innerHTML=list.length?list.map(c=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:5px 0">
-      <span><b style="font-family:var(--mono)">${esc(c.ip)}</b> <span class="muted">${esc(c.name||c.model||"PTP/IP device")} · ${esc(c.via)}${c.remembered?" · paired":""}</span></span>
-      <button data-ip="${esc(c.ip)}"${c.ptpip?"":" disabled"}>Use</button></div>`).join(""):'<span class="warn">No camera found. Is it on, on the same Wi-Fi, with PC Remote (Access Point) enabled?</span>';
-    $$("#wifiList [data-ip]").forEach(b=>b.onclick=()=>{ $("#wifiHost").value=b.dataset.ip; switchConn("wifi",b.dataset.ip); }); }
+    $("#wifiList").innerHTML=list.length?list.map(c=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap;border-top:1px solid var(--line);padding:5px 0">
+      <span style="flex:1;min-width:0"><b style="font-family:var(--mono)">${esc(c.ip)}</b> <span class="muted">${esc(c.brand||"maker unknown")}${c.brand&&c.brand!=="Sony"?" (untested)":""} · ${esc(c.name||c.model||"camera")} · ${esc(c.via)}${c.remembered?" · paired":""}</span></span>
+      <button data-ip="${esc(c.host||c.ip)}" data-brand="${esc(c.brand||"")}" style="flex:none"${(c.usable||c.ptpip)?"":" disabled"}>Use</button></div>`).join(""):'<span class="warn">No camera found. Is it on and on the same Wi-Fi as this PC, or is this PC on the camera’s own Wi-Fi?</span>';
+    $$("#wifiList [data-ip]").forEach(b=>b.onclick=()=>{ const br=b.dataset.brand||$("#wifiBrand").value; $("#wifiBrand").value=br; wifiHelp(); $("#wifiHost").value=b.dataset.ip; switchConn("wifi",b.dataset.ip,br); }); }
   catch(e){ $("#wifiList").innerHTML=`<span class="warn">${esc(e.message)}</span>`; }
   btn.disabled=false;
 };
@@ -2444,6 +2455,7 @@ $("#shutter").onclick=async()=>{
   requestAnimationFrame(tick); $("#sxLine").textContent="Taking photo… hold still";
   try{ const j=await post("/api/shoot");
     if(j.saved.length){ S.dzFlash={label:"Saved",say:j.note||"RAW and JPEG are in today’s shoot folder.",until:Date.now()+(j.note?7000:3500)}; if(j.note) toast(j.note,7000); loadFilm(); photoReview(j.saved.find(f=>/\.jpg$/i.test(f))); }
+    else if(j.on_card){ S.dzFlash={label:"On the card",say:j.note,until:Date.now()+6000}; toast(j.note,6000); }
     else toast(j.note||"The camera did not take the picture.",6000); }
   catch(e){ toast("Failed: "+e.message,5000); }
   S.firing=false; sh.classList.remove("firing"); sh.style.removeProperty("--p");

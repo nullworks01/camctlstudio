@@ -54,7 +54,9 @@ PATTERNS = {
     "first name": re.compile(r"\b" + "Fr" + r"anz\b"),
     "family name / email": re.compile("har" + "ster", re.I),
     "user path": re.compile(r"[A-Z]:[\\/]+Users[\\/]+(?!<|you|USER|\{)", re.I),
-    "home network address": re.compile(r"\b192\.168\.(?!122\.1\b)\d{1,3}\.\d{1,3}\b"),   # 192.168.122.1 = Sony's own AP
+    # the cameras' own access-point addresses are public facts, not a home network: 192.168.122.1 Sony,
+    # 192.168.54.1 Panasonic, 192.168.0.10 OM System / Olympus, 192.168.0.1 Ricoh / Pentax
+    "home network address": re.compile(r"\b192\.168\.(?!122\.1\b|54\.1\b|0\.10?\b)\d{1,3}\.\d{1,3}\b"),
     "MAC address": re.compile(r"\b(?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2}\b", re.I),
     "Claude key": re.compile(r"sk-ant-[A-Za-z0-9_\-]{6,}"),          # any key-shaped string, also invented test keys
     "tunnel / connector URL": re.compile(r"https://[a-z0-9-]+\.(trycloudflare\.com|ngrok\.io)", re.I),

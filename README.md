@@ -111,6 +111,10 @@ is added to this table when it works.
 
 USB note: on Windows the camera's USB connection may need a driver that Studio never installs itself. Wi-Fi needs none.
 
+Other makers over Wi-Fi (Canon, Nikon, Fujifilm, Panasonic, OM System / Olympus, Ricoh / Pentax): All settings ›
+Studio › Connection › Wi-Fi, pick the maker. These routes are **untested on real cameras** (written from public
+protocol notes, tried on simulated cameras only); see [docs/cameras.md](docs/cameras.md).
+
 ## Recommended setup
 
 1. A dummy battery / mains adapter in the battery slot (for the ZV-E10 the AC-PW20 type): live view drained about half

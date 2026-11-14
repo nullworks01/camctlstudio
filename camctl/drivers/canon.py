@@ -133,8 +133,8 @@ class CanonEOSCamera(PTPCamera):
     }
     READ_ONLY = {DP_FOCUS_MODE, DP_AE_MODE}        # the lens switch and the mode dial decide these on a Canon
 
-    def __init__(self, host: str = "usb", client=None, vendor: int | None = None):
-        super().__init__(host, client, vendor)
+    def __init__(self, host: str = "usb", client=None, vendor: int | None = None, **wifi):
+        super().__init__(host, client, vendor, **wifi)
         self.values: dict[int, int] = {}            # Canon code -> current value
         self.lists: dict[int, list[int]] = {}       # Canon code -> allowed values
         self.added: list[tuple[int, int]] = []      # (handle, format) of new files the camera announced

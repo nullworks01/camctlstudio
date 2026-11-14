@@ -213,7 +213,8 @@ class CaptureRun:
                     self._want(fm.CODES[key], v)
             fm.remember("video", self.props())
         else:
-            if self.props()[PROPS["exposure_mode"]].value != PHOTO_M:
+            em = self.props().get(PROPS["exposure_mode"])     # some Wi-Fi cameras do not report it
+            if em is not None and em.value != PHOTO_M:
                 self._want(PROPS["exposure_mode"], PHOTO_M)
                 time.sleep(0.8)                      # photo-only settings unlock a moment after the mode change
             prof = self.profile()
