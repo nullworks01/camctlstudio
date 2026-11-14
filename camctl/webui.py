@@ -450,7 +450,7 @@ class Studio:
     def _pump(self) -> None:
         stamps: deque = deque(maxlen=60)
         last_crc, last_req = None, 0.0
-        while True:
+        while not getattr(self, "_shut", False):   # _shut: this Studio is finished for good (tests)
             if self.released or time.time() - self.last_view_req > 3:
                 _real_sleep(0.1)
                 continue
@@ -577,10 +577,7 @@ def _camera_on_usb() -> bool:
     """Is a camera Studio can drive (any maker with a driver) on the USB bus? Errors are passed on (= can't tell)."""
     from .drivers import registry
     from .ptpusb import find_ptp_cameras
-    if find_ptp_cameras(registry.SONY_VID):              # the tested camera first, as before
-        return True
-    vids = registry.controllable_vendors() - {registry.SONY_VID}
-    return any(getattr(d, "idVendor", None) in vids for d in find_ptp_cameras(None))
+    return bool(find_ptp_cameras(registry.controllable_vendors()))   # one pass; other devices on the bus are not read
 
 
 def _best_live_view_quality(cam) -> None:

@@ -24,11 +24,14 @@ def _backend():
         return None
 
 
-def find_ptp_cameras(vendor: int | None = None) -> list:
+def find_ptp_cameras(vendor: int | set | frozenset | None = None) -> list:
+    """PTP cameras on the bus. `vendor` is one USB vendor id or a set of them; other makers' devices are skipped
+    before their descriptors are read (reading every device on the bus is slow on Windows)."""
     import usb.core
+    vendors = None if vendor is None else ({vendor} if isinstance(vendor, int) else set(vendor))
     found = []
     for dev in usb.core.find(find_all=True, backend=_backend()):
-        if vendor is not None and dev.idVendor != vendor:
+        if vendors is not None and dev.idVendor not in vendors:
             continue
         try:
             for cfg in dev:

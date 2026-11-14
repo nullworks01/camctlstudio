@@ -1,4 +1,4 @@
-"""Stop every test's Studio live-view pump afterwards, so background threads don't pile up
+"""End every test's Studio live-view pump afterwards, so background threads don't pile up
 (each one keeps pulling frames from its fake camera and slows the whole suite down)."""
 import pytest
 
@@ -23,6 +23,13 @@ def _stop_pumps():
         st = _studios.pop()
         st.released = True
         st.last_view_req = 0.0
+        st._shut = True                       # the pump thread ends instead of idling forever
+        card = getattr(st, "card", None)
+        if card is not None:                  # a capture-card / webcam ffmpeg left running by a test
+            try:
+                card.stop()
+            except Exception:  # noqa: BLE001
+                pass
 
 
 @pytest.fixture(autouse=True)

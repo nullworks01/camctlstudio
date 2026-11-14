@@ -124,10 +124,10 @@ def usb_cameras() -> list[tuple[int, int]]:
     """(vendor id, product id) of every PTP camera on the USB bus whose maker Studio can drive."""
     try:
         from ..ptpusb import find_ptp_cameras
-        devs = find_ptp_cameras(None)
+        ok = controllable_vendors()
+        devs = find_ptp_cameras(ok)                        # only makers Studio can drive; other devices are not read
     except Exception:  # noqa: BLE001 - no pyusb / no libusb: nothing found
         return []
-    ok = controllable_vendors()
     return [(d.idVendor, d.idProduct) for d in devs if d.idVendor in ok]
 
 
