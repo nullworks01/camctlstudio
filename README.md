@@ -7,6 +7,10 @@ what is in front of it: talking-head video, shorts, photos and video calls. Stud
 looks at the picture, measures the light, sets exposure, focus, white balance and the file format, and then **locks**
 everything. After that nothing changes by itself; you decide when something changes.
 
+![The main screen of camctl Studio](docs/img/main.jpg)
+
+**New here?** The [visual guide](docs/guide.md) shows every screen and how to use it, step by step.
+
 **Status: useful, and early.** Tested on one camera. Photos, focus, exposure setup, saved setups and focus stacking
 work on that camera; video recording from the app is being verified after the latest fix.
 
