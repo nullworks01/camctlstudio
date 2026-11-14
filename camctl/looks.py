@@ -150,7 +150,19 @@ def apply_table(img: np.ndarray, tab: np.ndarray, strength: float = 1.0) -> np.n
 
 
 # ---------------------------------------------------------------- pictures
+SAMPLE_PHOTO = Path(__file__).resolve().parent / "assets" / "looks_sample.jpg"
+
+
 def sample_picture(w: int = 480, h: int = 300) -> bytes:
+    """The picture the six looks are shown on: a stock photo shipped with Studio (Vitaly Gariev on Unsplash,
+    Unsplash License; never a photo of the user or from the camera), without EXIF. Falls back to a drawn sample
+    when the file is missing."""
+    if SAMPLE_PHOTO.is_file() and (w, h) == (480, 300):
+        return SAMPLE_PHOTO.read_bytes()
+    return drawn_sample(w, h)
+
+
+def drawn_sample(w: int = 480, h: int = 300) -> bytes:
     """A DRAWN sample (no photo of anyone): sky, a face-coloured patch, a grey ramp and colour chips."""
     from PIL import Image, ImageDraw
     im = Image.new("RGB", (w, h))

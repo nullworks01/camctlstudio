@@ -424,6 +424,9 @@ body[data-tray="1"] .dz-bottom{opacity:0;pointer-events:none}
   color:var(--text);scroll-snap-align:center;transition:border-color .2s,transform .25s var(--spring),background .2s}
 .card:active{transform:scale(.97)}.card[aria-pressed="true"]{border-color:var(--text);background:rgba(255,255,255,.12)}
 .card svg{display:block;width:100%;aspect-ratio:8/5;border-radius:14px}
+.card .art{position:relative;display:block;width:100%;aspect-ratio:8/5;border-radius:14px;overflow:hidden}
+.card .art svg{position:absolute;inset:0;height:100%;border-radius:0}
+.card .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .card b{display:block;margin:8px 6px 0;font-size:16px;font-weight:600}.card span{display:block;margin:1px 6px 0;font-size:13px;color:var(--dimw)}
 .card em{display:inline-block;margin:6px 6px 0;font-style:normal;font-size:12px;font-weight:600;color:var(--lock)}
 .trayacts{display:flex;gap:8px;margin:12px 4px 0}
@@ -2758,6 +2761,8 @@ buildDesign(); renderDz();
 /* ================= words (one name for one thing, everywhere) ================= */
 const WORDS={log:"Log",v709:"709",focus:"Focus",white:"White",shoot:"Shoot",take:"Take",shot:"What are you shooting?"};
 /* ================= the tray: visual pickers on the camera's real values ================= */
+/* card pictures: a stock photo from Studio (/api/art) over the drawing, which stays when there is no photo */
+function cardArt(key,svg){ return `<span class="art"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice">${svg}</svg><img src="/api/art/${key}.jpg" alt="" loading="lazy" onerror="this.remove()"></span>`; }
 const SHOT_ART={
   portrait:'<rect width="80" height="50" fill="#243247"/><circle cx="62" cy="13" r="6" fill="#fff" opacity=".4"/><circle cx="14" cy="20" r="4" fill="#8fd" opacity=".35"/><circle cx="70" cy="30" r="3.5" fill="#f9c" opacity=".4"/><path d="M18 50c0-11 8-16 19-16s19 5 19 16z" fill="#161d29"/><circle cx="37" cy="23" r="10" fill="#dcb69c"/>',
   interview:'<rect width="80" height="50" fill="#2a2e36"/><rect x="50" y="7" width="20" height="26" rx="2" fill="#a9c1e4" opacity=".55"/><path d="M8 50c0-10 7-14 16-14s16 4 16 14z" fill="#171b22"/><circle cx="24" cy="26" r="8.5" fill="#d3ab92"/><rect x="34" y="34" width="2" height="9" rx="1" fill="#777"/><circle cx="35" cy="33" r="2.4" fill="#999"/>',
@@ -2805,7 +2810,7 @@ function drawTray(){ const k=TR.k; if(!k) return; if(k.startsWith("sp_")) return
       `<div class="ends"><span>Cooler</span><span class="key">${m?"Studio measured "+m+" K":"Not measured yet"}</span><span>Warmer</span></div>`+
       '<div class="trayacts"><button class="tbtn" id="trWbFind">Find it automatically</button><button class="tbtn" id="trWbCard">Use a grey card</button></div>'; }
   if(k==="shot"){ const seen=(S.op&&S.op.decision&&S.op.decision.shot)||null, sel=TR.shot||seen||"portrait";
-    h='<div class="cards">'+Object.keys(SHOT_INFO).map(key=>`<button class="card" aria-pressed="${key===sel}" data-s="${key}"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice">${SHOT_ART[key]}</svg><b>${SHOT_INFO[key][0]}</b><span>${SHOT_INFO[key][1]}</span>${key===seen?"<em>Studio sees this</em>":""}</button>`).join("")+'</div>'; }
+    h='<div class="cards">'+Object.keys(SHOT_INFO).map(key=>`<button class="card" aria-pressed="${key===sel}" data-s="${key}">${cardArt(key,SHOT_ART[key])}<b>${SHOT_INFO[key][0]}</b><span>${SHOT_INFO[key][1]}</span>${key===seen?"<em>Studio sees this</em>":""}</button>`).join("")+'</div>'; }
   $("#trBody2").innerHTML=h;
   const on=$("#trBody2").querySelector('[aria-pressed="true"]'); if(on){ const c=on.parentNode; c.scrollLeft=on.offsetLeft-(c.clientWidth-on.offsetWidth)/2; }
   if(k==="wb"){ $("#trWbFind").onclick=()=>{ closeTray(); $("#wbcard").classList.add("on"); S.wbBox=true; drawGuides(); $("#wbFind").click(); };
@@ -2872,7 +2877,7 @@ function moreModel(){ const on=o=>S.overlays.has(o)?"On":"Off";
 function renderMore(){ let box=$("#mGroups"); if(!box){ box=document.createElement("div"); box.className="mgroups"; box.id="mGroups"; $("#mScroll").prepend(box); }
   const model=moreModel(); S.moreActs=[];
   box.innerHTML=model.map(([h,rows])=>(h?`<h3>${esc(h)}</h3>`:"")+(rows[0]&&rows[0].cards?
-      '<div class="cards" style="padding:4px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow:visible">'+rows[0].cards.map(k=>`<button class="card" data-spk="${k}" style="min-width:0;width:auto"><svg viewBox="0 0 80 50" preserveAspectRatio="xMidYMid slice">${SPECIAL[k].art}</svg><b>${SPECIAL[k].title}</b><span>${SPECIAL[k].line}</span></button>`).join("")+'</div>'
+      '<div class="cards" style="padding:4px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow:visible">'+rows[0].cards.map(k=>`<button class="card" data-spk="${k}" style="min-width:0;width:auto">${cardArt(k,SPECIAL[k].art)}<b>${SPECIAL[k].title}</b><span>${SPECIAL[k].line}</span></button>`).join("")+'</div>'
       :'<div class="mgrp">'+rows.map(r=>{ if(r.note) return `<div class="mnote" style="padding:12px 14px;color:var(--dimw);font-size:14px">${esc(r.note)}</div>`; S.moreActs.push(r.act); return `<button class="mrow${r.sub?" sub":""}" data-i="${S.moreActs.length-1}">${esc(r.label)}<span>${esc(r.val||"")}</span></button>`; }).join("")+'</div>')).join("");
   box.querySelectorAll("[data-spk]").forEach(b=>b.onclick=()=>{ $("#moreSheet").classList.remove("on"); spSheet(b.dataset.spk); });
   box.querySelectorAll(".mrow").forEach(b=>b.onclick=()=>{ S.moreActs[+b.dataset.i](); if(!b.classList.contains("sub")) setTimeout(renderMore,150); }); }

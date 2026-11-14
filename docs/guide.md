@@ -6,6 +6,7 @@ How to use Studio, screen by screen. For installing it, see the [README](../READ
 > [Vitaly Gariev on Unsplash](https://unsplash.com/photos/young-man-with-glasses-smiles-at-the-camera-xhQUcSQpotU))
 > standing in for the camera's picture; with your camera connected you see its live picture there. Claude's answers in
 > the screenshots are made up by the simulator and say so.
+> The pictures on the cards and in Looks are stock photos too: see the [photo credits](photo-credits.md).
 
 **Contents**
 

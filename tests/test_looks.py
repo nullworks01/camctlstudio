@@ -106,6 +106,15 @@ def test_clip_copy_keeps_the_original(tmp_path):
     assert not (out.parent / ".work").exists()
 
 
-def test_the_sample_is_drawn_never_a_photo():
+def test_the_sample_is_the_shipped_stock_photo_without_exif():
+    assert looks.SAMPLE_PHOTO.is_file()
+    assert looks.sample_picture() == looks.SAMPLE_PHOTO.read_bytes()
     im = Image.open(io.BytesIO(looks.sample_picture()))
     assert im.size == (480, 300) and not im.getexif()
+
+
+def test_the_drawn_fallback_is_used_without_the_photo(monkeypatch, tmp_path):
+    monkeypatch.setattr(looks, "SAMPLE_PHOTO", tmp_path / "missing.jpg")
+    im = Image.open(io.BytesIO(looks.sample_picture()))
+    assert im.size == (480, 300) and not im.getexif()
+    assert looks.sample_picture() == looks.drawn_sample()

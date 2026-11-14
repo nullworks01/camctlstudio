@@ -2,6 +2,7 @@
 switch (off at every start), and nothing Studio measures or sends ever sees a look."""
 import asyncio
 import hashlib
+import io
 import re
 from pathlib import Path
 
@@ -107,3 +108,20 @@ def test_the_preview_only_reaches_the_picture_when_switched_on(sim):
     assert isinstance(r, dict), r
     assert start is None                                                             # off at every start
     assert r["off"] <= 2 and r["on"] > 10 and r["same_hist"]                          # histogram from the camera frame
+
+
+def test_card_pictures_are_stock_photos_and_only_named_ones():
+    from pathlib import Path
+    from PIL import Image
+    from starlette.testclient import TestClient
+    from camctl import webui
+    from test_autopilot import StubCam, _studio_with
+    cards = Path(webui.__file__).resolve().parent / "assets" / "cards"
+    with TestClient(webui.build_app(_studio_with(StubCam()))) as c:
+        for key in ("portrait", "interview", "product", "daylight", "lowlight", "focusstack", "burst", "match", "auto"):
+            r = c.get(f"/api/art/{key}.jpg")
+            assert r.status_code == 200 and r.content == (cards / f"{key}.jpg").read_bytes()
+            im = Image.open(io.BytesIO(r.content))
+            assert im.size == (480, 300) and not im.getexif()
+        for bad in ("nothing", "..%2F..%2Fkeystore", "studio"):
+            assert c.get(f"/api/art/{bad}.jpg").status_code == 404

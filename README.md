@@ -1,9 +1,9 @@
 # camctl Studio
 
-**An AI camera operator for people who shoot alone.**
+**Turn your camera into a professional studio, run by AI.**
 
 camctl Studio sets up and operates your camera the way a professional photographer would, so you can concentrate on
-what is in front of it: talking-head video, shorts, photos and video calls. Studio (with Claude, if you add your key)
+what is in front of it: portraits, products, talking-head video, shorts and video calls. Studio (with Claude, if you add your key)
 looks at the picture, measures the light, sets exposure, focus, white balance and the file format, and then **locks**
 everything. After that nothing changes by itself; you decide when something changes.
 
@@ -11,7 +11,7 @@ everything. After that nothing changes by itself; you decide when something chan
 
 <sub>The screens come from Studio's built-in simulator. The person is an example photo by
 [Vitaly Gariev on Unsplash](https://unsplash.com/photos/young-man-with-glasses-smiles-at-the-camera-xhQUcSQpotU),
-standing in for the camera's picture.</sub>
+standing in for the camera's picture. All photos used: [photo credits](docs/photo-credits.md).</sub>
 
 **New here?** The [visual guide](docs/guide.md) shows every screen and how to use it, step by step.
 

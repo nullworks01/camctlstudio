@@ -3557,10 +3557,21 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                              "files": files[:60], "job": {k: v for k, v in look_job.items() if k != "stop"},
                              "ffmpeg": video.find_ffmpeg() is not None})
 
+    CARD_ART = ("portrait", "interview", "product", "daylight", "lowlight", "focusstack", "burst", "match", "auto")
+
+    def card_art(request: Request):
+        """The picture on a shot card or special-shot card: a stock photo shipped in camctl/assets/cards (Unsplash
+        License, never the user). Only the named cards; the page keeps its drawing when there is none."""
+        key = request.path_params["key"]
+        f = Path(__file__).resolve().parent / "assets" / "cards" / f"{key}.jpg"
+        if key not in CARD_ART or not f.is_file():
+            return JSONResponse({"error": "no picture"}, status_code=404)
+        return Response(f.read_bytes(), media_type="image/jpeg", headers={"Cache-Control": "max-age=3600"})
+
     _sample_cache: dict = {}
 
     def looks_sample(request: Request):
-        """The six looks on the same DRAWN sample picture (never a photo of anyone)."""
+        """The six looks on the same sample picture: the stock photo shipped in camctl/assets (never the user)."""
         key = request.path_params["key"]
         if key != "original" and key not in looks.BY_KEY:
             return JSONResponse({"error": "unknown look"}, status_code=404)
@@ -4792,6 +4803,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         Route("/api/settings", settings),
         Route("/api/formats", formats_view, methods=["GET", "POST"]),
         Route("/api/sound/ask", sound_ask, methods=["POST"]),
+        Route("/api/art/{key}.jpg", card_art),
         Route("/api/looks", looks_list),
         Route("/api/looks/sample/{key}.jpg", looks_sample),
         Route("/api/looks/table/{key}", looks_table),

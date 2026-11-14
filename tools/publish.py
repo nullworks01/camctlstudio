@@ -20,16 +20,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # allow-list: only these are ever published
 INCLUDE = [
-    "camctl/**/*.py", "camctl/studio_pro.html", "camctl/presets.json", "camctl/assets/*.ico",
+    "camctl/**/*.py", "camctl/studio_pro.html", "camctl/presets.json", "camctl/assets/*.ico", "camctl/assets/looks_sample.jpg", "camctl/assets/cards/*.jpg",
     "tests/*.py", "tests/data/*.json", "tests/data/lineup_ref.jpg",
     "tools/battery_guard.py", "tools/check_page.py", "tools/leave_as_set_up.py",
     "tools/publish.py", "tools/sim_studio.py", "tools/start_server.pyw", "tools/studio_app.pyw",
     "README.md", "LICENSE", "CONTRIBUTING.md", "requirements.txt", "requirements-optional.txt", "pyproject.toml", "start_studio.ps1",
     "Install or repair camctl Studio.cmd", ".gitignore", ".github/ISSUE_TEMPLATE/*.md",
-    "docs/guide.md", "docs/img/*.jpg",
+    "docs/guide.md", "docs/photo-credits.md", "docs/img/*.jpg",
 ]
 NEVER = re.compile(r"(\.bak$|\.r\d+\.bak$|__pycache__|\.pyc$|/logs/|/captures/|AUDIT\.md|publish_list\.txt|\.log$)", re.I)
-IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico"}     # a generated picture and the app icon
+IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico",     # a generated picture and the app icon
+             "camctl/assets/looks_sample.jpg"}   # the Looks sample: stock photo (Vitaly Gariev, Unsplash License)
+# the pictures on the shot cards and special-shot cards: stock photos (Unsplash License), named one by one
+CARD_PICS = ("portrait", "interview", "product", "daylight", "lowlight", "focusstack", "burst", "match", "auto")
+IMAGES_OK |= {f"camctl/assets/cards/{n}.jpg" for n in CARD_PICS}
 # the visual guide's pictures (docs/img): screenshots of the SIMULATOR only, never a camera frame. The person in them is
 # a free stock photo (Vitaly Gariev on Unsplash, Unsplash License) put in the place of the simulator's test card.
 # Each picture is named here so that no other picture can slip in
