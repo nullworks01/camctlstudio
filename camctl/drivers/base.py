@@ -44,9 +44,17 @@ def brand_of(vendor_id: int | None) -> str | None:
     return BRANDS.get(vendor_id) if vendor_id is not None else None
 
 
-def guide(brand: str | None, model: str | None, connected: bool, route: str | None = None) -> dict:
-    """What to tell the user about this camera, in plain words. kind: tested / untested / unsupported / unknown."""
+def guide(brand: str | None, model: str | None, connected: bool, route: str | None = None, usb: dict | None = None) -> dict:
+    """What to tell the user about this camera, in plain words. kind: tested / untested / unsupported / unknown /
+    usb_mode (on the cable, but in a USB mode that only copies files). usb: registry.lookup_usb() for the cable."""
     info = _registry.brand_info(brand)
+    if usb and not usb.get("control") and not connected and _registry.driver_name(brand):
+        name = f"{brand} {usb.get('model') or model or 'camera'}"
+        return {"kind": "usb_mode", "title": f"{name}: switch the USB mode",
+                "text": (f"The {name} is on the cable in its {usb.get('usb_mode') or 'file copy'} USB mode, which only "
+                         "copies files. Set the camera's USB connection to remote control (PC Remote / PTP / tether); "
+                         "Studio then connects by itself."),
+                "steps": list(info.get("camera_setup") or [])}
     if brand and not _registry.driver_name(brand):
         return {"kind": "unsupported", "title": f"{brand} cameras are not supported yet",
                 "text": (f"camctl Studio can't control {brand} cameras yet. Nothing was changed on your camera. "
@@ -61,8 +69,11 @@ def guide(brand: str | None, model: str | None, connected: bool, route: str | No
         return {"kind": "tested", "title": f"Sony {model}", "text": ("Tested camera." if connected else
                 "Set the camera up like this, then Studio connects by itself."), "steps": [] if connected else steps}
     if brand == "Sony":
+        known = bool(model) and any(model.lower() in n.lower() or n.lower() in model.lower()
+                                    for n in _registry.control_pids("Sony"))
         return {"kind": "untested", "title": f"Sony {model or 'camera'}: untested",
-                "text": ("This Sony model is untested. Turn on PC Remote (MENU › Network › PC Remote Function) and use "
+                "text": (("libgphoto2 lists this model as remote-controllable. " if known else "") +
+                         "This Sony model is untested. Turn on PC Remote (MENU › Network › PC Remote Function) and use "
                          "\"Check this camera\" in All settings › Studio: it tests what works without taking a photo."),
                 "steps": ["MENU › Network › PC Remote Function › PC Remote: On.", "Then: All settings › Studio › Check this camera."]}
     if brand:

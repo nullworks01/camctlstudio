@@ -16,6 +16,7 @@ import hmac
 import json
 import math
 import os
+import re
 import secrets
 import socket
 import subprocess
@@ -34,6 +35,7 @@ from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Redire
 from starlette.routing import Route
 
 from .drivers.sony import (SP_FLASH_COMP, SP_DRO, SP_IMAGE_SIZE, SP_SHUTTER, SP_STATUS, SP_COLOR_TEMP, SP_WB_SHIFT_GM, SP_ASPECT, SP_FOCUS_INDICATION, SP_PENDING_IMAGES, SP_AF_LOCK, SP_BATTERY, SP_PICTURE_EFFECT, SP_WB_SHIFT_AB, SP_REC_STATE, SP_ISO, SP_SAVE_TO, SP_FOCUS_AREA, SP_PICTURE_PROFILE, SP_MOVIE_FORMAT, SP_MOVIE_SETTING, SP_SHOOT_CLASS, SP_MEDIA_STATUS, SP_SHOTS_LEFT, SP_REC_TIME_LEFT, SP_FOCUS_POSITION, SP_STILL_FORMAT, SP_ZOOM_POSITION, SP_JPEG_QUALITY, SP_LIVE_VIEW_QUALITY, SC_STILL_D2C7)  # noqa: E402,F401  Sony codes by name
+from . import liveroute  # noqa: E402
 from . import assistant, audiocheck, autofix, capture_card, looks, playground, reel, camprofile, automation, capture, coach, director, followlight, formats, handoff, importer, lut, measure, presets, scene, setups, shotplan, smartphoto, video, wbauto, wifi
 from .drivers.sony import PROPS, SonyCamera, format_value
 from .drivers.ptpstd import Unsupported  # noqa: E402  (a driver that cannot do something, not a lost link)
@@ -140,6 +142,8 @@ class Studio:
         self.frame_seq = 0
         self.frame_error = ""
         self.no_picture = ""                 # why a connected camera shows no picture (said on the screen)
+        self.picture_route: dict | None = None   # liveroute.choose() for a camera without PTP live view
+        self._route_at, self._route_busy = 0.0, False
         self.fps = 0.0
         self.last_view_req = 0.0
         self.released = False
@@ -318,7 +322,7 @@ class Studio:
             self.fail_since = time.time()          # Studio started with the camera off: that is a failure too, said plainly
         if not self.fail_since:
             if self.no_picture and self.cam is not None:
-                return {"state": "ok", "message": "", "no_picture": self.no_picture + " Settings and the shutter work."}
+                return {"state": "ok", "message": "", "no_picture": self.no_picture}
             return {"state": "ok", "message": ""}
         down = time.time() - self.fail_since
         if down < self.WATCHDOG_S:
@@ -331,6 +335,12 @@ class Studio:
                 self._nodrv, self._nodrv_at = nodrv, time.time()
             except Exception:  # noqa: BLE001
                 nodrv = []
+            mode = _usb_mode_of(nodrv[0].get("instance", "")) if nodrv else None
+            if mode and not mode["control"]:
+                return {"state": "absent", "down_s": round(down, 1), "usb_mode": True,
+                        "message": f"The Sony {mode['model']} is on the cable in its {mode['usb_mode'] or 'file copy'} "
+                                   "USB mode, which only copies files. On the camera set MENU › Network › PC Remote "
+                                   "Function › PC Remote: On (USB connection: PC Remote); Studio connects by itself."}
             if nodrv:
                 return {"state": "absent", "down_s": round(down, 1), "no_driver": True,
                         "message": f"A Sony camera ({nodrv[0]['name']}) is on the cable, but Windows has no driver for this camera "
@@ -466,7 +476,9 @@ class Studio:
                 if jpg is None:
                     jpg = self.run(lambda c: c.live_view(), keep_cache=True)
             except Unsupported as exc:            # e.g. a plain-PTP camera: connected, but it sends no picture
-                self.frame_error = self.no_picture = str(exc)
+                self.frame_error = str(exc)
+                self.no_picture = (self.picture_route or {}).get("say") or (str(exc) + " Settings and the shutter work.")
+                self._find_picture_route()          # its webcam mode or a capture card instead (see liveroute.py)
                 with self.frame_cond:
                     self.frame_cond.notify_all()
                 _real_sleep(5.0)
@@ -498,6 +510,35 @@ class Studio:
                 rb.pause(bool(self.recording))
                 rb.feed(jpg, now)
 
+    def _find_picture_route(self) -> None:
+        """A camera without PTP live view: look (at most every 30 s, in the background) for its own webcam mode, which
+        Studio then uses by itself, or a capture card, which is only offered. Opens nothing else."""
+        if self._route_busy or time.time() - self._route_at < 30 or getattr(self, "card", None) is not None:
+            return
+        self._route_busy, self._route_at = True, time.time()
+
+        def work():
+            try:
+                cam = self.cam
+                if cam is None:
+                    return
+                devs = capture_card.list_devices()
+                brand = getattr(cam, "brand", None) or "Sony"
+                r = liveroute.choose(brand, camprofile.model_key(getattr(cam, "name", "")), False, devs.get("video") or [])
+                self.picture_route = r
+                if r["kind"] == "webcam" and devs.get("ffmpeg") and getattr(self, "card", None) is None:
+                    src = capture_card.CardSource(r["device"])
+                    src.start()
+                    self._card_seq = 0
+                    self.card, self.card_note, self.no_picture = src, r["say"], ""
+                else:
+                    self.no_picture = r["say"]
+            except Exception as exc:  # noqa: BLE001 - never break the picture loop
+                self.no_picture = self.no_picture or f"No live picture from this camera ({exc})."
+            finally:
+                self._route_busy = False
+        threading.Thread(target=work, daemon=True, name="picture-route").start()
+
     def card_fallback(self, note: str) -> None:
         """Back to the camera cable picture (the card unplugged or silent), said in words."""
         card, self.card = getattr(self, "card", None), None
@@ -523,12 +564,23 @@ class Studio:
 PROP_LIVE_VIEW_QUALITY = SP_LIVE_VIEW_QUALITY   # Sony "Live View image quality" (1 standard, 2 high) on bodies that have it
 
 
+def _usb_mode_of(instance: str) -> dict | None:
+    """libgphoto2's entry for a Windows device id like USB\\VID_054C&PID_0DE3\\...: model and USB mode."""
+    m = re.search(r"VID_([0-9A-F]{4})&PID_([0-9A-F]{4})", instance.upper())
+    if not m:
+        return None
+    from .drivers import registry
+    return registry.lookup_usb(int(m[1], 16), int(m[2], 16))
+
+
 def _camera_on_usb() -> bool:
     """Is a camera Studio can drive (any maker with a driver) on the USB bus? Errors are passed on (= can't tell)."""
     from .drivers import registry
     from .ptpusb import find_ptp_cameras
-    vids = registry.controllable_vendors()
-    return any(d.idVendor in vids for d in find_ptp_cameras(None))
+    if find_ptp_cameras(registry.SONY_VID):              # the tested camera first, as before
+        return True
+    vids = registry.controllable_vendors() - {registry.SONY_VID}
+    return any(getattr(d, "idVendor", None) in vids for d in find_ptp_cameras(None))
 
 
 def _best_live_view_quality(cam) -> None:
@@ -2831,7 +2883,14 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 except Exception:  # noqa: BLE001
                     ready_cache.update(t=now, usb=[])
             other = ready_cache.get("usb") or []
-        g = (drvbase.guide(other[0]["brand"], None, False) if other else
+        usb0 = None
+        if other:
+            try:
+                from .drivers import registry as _reg
+                usb0 = _reg.lookup_usb(int(other[0]["vendor_id"], 16), int(other[0]["product_id"], 16))
+            except Exception:  # noqa: BLE001
+                usb0 = None
+        g = (drvbase.guide(other[0]["brand"], (usb0 or {}).get("model"), False, usb=usb0) if other else
              drvbase.guide(getattr(studio.cam, "brand", "Sony"), model, cam_ok) if cam_ok else drvbase.guide("Sony", "ZV-E10", False))
         text = (f"Connected: {studio.cam.name}" if cam_ok and studio.cam else
                 (g["text"] if other else h.get("message") or "Looking for the camera on the USB cable and on Wi-Fi…"))

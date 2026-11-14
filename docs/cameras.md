@@ -19,6 +19,30 @@ only when you press Submit on the issue page yourself.
 Not supported: GoPro and Blackmagic cameras (they are controlled through their own apps / APIs, not PTP), Canon
 PowerShots without EOS remote mode, Wi-Fi for Canon and Nikon.
 
+## The live picture, per camera
+
+Studio picks the picture source by itself, best first, and says on screen where the picture comes from or why there
+is none:
+
+1. **The camera's own live view over the control cable** (Sony, Canon EOS, Nikon): in step with every setting.
+2. **The camera's webcam mode** (Fujifilm X Webcam / USB Webcam, LUMIX Webcam, OM System Webcam, EOS Webcam Utility,
+   Nikon Webcam Utility, Sony USB Streaming): a video device named after the maker. It is the connected camera itself,
+   so Studio uses it by itself when the camera gives no live view over PTP. On many bodies webcam mode and remote
+   control are different USB modes, so one cable gives one of them; a second connection (or an HDMI card) gives both.
+3. **An HDMI capture card** (Cam Link and similar) on the camera's clean HDMI output: works with every camera that has
+   one. Studio never opens a capture card by itself; it offers it, and you pick it in More › Capture card.
+
+Studio never opens the laptop's own webcam.
+
+## Models Studio recognises
+
+`camctl/drivers/usb_models.json` holds libgphoto2's list of 789 camera models by USB id (names and ids only), with
+whether each USB mode allows remote control and a live picture. Studio uses it to name a camera before it connects
+and to say plainly when a camera is in a USB mode that only copies files (for example a Sony in MTP mode instead of
+PC Remote). It lists 51 remote-controllable Sony models (ZV-E10, ZV-1, a6100 / a6400 / a6600 / a6700, a7 III /
+IV, a7C / a7C II, a7R III-V, a7S III, a1, a9 III, FX3 and others), all driven by the same Sony driver as the ZV-E10.
+Recognised is not tested: every model but the ZV-E10 is untested.
+
 ## What stays on the camera
 
 - **Canon**: the mode dial and the AF / MF switch on the lens. Set the dial to M.

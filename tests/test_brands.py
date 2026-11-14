@@ -276,3 +276,62 @@ def test_raw_files_get_their_makers_ending():
     assert file_ext(tiff, "Canon") == ".cr2" and file_ext(tiff, "Nikon") == ".nef"
     assert file_ext(b"\x00\x00\x00\x18ftypcrx " + b"\x00" * 8, "Canon") == ".cr3"
     assert file_ext(b"FUJIFILMCCD-RAW 0201") == ".raf" and file_ext(b"\xff\xd8\xff\xe0") == ".jpg"
+
+
+# -- recognising models by USB id, and the live picture route ---------------------------------------------------------
+def test_usb_ids_name_the_model_and_its_usb_mode():
+    z = registry.lookup_usb(0x054C, 0x0D97)                   # his ZV-E10 in PC Remote (measured 11 Nov 2026)
+    assert z == {"brand": "Sony", "model": "ZV-E10", "usb_mode": "Control", "control": True, "live_picture": True}
+    m = registry.lookup_usb(0x054C, 0x0DE3)                   # the same camera in MTP mode: files only
+    assert m["model"] == "ZV-E10" and m["control"] is False
+    assert registry.lookup_usb(0x1234, 0x5678) is None
+    sony = registry.control_pids("Sony")
+    assert {"ZV-E10", "ILCE-6400", "Alpha-A7 IV", "ILME-FX3"} <= set(sony) and len(sony) > 40
+
+
+def test_guide_says_switch_the_usb_mode():
+    g = base.guide("Sony", None, connected=False, usb=registry.lookup_usb(0x054C, 0x0DE3))
+    assert g["kind"] == "usb_mode" and "only copies files" in g["text"] and "ZV-E10" in g["title"]
+    g = base.guide("Sony", "ILCE-6400", connected=True)
+    assert g["kind"] == "untested" and "remote-controllable" in g["text"]
+
+
+def test_picture_route_order():
+    from camctl import liveroute
+    assert liveroute.choose("Canon", "EOS R50", True, ["Cam Link 4K"])["kind"] == "ptp"
+    r = liveroute.choose("Fujifilm", "X-S10", False, ["Integrated Camera", "FUJIFILM X Webcam", "Cam Link 4K"])
+    assert r["kind"] == "webcam" and r["device"] == "FUJIFILM X Webcam" and r["auto"]
+    r = liveroute.choose("Fujifilm", "X-S10", False, ["Integrated Camera", "Cam Link 4K"])
+    assert r["kind"] == "card_offer" and not r["auto"] and r["devices"] == ["Cam Link 4K"]   # offered, never opened
+    r = liveroute.choose("Panasonic", "DC-S5", False, ["Integrated Camera"])                  # the laptop's own webcam
+    assert r["kind"] == "none" and "HDMI capture card" in r["say"] and "LUMIX" in r["say"]
+    assert liveroute.webcam_for("Fujifilm", ["Integrated Camera"]) is None
+
+
+def test_a_camera_without_ptp_picture_uses_its_webcam_mode(monkeypatch):
+    """Plain-PTP Fujifilm (simulated) + its webcam device (ffmpeg's test pattern standing in): Studio switches to it."""
+    import time
+    from camctl import capture_card, video, webui
+    if not video.find_ffmpeg():
+        pytest.skip("no ffmpeg here")
+    monkeypatch.setattr(capture_card, "FAKE", True)
+    monkeypatch.setattr(capture_card, "list_devices",
+                        lambda: {"video": ["Integrated Camera", "FUJIFILM X Webcam"], "audio": [], "ffmpeg": True})
+    cam = PTPCamera(client=FakePlainPTP())
+    cam.brand = "Fujifilm"
+    cam.connect()
+    st = webui.Studio("usb")
+    st._new_cam = lambda: cam
+    st.cam = cam
+    try:
+        frame, seq = None, -1
+        deadline = time.time() + 20
+        while time.time() < deadline and frame is None:
+            frame, seq = st.latest_frame(-1, timeout=1.0)
+        assert st.card is not None and st.card.video_name == "FUJIFILM X Webcam"
+        assert frame is not None and frame[:2] == b"\xff\xd8"
+        assert "webcam mode" in st.card_note
+    finally:
+        if getattr(st, "card", None) is not None:
+            st.card.stop()
+        st.released = True

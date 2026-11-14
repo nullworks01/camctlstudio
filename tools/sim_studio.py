@@ -108,6 +108,8 @@ def main() -> None:
     ap.add_argument("--night", action="store_true", help="exposed for a dark room: f/4 1/125 ISO 6400 (noisy stills)")
     ap.add_argument("--brand", choices=["canon", "nikon", "ptp"], help="a SIMULATED Canon / Nikon / plain-PTP camera "
                     "through Studio's real (untested) driver for that maker (tests/fake_ptp_brands.py)")
+    ap.add_argument("--webcam", action="store_true", help="with --brand ptp: a SIMULATED Fujifilm webcam-mode device "
+                    "(ffmpeg's test pattern) so Studio's picture-route choice can be seen")
     ap.add_argument("--split", type=float, default=0.0, help="stops darker on the shadow half of the face (key light from the side)")
     a = ap.parse_args()
     cam = ZVE10(ev=a.ev, mode="video" if a.video else "photo", battery=a.battery, model=a.model)
@@ -163,6 +165,10 @@ def main() -> None:
         if a.brand == "ptp":
             cam.brand = "Fujifilm"
         cam.connect()
+        from camctl import capture_card
+        capture_card.FAKE = bool(a.webcam)                 # never a real device in the simulator
+        capture_card.list_devices = (lambda: {"video": ["FUJIFILM X Webcam"], "audio": [], "ffmpeg": True}) \
+            if a.webcam else (lambda: {"video": [], "audio": [], "ffmpeg": True})
         measure._faces_cv = lambda im: [(int(im.width * 0.4), int(im.height * 0.2), int(im.width * 0.2), int(im.height * 0.55))]
     st.cam = None if a.nocam else cam
 
