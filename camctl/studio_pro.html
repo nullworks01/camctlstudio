@@ -55,11 +55,11 @@ input[type=range]{padding:0;accent-color:var(--accent)}input[type=checkbox]{acce
 .pane.on{display:block}
 .sec{border-bottom:1px solid var(--line);padding:12px 14px}
 .sec h3{margin:0 0 9px;font-size:10px;letter-spacing:.18em;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;align-items:center}
-.sec h3 small{letter-spacing:0;font-weight:400;color:var(--dim);font-size:11px}
+.sec h3 small{letter-spacing:0;font-weight:400;color:var(--dim);font-size:12px}
 .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .grow{flex:1;min-width:0}
 .kv{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;align-items:center}
-.kv>span{color:var(--muted);font-size:11px;letter-spacing:.04em}
+.kv>span{color:var(--muted);font-size:13px}
 .muted{color:var(--muted)}.dimtxt{color:var(--dim)}.warn{color:var(--accent2)}.okc{color:var(--ok)}.bad{color:var(--rec)}
 .btn-accent{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600}
 .btn-accent:hover{border-color:var(--accent2)}
@@ -111,7 +111,7 @@ table.lt td.m{font-family:var(--mono);white-space:nowrap}
 .ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .ba .after{clip-path:inset(0 0 0 var(--split,50%))}
 .ba .bar{position:absolute;top:0;bottom:0;left:var(--split,50%);width:2px;background:#fff;box-shadow:0 0 8px #000}
-.ba .tag{position:absolute;top:8px;background:#000a;padding:3px 8px;font-size:11px}
+.ba .tag{position:absolute;top:8px;background:#000a;padding:3px 8px;font-size:12px}
 .mbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:14px}
 #propsTable select,#propsTable input{padding:3px}
 /* ================= SIMPLE MODE (default): full-screen monitor, floating glass controls ================= */
@@ -208,7 +208,7 @@ body.armed .view{box-shadow:inset 0 0 0 3px var(--rec)}
 
 /* ================= DESIGN (approved preview, 11 Nov 2026): one block of tokens and components ================= */
 :root{
-  --ink:#05070a; --soft:rgba(255,255,255,.72); --dimw:rgba(255,255,255,.46);
+  --ink:#05070a; --soft:rgba(255,255,255,.72); --dimw:rgba(255,255,255,.62);
   --glass:rgba(24,27,33,.46); --glass-hi:rgba(255,255,255,.16); --edge:rgba(255,255,255,.14);
   --lock:#7db4ff; --warn:#ffc24a;
   --ui:ui-sans-serif,system-ui,-apple-system,"SF Pro Display","Segoe UI Variable Display","Segoe UI",Roboto,sans-serif;
@@ -219,7 +219,7 @@ body.armed .view{box-shadow:inset 0 0 0 3px var(--rec)}
 }
 body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
 button{border-radius:12px}
-.glass{background:var(--glass);-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5);
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(28px) saturate(1.5) brightness(.6);backdrop-filter:blur(28px) saturate(1.5) brightness(.6);
   border:1px solid var(--edge);box-shadow:0 10px 40px rgba(0,0,0,.35);border-radius:18px}
 .ibtn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:22px;background:rgba(255,255,255,.08);
   border:1px solid var(--edge);color:var(--text);font:500 15px var(--ui);transition:transform .2s var(--spring),background .2s}
@@ -304,7 +304,7 @@ body.simple #recBadge{display:none !important}
   background:rgba(255,255,255,.12);color:var(--text);font:600 12.5px var(--ui);cursor:pointer;text-shadow:none;white-space:nowrap}
 .dz-again:hover{background:rgba(255,255,255,.2)}.dz-again[disabled]{opacity:.55;cursor:default}.dz-again .cl-spark svg{width:11px;height:11px}
 .dz-again.busy .ico{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-@media (max-width:900px){ .dz-again .lbl{display:none} .dz-again{padding:0 8px} }
+@media (max-width:600px){ .dz-again .lbl{display:none} .dz-again{padding:0 8px} }
 .dz-status p{margin:0;font-size:18px;font-weight:500;letter-spacing:-.01em;text-wrap:balance}
 .dz-status p.note{font-size:14px;font-weight:400;color:var(--warn);margin-top:3px;letter-spacing:0;min-height:19px}
 .dz-status p.note.neutral{color:var(--soft)}
@@ -318,7 +318,7 @@ body[data-view="709"] #sx709::before{transform:translateX(64px)}
 
 /* toasts, proposal, offline, More */
 #toast{left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);padding:11px 18px;border-radius:22px;max-width:calc(100% - 32px);
-  text-align:center;z-index:30;background:var(--glass);-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5);border:1px solid var(--edge);font:15px var(--ui)}
+  text-align:center;z-index:30;background:var(--glass);-webkit-backdrop-filter:blur(28px) saturate(1.5) brightness(.6);backdrop-filter:blur(28px) saturate(1.5) brightness(.6);border:1px solid var(--edge);font:15px var(--ui)}
 .autofeed{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:6;display:grid;gap:6px;justify-items:center;pointer-events:none}
 .af{border-radius:22px;padding:8px 8px 8px 16px;font-size:15px}
 .af button{border-radius:16px;min-height:32px}
@@ -349,6 +349,16 @@ body.more-open .dz-scrim{opacity:1;pointer-events:auto}
 .moresheet summary::-webkit-details-marker{display:none}
 .mbody{display:flex;flex-wrap:wrap;gap:8px;padding:0 0 14px;align-items:center;font-size:15px}
 .moresheet .dimtxt{font-size:13px}
+/* round 3: upright iPad and phone: More and its pages are a bottom sheet like All settings (a side sheet cut the status
+   line and the readouts mid-word); the status line under it is hidden, the readouts at the top stay whole */
+@media (max-aspect-ratio:1/1),(max-width:899px){
+  .moresheet{top:auto;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;height:58%;transform:translateY(calc(100% + 40px))}
+  .moresheet.on{transform:none}
+  body.more-open .dz-bottom{opacity:0;pointer-events:none}
+}
+/* landscape iPad: the side sheet would cut the format readout ("RAW + JP…"); it is hidden while More is open (the
+   status line below names the format) */
+@media (max-width:1279px) and (min-aspect-ratio:1/1){ body.more-open .dz-hud .file{visibility:hidden} }
 .focuspill,#sxWb{font-family:var(--ui)}
 
 /* upright iPad and phone: dock becomes a bottom bar */
@@ -400,6 +410,7 @@ body[data-tray="1"] .dz-bottom{opacity:0;pointer-events:none}
 .stop{position:relative;flex:1 0 64px;height:56px;border-radius:18px;border:0;background:none;font:600 17px var(--ui);color:var(--dimw);font-variant-numeric:tabular-nums;scroll-snap-align:center;
   transition:background .25s,color .2s,transform .25s var(--spring)}
 .stop[aria-pressed="true"]{background:var(--text);color:#000;transform:scale(1.04)}
+.sp-body .ruler .stop[aria-pressed="true"]{transform:none}   /* a two- or three-option switch fills its row: growing would clip its rounded ends */
 .stop.warn:not([aria-pressed="true"]){color:var(--warn)}
 .stop.ours::after{content:"";position:absolute;left:50%;bottom:6px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--lock)}
 .ends{display:flex;justify-content:space-between;align-items:center;padding:4px 8px 0;font-size:13px;color:var(--dimw)}
@@ -493,7 +504,7 @@ body[data-tray="1"] .dz-bottom{opacity:0;pointer-events:none}
 /* ================= ALL SETTINGS: one panel, the same glass (replaces Pro and Classic) ================= */
 .as{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));right:max(12px,env(safe-area-inset-right,0px));
   width:min(460px,calc(100% - 24px));border-radius:30px;padding:14px;z-index:21;display:flex;flex-direction:column;background:rgba(22,25,31,.66);
-  -webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5);border:1px solid var(--edge);box-shadow:0 10px 40px rgba(0,0,0,.35);
+  -webkit-backdrop-filter:blur(28px) saturate(1.5) brightness(.6);backdrop-filter:blur(28px) saturate(1.5) brightness(.6);border:1px solid var(--edge);box-shadow:0 10px 40px rgba(0,0,0,.35);
   transform:translateX(calc(100% + 40px));transition:transform .4s var(--ease);overflow:hidden;color:var(--text);font:15px/1.35 var(--ui);visibility:hidden}
 body[data-as="1"] .as{transform:none;visibility:visible}
 .as-head{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 10px 10px}
@@ -705,6 +716,187 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
 .zm-ends b{font:600 17px var(--ui);color:var(--text);font-variant-numeric:tabular-nums}
 @media (max-width:600px){ .zm{gap:8px} .zm-btn{width:74px;height:56px;min-height:56px;font-size:15px;border-radius:18px} .zm-ends span{display:none} .zm-ends{justify-content:center}
   .zm-ends b{font-size:15px;white-space:nowrap} #trBody2 .zm ~ .ends span:not(:nth-child(2)){display:none} #trBody2 .zm ~ .ends{justify-content:center} #trBody2 .zm ~ .ruler .stop{flex-basis:46px} }
+
+/* ================= LAYOUT RULES (UI pass, 13 Nov 2026): one way for rows, cards, notes, spacing and long text =====
+   - spacing scale: 4 / 8 / 12 / 16 / 24 px
+   - a row: title on top, one muted line of explanation below, the value or control at the right
+   - a card: heading, one sentence, then its content
+   - long text wraps (at most two lines in controls); nothing is cut off silently
+   - the document never scrolls: only panels do, with room at the end and a soft fade at the cut edge */
+:root{--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px}
+html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}
+.glass{-webkit-backdrop-filter:blur(28px) saturate(1.5) brightness(.6);backdrop-filter:blur(28px) saturate(1.5) brightness(.6)}
+.as-row .l,.as-blk .l{display:block;min-width:0;flex:1 1 auto;line-height:1.3}
+.as-row .l small,.as-blk .l small,.mrow small{display:block;margin-top:var(--s1);font-size:13px;line-height:1.35;color:var(--dimw);font-weight:400}
+.as-row .v{max-width:46%;white-space:normal;text-align:right;overflow-wrap:anywhere;line-height:1.3}
+.as-row{padding-top:10px;padding-bottom:10px}
+.msub .mbody2>.mbody{display:block}
+.msub .mbody2>.mbody>*+*{margin-top:var(--s3)}
+.as-grp+.as-grp,.as-grp+.sec,.sec+.as-grp,.sec+.sec,.su-card+.sec{margin-top:var(--s3)}
+.as-note{line-height:1.4}
+.note-tag{display:block;margin-top:var(--s2);font-size:13px;line-height:1.35;color:var(--warn);font-weight:500}
+.lib-line{display:block;margin-top:var(--s1)}.lib-fix{margin-top:var(--s2);color:var(--soft)}
+.rd-line[hidden]{display:none!important}
+.pg-card{margin-top:var(--s3)}
+.pg-head{padding:14px 14px 12px}
+.pg-head h5{margin:0;font:600 17px/1.25 var(--ui);color:var(--text);display:flex;align-items:center;gap:8px}
+.pg-head p{margin:var(--s1) 0 0;font-size:14px;line-height:1.4;color:var(--soft)}
+.pg-steps{margin:var(--s2) 0 0;padding-left:20px;font-size:13px;line-height:1.5;color:var(--dimw)}
+.as-opts{display:flex;flex-direction:column;gap:var(--s1);margin-top:var(--s2)}
+.as-opts button{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);width:100%;min-height:44px;padding:8px 12px;
+  border:0;border-radius:12px;background:rgba(255,255,255,.06);color:var(--text);font:15px/1.3 var(--ui);text-align:left;white-space:normal}
+.as-opts button small{display:block;margin-top:2px;font-size:13px;color:var(--dimw)}
+.as-opts button[aria-pressed="true"]{background:var(--text);color:#000}.as-opts button[aria-pressed="true"] small{color:#3a3a3a}
+.as-opts button[disabled]{opacity:.45}
+.as-seg button{min-height:40px;height:auto;white-space:normal;line-height:1.2;padding:6px 10px}
+.as-body,.msub .mbody2,#mScroll{padding-bottom:56px;-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent);
+  mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent)}
+#mScroll{overflow-x:hidden}
+.dz-again{height:36px;min-height:36px;padding:0 14px;border-radius:18px}
+@media (max-width:600px){ .dz-again{padding:0 12px} }
+#sxReel,#pxPill,#lookPill{height:36px!important}
+#pxPill,#lookPill{z-index:6!important}
+.dz-prop{position:static!important;transform:none!important;display:none;gap:var(--s2);margin-top:var(--s2);padding:0!important;
+  background:none!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.dz-prop.on{display:flex;flex-wrap:wrap}
+.dz-prop #propText{display:none}
+.dz-prop .ibtn{height:36px!important;min-height:36px;white-space:nowrap}
+[style*="font-size:11px"],[style*="font-size:11.5px"],[style*="font-size:10px"],[style*="font-size:10.5px"]{font-size:12px!important}
+.nb{white-space:nowrap}
+small{font-size:max(12px,.85em)}
+.snd{margin-top:var(--s2);border-top:1px solid var(--line);padding-top:var(--s2)}
+.snd>b{display:block;margin-bottom:var(--s1)}
+.snd>.row{justify-content:space-between;align-items:baseline;flex-wrap:nowrap;gap:var(--s2);line-height:1.35}
+.snd>.row+.row{margin-top:var(--s2)}
+.snd small{font-size:13px}
+#effects button{min-height:44px}
+.tr-head{justify-content:space-between;align-items:flex-start;flex-wrap:nowrap;gap:var(--s3)}.tr-head b{flex:1 1 auto;min-width:0}
+.ba .tag{transform:none}
+.ho-path{display:block;margin-top:var(--s1);font-size:13px;font-weight:400;color:var(--muted);overflow-wrap:anywhere}
+#handoff .row{flex-wrap:wrap;gap:var(--s2)}
+.msub .mbody2,#mScroll,.as-body{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent}
+.msub .mbody2{padding-right:var(--s2)}
+.su-more summary{list-style:none;justify-content:space-between;gap:var(--s2)}.su-more summary::-webkit-details-marker{display:none}
+.su-more summary::after{content:"›";color:var(--dimw);font-size:19px;transition:transform .2s}.su-more[open] summary::after{transform:rotate(90deg)}
+.rchg li+li{margin-top:var(--s2)}.rchg .why{display:block;margin-top:var(--s1);line-height:1.35}
+.dz-scope-x{width:36px;height:36px;min-height:36px;border-radius:18px}
+.af button{height:36px!important;min-height:36px;padding:0 14px!important;border-radius:18px!important;font-size:13px!important}
+.tr-x{display:grid;place-items:center;flex:none;width:36px;height:36px;padding:0;border-radius:18px}
+.vpanel .ibtn{height:auto;min-height:36px}
+#trBody>*+*{margin-top:var(--s2)}
+#trBody{line-height:1.45}#trBody .okc>div+div,#trBody .tr-fixes>.row+.row{margin-top:var(--s1)}   /* round 3: the check lines get room */
+/* the take review sits where the status sentence is: while it is open the sentence waits behind it, hidden, instead of showing through */
+body:has(#treview.on) .dz-status{visibility:hidden}
+/* status pills (look preview, double exposure) step aside while a sheet or panel is open: the sheet shows the same thing */
+body:has(#ready.on) #pxPill,body:has(#ready.on) #lookPill,body:has(#handoff.on) #pxPill,body:has(#handoff.on) #lookPill,body.more-open #pxPill,body.more-open #lookPill,body[data-as="1"] #pxPill,body[data-as="1"] #lookPill{opacity:0;pointer-events:none}
+/* narrow landscape with All settings open: the readouts are centred in the smaller space, the battery keeps only its icon */
+@media (max-width:1300px) and (min-aspect-ratio:1/1){ body[data-as="1"] .dz-batt span{display:none} }
+.msub .trayacts,.as .trayacts{flex-wrap:wrap;gap:var(--s2)}
+.as-row:has(.l small){align-items:flex-start}.as-row:has(.l small) .v{padding-top:2px}
+.view{overflow:clip!important}   /* the screen itself can never be scrolled (a focused row in a sheet used to move it) */
+@media (orientation:portrait) and (max-width:900px){ body.simple .stage canvas{object-position:50% 32%} }   /* iPad upright: the picture centred in the free space */
+
+/* ================= UI PASS ROUND 2 (13 Nov 2026): the same rules for the review, the photo, dialogs, sheets =========
+   - one surface at a time: a tray, sheet, Claude panel or dialog closes the take card; dialogs take the toast
+   - a dialog: heading and a round × at the top, labelled sections, a note line for messages, buttons at the end
+   - captions and footnotes 13 px or more, on their own line, below what they describe */
+.dlg-note{margin:0;font-size:14px;line-height:1.4;color:var(--soft)}.dlg-note[hidden]{display:none}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.dlg-head h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+/* photo review: one picture, full width, caption below; two panes only for a merged series */
+.rv-card{grid-template-columns:1fr;gap:var(--s4);width:min(760px,94%)}
+.rv-card[data-n="2"]{grid-template-columns:1fr 1fr;width:min(1200px,96%)}
+.rv-pane{margin:0;min-width:0}.rv-pane[hidden]{display:none}
+.rv-pic{border-radius:18px;overflow:hidden;background:#000;display:grid;place-items:center;max-height:min(62vh,640px)}
+.rv-pic img{display:block;max-width:100%;max-height:min(62vh,640px);width:auto;height:auto;object-fit:contain}
+.rv-cap{margin-top:var(--s2);font-size:14px;line-height:1.4;color:var(--soft)}
+.rv-foot{grid-column:1/-1;display:flex;flex-direction:column;gap:var(--s3)}
+.rv-info{margin:0;font-size:14px;line-height:1.4;color:var(--dimw);overflow-wrap:anywhere}
+.rv-acts{display:flex;flex-wrap:wrap;gap:var(--s2);justify-content:flex-end}
+@media (max-width:720px){ .rv-card[data-n="2"]{grid-template-columns:1fr} }
+/* the photo: a plain viewer that fully hides the main screen; the slider only when comparing */
+#viewer{background:#000;grid-template-rows:minmax(0,1fr) auto}
+/* round 3: the picture is centred on the screen with its name and buttons directly under it (upright sizes too) */
+#viewer.on{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:56px 0 var(--s4)}
+#viewer .ba{margin:0;max-width:none;max-height:none;flex:none;width:min(94vw,calc((100vh - 220px) * var(--ar,1.777)))}
+#viewer .ba[data-cmp="0"] .after,#viewer .ba[data-cmp="0"] .bar,#viewer .ba[data-cmp="0"] .tag{display:none}
+.vw-foot{display:flex;flex-direction:column;align-items:center;gap:var(--s2);padding:var(--s3) var(--s4) var(--s4)}
+.vw-name{margin:0;font-size:14px;color:var(--soft);overflow-wrap:anywhere;text-align:center}
+#viewer .mbar{padding:0;gap:var(--s2)}#viewer .mbar:empty{display:none}
+.vw-x{position:absolute;top:12px;right:12px;z-index:2}
+/* hand-off */
+.ho-card{grid-template-columns:1fr;width:min(620px,94%);gap:var(--s4)}
+.ho-sec{border-top:1px solid rgba(255,255,255,.1);padding-top:var(--s3);display:flex;flex-direction:column;gap:var(--s2)}
+.ho-sec h3{margin:0;font:500 13px var(--ui);color:var(--dimw)}
+.ho-name{margin:0;font-size:17px;font-weight:600;line-height:1.3}
+.ho-sub{margin:0;font-size:14px;line-height:1.4;color:var(--soft)}
+.ho-foot{margin:0;font-size:13px;line-height:1.4;color:var(--dimw)}.ho-foot:empty{display:none}
+.ho-row{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center}
+.ho-row input{flex:1 1 200px;min-width:0;height:44px;border-radius:14px;border:1px solid var(--edge);background:rgba(255,255,255,.08);color:var(--text);font:15px var(--ui);padding:0 12px}
+#handoff textarea{width:100%;min-height:64px;border-radius:14px;border:1px solid var(--edge);background:rgba(255,255,255,.08);color:var(--text);font:15px var(--ui);padding:10px 12px;resize:vertical}
+/* the take card's sound lines: label on top, advice below in the secondary colour, the number at the right */
+.snd-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3);line-height:1.35}
+.snd-row+.snd-row{margin-top:var(--s2)}
+.snd-l{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px}
+.snd-k{color:var(--text);font-weight:500}.snd-k.warn{color:var(--warn)}
+.snd-a{color:var(--soft);font-size:14px}
+.snd-v{flex:none;max-width:42%;text-align:right;color:var(--dimw);font-size:13px;overflow-wrap:anywhere}
+/* special-shot sheets */
+.sp-body{display:flex;flex-direction:column;padding:4px 0 0}
+.sp-lab{margin:var(--s4) 4px var(--s1);font-size:13px;color:var(--dimw)}
+.sp-row{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);margin:var(--s3) 4px 0;padding:10px 14px;border-radius:16px;background:rgba(255,255,255,.06)}
+.sp-row .l{min-width:0;font-size:15px;line-height:1.3}.sp-row small{display:block;margin-top:2px;font-size:13px;color:var(--dimw)}
+.sp-check{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s2);margin:var(--s3) 4px 0}
+.sp-note{margin:0;font-size:14px;line-height:1.4;color:var(--soft)}.sp-note.warn{color:var(--warn)}
+.sp-foot{margin:var(--s2) 4px 0;font-size:13px;line-height:1.4;color:var(--dimw)}.sp-foot+.sp-foot{margin-top:var(--s1)}
+/* teleprompter: the topic on its own line, then the length with its unit and the button */
+.msub .tp-topic{display:block;width:100%;margin-top:var(--s2)}
+.tp-row{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);margin-top:var(--s2)}
+.tp-len{display:inline-flex;align-items:center;gap:var(--s2);font-size:15px;color:var(--soft)}
+.msub .tp-len input{width:84px}
+.msub .sec button.tp-write{white-space:nowrap;flex:none}
+#gearState{margin-left:auto;padding-left:var(--s3);color:var(--soft)}   /* a row: "My lights" at the left, its state at the right */
+/* the marker pills and the toast: one stack at the top centre, 8 px apart */
+#topStack{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:var(--s2);
+  pointer-events:none;width:max-content;max-width:calc(100% - 32px)}
+#topStack>*{pointer-events:auto;position:static!important;left:auto!important;top:auto!important;transform:none!important;max-width:100%}
+#topStack #lookPill,#topStack #pxPill{z-index:auto!important}
+#topStack #toast{max-width:min(640px,calc(100vw - 32px))}
+/* History: 24-hour times, who on top, what below, the time at the right */
+#mHist{display:block}
+.hi-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3);padding:var(--s2) 0;width:100%}
+.hi-row+.hi-row{border-top:1px solid rgba(255,255,255,.08)}
+.hi-x{min-width:0;display:flex;flex-direction:column;gap:2px;font-size:15px;line-height:1.35}.hi-x b{font-weight:600}.hi-x span{color:var(--soft);font-size:14px}
+.hi-t{flex:none;font-size:13px;color:var(--dimw);font-variant-numeric:tabular-nums}
+.as .le{grid-template-columns:1fr auto;grid-template-areas:"x b" "t b";gap:2px var(--s3);padding:var(--s2) 0}
+.as .le .x{grid-area:x;font-size:15px;line-height:1.35}.as .le .t{grid-area:t;font:13px var(--ui);color:var(--dimw);padding:0;font-variant-numeric:tabular-nums}
+.as .le>button,.as .le>span:last-child{grid-area:b;align-self:center}
+.as .le .x .src{display:block;font:500 13px var(--ui);letter-spacing:0;color:var(--dimw);margin:0 0 2px}
+.as .le .x .r{font-size:13px;color:var(--dimw);margin-top:2px}
+.as .le.change .x b{font-family:var(--ui);font-weight:600}
+/* a sheet covers what is under it completely: nothing peeks out at its edges (the Claude button's ring, a pill's end) */
+body[data-cl="1"] .dz-bottom{opacity:0;pointer-events:none}
+@media (max-aspect-ratio:1/1),(max-width:899px){ body[data-as="1"] .dz-bottom,body[data-as="1"] .dz-dock{opacity:0;pointer-events:none} }
+body.more-open .dz-dock,body.more-open .dz-pills{opacity:0;pointer-events:none}
+/* the "Setting up the camera…" card waits behind an open sheet instead of lying on it (the status line still says it) */
+body[data-tray="1"] #busy,body[data-cl="1"] #busy,body.more-open #busy{visibility:hidden}
+/* a full-screen window (the photo, All camera properties) hides the main screen completely */
+#propsModal{background:#000}
+body:has(.modal.on) .dz-bottom,body:has(.modal.on) .dz-dock{visibility:hidden}
+/* upright iPad and phone: the bottom area (Claude, status) sits higher, so the take card sits above it, not on the Claude button */
+@media (max-aspect-ratio:1/1),(max-width:720px){ #treview{bottom:calc(256px + env(safe-area-inset-bottom,0px))!important;max-height:calc(100% - 340px);overflow-y:auto} }
+/* while recording: nothing to analyse or apply (all settings are held until you stop) */
+body[data-rec="1"] #dzAgain,body[data-rec="1"] #proposal{display:none!important}
+/* the marker pills belong to the live picture: a dialog covering it hides them too; the smart photo bar pushes them down */
+body:has(.result.on) #lookPill,body:has(.result.on) #pxPill,body:has(.modal.on) #lookPill,body:has(.modal.on) #pxPill{display:none!important}
+/* the smart photo bar sits under the top row (never over the readouts); the pill stack moves below it */
+.smartbar{top:calc(64px + env(safe-area-inset-top,0px));max-width:calc(100% - 32px)}
+body.armed #topStack{top:calc(128px + env(safe-area-inset-top,0px))}
+.as table.lt th{font-size:13px;font-weight:500;color:var(--dimw);letter-spacing:0}
+/* a sheet on the right covers the top-right button completely: hide it so no ring peeks out at its corner */
+body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:none}
+.as-ours{height:auto;min-height:36px;padding:6px 12px;line-height:1.3;white-space:normal;text-align:left}
+.pg-note{margin:var(--s2) 0 0;font-size:13px;line-height:1.4;color:var(--dimw)}
 </style></head><body>
 <div class="app">
   <div class="top">
@@ -782,20 +974,21 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
         <div style="font-size:13px">Hold a <b>grey card</b> (or plain white paper) in front of your face, in the <b>box in the middle</b>, lit by the same light as you. Then press Measure. Studio measures it, sets the exact Kelvin and <b>locks</b> it so it never drifts.</div>
         <div class="row"><button class="ibtn" id="wbFind" style="background:var(--accent);color:#141006;border-color:var(--accent);font-weight:650">Find it automatically</button><button class="ibtn" id="wbGo">Measure the card</button><button class="ibtn" id="wbAuto">Back to auto (not locked)</button></div>
         <div class="dimtxt" style="font-size:11px">“Find it automatically” looks for white and grey surfaces in the picture (and asks Claude which ones are truly neutral, if set up). No card needed. The card is the most precise.</div>
-        <div id="wbMsg" class="report"></div></div></div>
+        <p class="dlg-note" data-toast hidden></p><div id="wbMsg" class="report"></div></div></div>
       <div class="smartbar" id="smartbar"><span class="recdot"></span><b>SMART PHOTO ARMED</b><span id="smCount" style="font-family:var(--mono)">0/12</span><span class="muted" id="smWhy"></span><button class="ibtn btn-stop" id="smStop" style="height:32px">Stop</button></div>
       <div class="sheetpart" id="ppanel" style="display:none">
         <div class="sec"><h3>What is the shoot?</h3><textarea id="ppDesc" placeholder="Describe the shoot, e.g. 2-min YouTube intro about my studio"></textarea>
           <button id="ppGo" class="btn-accent wide" style="margin-top:8px">Plan it with Claude</button></div>
         <div class="sec"><h3 id="ppTitle">No plan yet.</h3><div id="ppList"></div></div>
       </div>
-      <div class="vpanel glass" id="treview" style="bottom:200px"><div class="row" style="justify-content:space-between"><b style="font-size:12px;letter-spacing:.12em" id="trTitle">Take</b><button class="ibtn" id="trClose" style="height:28px;padding:0 9px">×</button></div>
+      <div class="vpanel glass" id="treview" style="bottom:200px"><div class="row tr-head"><b style="font-size:12px;letter-spacing:.12em" id="trTitle">Take</b><button class="ibtn tr-x" id="trvClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></div>
         <div id="trBody" style="margin-top:6px;font-size:12.5px"></div><div class="row" style="margin-top:8px" id="trBtns"></div></div>
       <div class="vpanel glass" id="vpanel"><div class="row" style="justify-content:space-between"><b style="font-size:12px;letter-spacing:.12em">Video</b><button class="ibtn" id="vpClose" style="height:28px;padding:0 9px">×</button></div>
         <div id="vpMsg" style="margin-top:6px;font-size:12.5px"></div><div class="row" style="margin-top:8px" id="vpBtns"></div></div>
       <div class="sheetpart" id="tpanel" style="display:none">
         <div class="sec"><h3>Script</h3><textarea id="tpText" style="min-height:140px" placeholder="Paste your script here…"></textarea>
-          <div class="row" style="margin-top:8px;flex-wrap:nowrap"><input id="tpTopic" style="flex:1 1 auto;min-width:0" placeholder="…or a topic, and Claude writes it"><input id="tpSecs" type="number" min="15" max="600" value="60" title="seconds" style="width:84px"><button id="tpWrite">Write it</button></div></div>
+          <input id="tpTopic" class="tp-topic" placeholder="Or a topic: Claude writes it">
+          <div class="tp-row"><label class="tp-len"><span>Length</span><input id="tpSecs" type="number" min="15" max="600" value="60" aria-label="Length in seconds"><span>s</span></label><button id="tpWrite" class="tp-write">Write it</button></div></div>
         <div class="sec"><h3>While you record</h3>
           <label class="row"><input type="checkbox" id="tpOn"> Show the teleprompter</label>
           <label class="row" title="Countdown before recording starts"><input type="checkbox" id="tpCount" checked> 3-2-1 before recording</label>
@@ -820,17 +1013,19 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
             <button class="ibtn" id="offFind">Search my network</button><button class="ibtn" id="offUsb">Use USB cable</button><button class="ibtn" id="offWifi">Use Wi-Fi</button></div>
         </div>
       </div>
-      <div class="result" id="handoff"><div class="rcard glass" style="grid-template-columns:1fr;width:min(620px,94%)">
-        <div class="row" style="justify-content:space-between"><div style="font-size:16px;font-weight:650">Shoot &amp; hand-off</div><button class="ibtn" id="hoClose" style="height:32px">Close</button></div>
-        <div><div class="muted" style="font-size:11px;letter-spacing:.1em">Current shoot</div><div style="font-size:15px;font-weight:600;margin-top:2px" id="hoName">—</div>
-          <div class="muted" style="font-size:12px;margin-top:2px;font-family:var(--mono)" id="hoCounts"></div>
-          <div class="row" style="margin-top:8px"><input id="hoNew" class="grow" placeholder="New shoot name, e.g. Interview Maria"><button class="ibtn" id="hoNewBtn">Start new shoot</button><button class="ibtn" id="hoOpen">Open folder</button></div></div>
-        <div style="border-top:1px solid var(--line);padding-top:10px"><div class="muted" style="font-size:11px;letter-spacing:.1em">For your grade</div>
-          <div style="font-size:12.5px;margin-top:4px" id="hoLook"></div>
-          <textarea id="hoNotes" style="margin-top:8px;min-height:50px" placeholder="Shoot notes (framing, mic, what to fix in post…)"></textarea>
-          <div class="row" style="margin-top:8px"><button class="ibtn" id="hoExport" style="background:var(--accent);color:#141006;border-color:var(--accent);font-weight:650">Save notes, settings, LUTs &amp; preset</button></div>
-          <div class="dimtxt" style="font-size:11px;margin-top:6px">Photos and clips are copied in automatically. Originals are never moved or deleted. Looks are exported as starting points only.</div></div>
-        <div style="border-top:1px solid var(--line);padding-top:10px" class="row"><button class="ibtn" id="hoResolve">Send to Resolve</button><button class="ibtn" id="hoPs">Open latest photo in Photoshop</button><span class="muted" style="font-size:11.5px" id="hoLr"></span></div>
+      <div class="result" id="handoff"><div class="rcard glass ho-card" role="dialog" aria-label="Shoot and hand-off">
+        <header class="dlg-head"><h2>Shoot &amp; hand-off</h2><button class="tbtn x" id="hoClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></header>
+        <section class="ho-sec"><h3>Current shoot</h3><p class="ho-name" id="hoName">—</p>
+          <p class="ho-sub" id="hoCounts"></p>
+          <div class="ho-row"><input id="hoNew" placeholder="New shoot name, e.g. Interview Maria"><button class="tbtn" id="hoNewBtn">Start new shoot</button><button class="tbtn" id="hoOpen">Open folder</button></div></section>
+        <section class="ho-sec"><h3>For your grade</h3>
+          <p class="ho-sub" id="hoLook"></p>
+          <textarea id="hoNotes" placeholder="Shoot notes (framing, mic, what to fix in post…)"></textarea>
+          <div class="ho-row"><button class="tbtn pri" id="hoExport">Save notes, settings, LUTs &amp; preset</button></div>
+          <p class="ho-foot">Photos and clips are copied in automatically. Originals are never moved or deleted. Looks are exported as starting points only.</p></section>
+        <section class="ho-sec"><h3>Open in</h3><div class="ho-row"><button class="tbtn" id="hoResolve">Send to Resolve</button><button class="tbtn" id="hoPs">Open latest photo in Photoshop</button></div>
+          <p class="ho-foot" id="hoLr"></p></section>
+        <p class="dlg-note" data-toast hidden></p>
         <div id="hoMsg" class="report"></div>
       </div></div>
       <div class="result" id="ready"><div class="rcard glass rd-card" role="dialog" aria-label="Getting ready">
@@ -839,12 +1034,14 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
         <div class="rd-line" id="rdCl"></div>
         <div class="rd-line" id="rdLib" hidden></div>
         <p class="rd-note" id="rdNote" hidden>Without Claude you still have: Studio's own setup, focus, zoom, shooting and special shots. Claude is needed for the Claude panel, its shot direction, the light plan, picking the best take and comparing with a reference.</p>
+        <p class="dlg-note" data-toast hidden></p>
         <div class="rd-acts"><button class="tbtn" id="rdNoCl" hidden>Continue without Claude</button><button class="tbtn pri" id="rdGo">Continue</button></div>
       </div></div>
-      <div class="result" id="review"><div class="rcard glass" style="grid-template-columns:1fr 1fr;width:min(1200px,96%)">
-        <div><div class="cmp" style="aspect-ratio:3/2"><img id="rvO" alt="" style="clip-path:none"></div><div class="muted" style="margin-top:6px;font-size:11px;letter-spacing:.1em">Original, untouched</div></div>
-        <div><div class="cmp" style="aspect-ratio:3/2"><img id="rvG" alt=""></div><div class="muted" style="margin-top:6px;font-size:11px;letter-spacing:.1em" id="rvGT"></div></div>
-        <div style="grid-column:1/-1" class="row"><span class="muted grow" id="rvInfo"></span><button class="ibtn" id="rvPs">Open in Photoshop</button><button class="ibtn" id="rvMore">Open the photo</button><button class="ibtn" id="rvClose" style="background:var(--accent);color:#141006;border-color:var(--accent);font-weight:650">Done</button></div>
+      <div class="result" id="review"><div class="rcard glass rv-card" id="rvCard" data-n="1" role="dialog" aria-label="Photo review">
+        <figure class="rv-pane"><div class="rv-pic"><img id="rvO" alt=""></div><figcaption class="rv-cap" id="rvOT">Original, untouched</figcaption></figure>
+        <figure class="rv-pane" id="rvGP"><div class="rv-pic"><img id="rvG" alt=""></div><figcaption class="rv-cap" id="rvGT"></figcaption></figure>
+        <div class="rv-foot"><p class="rv-info" id="rvInfo"></p><p class="dlg-note" data-toast hidden></p>
+          <div class="rv-acts"><button class="tbtn" id="rvPs">Open in Photoshop</button><button class="tbtn" id="rvMore">Open the photo</button><button class="tbtn pri" id="rvClose">Done</button></div></div>
       </div></div>
       <div class="busy glass" id="busy"><div style="font-weight:600;font-size:14px" id="busyT">Setting up the camera…</div><div class="muted" style="font-size:12px;margin-top:4px" id="busyS"></div><div class="bar"><i></i></div>
         <button class="ibtn" id="busyStop" style="margin-top:12px;height:32px">Stop</button></div>
@@ -894,7 +1091,7 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
           <div class="banote" id="baNote"></div></div>
         <div style="display:grid;align-content:start;gap:10px">
           <div style="font-size:16px;font-weight:650" id="rTitle">Done</div>
-          <div id="rSum" class="report"></div>
+          <div id="rSum" class="report"></div><p class="dlg-note" data-toast hidden></p>
           <ul class="rchg" id="rList" style="padding-left:18px;margin:0"></ul>
           <div class="row" style="margin-top:4px"><button class="ibtn" id="rUndo"><svg class="ico" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>Undo all</button><button class="ibtn" id="rDone" style="background:var(--accent);color:#141006;border-color:var(--accent);font-weight:650">Keep it</button></div>
         </div></div></div>
@@ -915,11 +1112,11 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
         <div id="litNoKey" class="warn" style="display:none;margin-bottom:8px">Add your Claude key in the Claude panel first (the violet Claude button).</div>
         <div class="drop" id="refZone">Drop reference images here, paste (Ctrl+V) or click to choose<input type="file" id="refFile" accept="image/*" multiple hidden></div>
         <div class="refs" id="refs"></div>
-        <label class="row" style="margin-top:8px;color:var(--muted);font-size:11px"><input type="checkbox" id="litLive" checked> also show Claude the current frame (your real set)</label>
-        <input id="litReq" class="wide" style="margin-top:8px" placeholder="Optional: e.g. one key light only, keep the window as fill">
+        <label class="row" style="margin-top:8px;color:var(--muted);font-size:11px"><input type="checkbox" id="litLive" checked> Also show Claude the live picture (your real set)</label>
+        <input id="litReq" class="wide" style="margin-top:8px" placeholder="Optional wish, e.g. one light only" title="Optional: e.g. one key light only, keep the window as fill">
         <details id="gearBox" style="margin-top:8px"><summary class="muted" style="cursor:pointer;font-size:11px;letter-spacing:.1em">MY GEAR <span id="gearState" class="dimtxt"></span></summary>
           <textarea id="gearText" style="margin-top:6px" placeholder="List your lights and modifiers once, e.g.&#10;- 1× Aputure Amaran 100d + 60 cm softbox&#10;- 1× small RGB LED panel&#10;- desk lamp (warm), window to the left&#10;- white foam board, black cloth"></textarea>
-          <div class="row" style="margin-top:6px"><button id="gearSave">Save gear</button><label class="row muted" style="gap:5px;font-size:11px"><input type="checkbox" id="gearUse" checked> plans use only my gear</label></div>
+          <div class="row" style="margin-top:6px"><button id="gearSave">Save gear</button><label class="row muted" style="gap:5px;font-size:11px"><input type="checkbox" id="gearUse" checked> Plans use only my gear</label></div>
         </details>
         <button id="litGo" class="btn-accent wide" style="margin-top:8px">Generate lighting plan</button>
         <div id="litMsg" class="muted" style="margin-top:6px"></div>
@@ -998,13 +1195,14 @@ body[data-tray="1"] .dz-scope,body[data-cl="1"] .dz-scope{display:none}
 <div class="modal" id="propsModal" style="grid-template-rows:auto 1fr">
   <div class="row" style="padding:14px 18px;justify-content:space-between"><b style="letter-spacing:.14em">ALL CAMERA PROPERTIES</b>
     <span class="muted" style="font-size:12px">Names marked (?) are best guesses. Grey rows can't be changed in the current mode.</span>
-    <button id="propsClose">Close</button></div>
+    <button id="propsClose" class="tbtn x" aria-label="Close"><svg width="14" height="14" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></div>
+  <p class="dlg-note" data-toast hidden style="padding:0 18px 8px"></p>
   <div style="overflow:auto;padding:0 18px 18px"><table id="propsTable" style="width:100%;border-collapse:collapse;font-size:12px"></table></div>
 </div>
-<div class="modal" id="viewer">
-  <div class="ba" id="ba"><img class="before" id="baBefore" alt=""><img class="after" id="baAfter" alt=""><div class="bar"></div>
-    <span class="tag" style="left:8px">ORIGINAL</span><span class="tag" style="right:8px" id="afterTag">EFFECT</span></div>
-  <div class="mbar" id="effects"></div>
+<div class="modal" id="viewer" role="dialog" aria-label="Photo">
+  <div class="ba" id="ba" data-cmp="0"><img class="before" id="baBefore" alt=""><img class="after" id="baAfter" alt=""><div class="bar"></div>
+    <span class="tag" id="beforeTag" style="left:8px">ORIGINAL</span><span class="tag" style="right:8px" id="afterTag">EFFECT</span></div>
+  <div class="vw-foot"><p class="vw-name" id="vwName"></p><p class="dlg-note" data-toast hidden></p><div class="mbar" id="effects"></div></div>
 </div>
 
 <script>
@@ -1024,7 +1222,11 @@ async function api(path, opts){ const r = await fetch(path, opts); const j = awa
   const by=r.headers.get("X-Claude-Answered-By"); if(by) setTimeout(()=>toast("Answered with "+by+".",4000),300);   /* the safety net said so */
   if(!r.ok) throw new Error(j.error || r.statusText); return j; }
 const post = (p, body) => api(p, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body||{})});
-function toast(t, ms=2600){ const el=$("#toast"); el.textContent=t; el.style.display="block"; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display="none", ms); }
+function toast(t, ms=2600){
+  /* a dialog is open (photo review, the photo, hand-off, Getting ready…): the message goes on its own note line, never over it */
+  const dlg=[...document.querySelectorAll(".result.on,.modal.on")].pop(), slot=dlg&&dlg.querySelector("[data-toast]");
+  if(slot){ slot.textContent=t; slot.hidden=false; clearTimeout(toast.s); toast.s=setTimeout(()=>{ slot.textContent=""; slot.hidden=true; }, Math.max(ms,4000)); return; }
+  const el=$("#toast"); el.textContent=t; el.style.display="block"; clearTimeout(toast.t); toast.t=setTimeout(()=>el.style.display="none", ms); }
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const keyMsg = m => m==="NO_KEY" ? "Add your Claude key first: open the Claude panel and paste it there." : m;
 
@@ -1383,8 +1585,9 @@ function renderDirector(d){
   $("#dirBadge").style.display=d.running?"block":"none"; $("#dirBadge").textContent=`DIRECTOR · ${st.toUpperCase()} · ${d.step}/${d.max_steps}`;
   if(d.version!==S.dirVersion){ S.dirVersion=d.version;
     $("#log").innerHTML=d.log.length?d.log.map(e=>{
-      const txt=e.kind==="change"?`<b>${esc(e.text)}</b>`:esc(e.text);
-      return `<div class="le ${e.kind}${e.undone?" undone":""}"><span class="t">${hm(e.t)}</span><span class="x"><span class="src">${esc(e.source.toUpperCase())}</span>${txt}${e.reason?`<span class="r">${esc(e.reason)}</span>`:""}</span>${e.undoable?`<button data-u="${e.id}">Undo</button>`:"<span></span>"}</div>`; }).join("")
+      const dot=x=>esc(x).replace(/ · /g," ·\u00a0");   /* round 3: a line never ends in " ·" (the dot goes with the next word) */
+      const txt=e.kind==="change"?`<b>${dot(e.text)}</b>`:dot(e.text);
+      return `<div class="le ${e.kind}${e.undone?" undone":""}"><span class="t">${hm(e.t)}</span><span class="x"><span class="src">${esc(String(e.source||"").replace(/^./,c=>c.toUpperCase()))}</span>${txt}${e.reason?`<span class="r">${dot(e.reason)}</span>`:""}</span>${e.undoable?`<button data-u="${e.id}">Undo</button>`:"<span></span>"}</div>`; }).join("")
       :'<div class="dimtxt">No changes yet.</div>';
     $$("#log [data-u]").forEach(b=>b.onclick=()=>undo({ids:[+b.dataset.u]}));
     if(!S.busy) loadSettings();
@@ -1743,8 +1946,11 @@ function renderOperator(a){
   if(a.proposal){ $("#propText").textContent=a.proposal.text; $("#propApply").style.display=a.proposal.kind==="colour"?"none":"";
     $("#propApply").onclick=async()=>{ const r=await post("/api/autofix",{apply:a.proposal.id}); renderAutoState(r); loadSettings(); if(S.rec) toast("Applies after this take.",2500); };
     $("#propDismiss").onclick=async()=>renderAutoState(await post("/api/autofix",{dismiss:1}));
-    if(a.proposal.kind==="colour"){ $("#propDismiss").textContent="Not now"; $("#propText").innerHTML=esc(a.proposal.text)+' <button class="ibtn" style="height:28px" onclick="document.querySelector(\'#sxWb\').click()">Set white balance</button>'; } }
+    let wb=$("#propWb"); if(!wb){ wb=document.createElement("button"); wb.id="propWb"; wb.className="ibtn"; wb.textContent="Set white balance"; wb.onclick=()=>$("#sxWb").click(); pr.insertBefore(wb,$("#propDismiss")); }
+    wb.style.display=a.proposal.kind==="colour"?"":"none"; }
 }
+document.querySelectorAll(".view").forEach(v=>v.addEventListener("scroll",()=>{ if(v.scrollTop||v.scrollLeft){ v.scrollTop=0; v.scrollLeft=0; } }));   /* and if a browser still tries */
+(function(){ const pb=$("#proposal"), host=$("#dzNote"); if(pb&&host){ host.after(pb); pb.classList.remove("glass","proposal"); pb.classList.add("dz-prop"); } })();
 $("#opAgain").onclick=()=>analyseAgain(); $("#opAgain").style.display="none";   /* one home: next to Locked */
 $("#shotOverride").onchange=e=>{ if(e.target.value){ runAuto({preset:e.target.value,title:e.target.selectedOptions[0].text}); e.target.value=""; } };
 function renderAutoState(a){
@@ -1758,9 +1964,10 @@ function renderAutoState(a){
 function renderHistory(a){
   const h=$("#mHist"); if(!h) return;
   const who={setup:"Studio",change:"Studio",proposal:"Studio suggests",you:"You",camera:"On the camera"};
-  const t=ev=>new Date(ev.t*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
   const evs=(a.events||[]).slice(-10).reverse();
-  h.innerHTML=evs.length?evs.map(ev=>`<div><span class="dimtxt" style="font-family:var(--mono)">${t(ev)}</span> <b style="font-weight:600">${esc(who[ev.kind]||"")}</b> · ${esc(ev.text.replace(/^Proposal: /,""))}</div>`).join(""):'<div class="dimtxt">Nothing changed yet.</div>';
+  /* one row each: who on top, what below, the time (24-hour, like every other time in Studio) at the right; never "You · You…" */
+  const what=ev=>{ const w=who[ev.kind]||"", x=ev.text.replace(/^Proposal: /,""); const m=w&&!w.includes(" ")&&x.match(new RegExp("^"+w+"\\s+(.*)$","i")); return m?m[1].replace(/^./,c=>c.toUpperCase()):x; };
+  h.innerHTML=evs.length?evs.map(ev=>`<div class="hi-row"><div class="hi-x"><b>${esc(who[ev.kind]||"")}</b><span>${esc(what(ev))}</span></div><span class="hi-t">${hm(ev.t)}</span></div>`).join(""):'<div class="dimtxt">Nothing changed yet.</div>';
 }
 function autoToast(ev){
   const el=document.createElement("div"); el.className="af glass"+(ev.kind==="setup"?" setup":"");
@@ -1808,9 +2015,12 @@ $("#offWifi").onclick=()=>api("/api/connection").then(c=>switchConn("wifi",c.sav
 async function photoReview(file){
   if(!file || !isSimple()) return;
   S.reviewFile=file;
-  { const jo=!!(S.format&&S.format.jpeg_only);   /* shown exactly as the camera made it */
-    $("#rvO").src="/captures/"+encodeURIComponent(file); $("#rvG").removeAttribute("src"); $("#rvGT").textContent=jo?"The camera's JPEG, exactly as the camera made it.":"RAW for your grade in Lightroom / Photoshop (this is the camera JPEG reference).";
-    $("#rvInfo").textContent=file+" saved"+(jo?" (JPEG only)":S.post?" (RAW + JPEG: the RAW is for your grade)":"")+". Original untouched.";
+  { const jo=!!(S.format&&S.format.jpeg_only);   /* shown exactly as the camera made it: ONE picture, full width */
+    $("#rvCard").dataset.n="1"; $("#rvGP").hidden=true; $("#rvG").removeAttribute("src");
+    $("#rvO").src="/captures/"+encodeURIComponent(file);
+    $("#rvOT").textContent=jo?"The camera's JPEG, exactly as the camera made it.":"The camera's JPEG. The RAW next to it is for your grade in Lightroom or Photoshop.";
+    $("#rvInfo").textContent=file+" saved"+(jo?" (JPEG only)":S.post?" (RAW + JPEG)":"")+". The original is untouched.";
+    $("#rvMore").style.display=""; $("#rvPs").style.display="";
     $("#review").classList.add("on"); $("#rvMore").onclick=()=>{ $("#review").classList.remove("on"); openViewer(file); }; }
 }
 $("#rvClose").onclick=()=>$("#review").classList.remove("on");
@@ -2029,18 +2239,22 @@ setInterval(pollTakes,3000);
 function soundHtml(s){ if(!s) return "";
   if(!(s.lines||[]).length) return `<div class="muted" style="margin-top:6px"><b>Sound:</b> ${esc(s.summary||"")}</div>`;
   const NM={loudness:"Loudness",clipping:"Clipping",noise:"Background noise",pauses:"Long pauses",none:"Sound"};
-  return `<div style="margin-top:6px;border-top:1px solid var(--line);padding-top:6px"><b>Sound</b>${s.lines.map(l=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap;gap:8px"><span${l.advice?' class="warn"':""}>${esc(NM[l.key]||l.key)}: ${esc(l.word)}${l.advice?` · ${esc(l.advice)}`:""}</span><small class="muted" style="white-space:nowrap">${esc(l.num||"")}</small></div>`).join("")}</div>`; }
+  /* each line: the label and its word on top, the advice below in the secondary colour, the number at the right */
+  return `<div class="snd"><b>Sound</b>${s.lines.map(l=>`<div class="snd-row"><div class="snd-l"><span class="snd-k${l.advice?" warn":""}">${esc(NM[l.key]||l.key)}: ${esc(l.word)}</span>${l.advice?`<span class="snd-a">${esc(l.advice)}</span>`:""}</div><span class="snd-v">${esc(l.num||"")}</span></div>`).join("")}</div>`; }
 function showTakeReview(t,force){
   if(!force) return;
+  /* one surface at a time: the take card closes the tray, the Claude panel, More and All settings */
+  if(typeof closeTray==="function"&&TR.k) closeTray(); if(typeof clIsOpen==="function"&&clIsOpen()) clClose();
+  if(typeof asIsOpen==="function"&&asIsOpen()) asClose(); $("#moreSheet").classList.remove("on");
   const r=t.review||{}; const p=$("#treview");
   $("#trTitle").textContent=`TAKE ${t.id} · ${t.kind.toUpperCase()}${t.shot?" · "+t.shot:""}`;
   let h="";
-  if((r.good||[]).length) h+=`<div class="okc">${r.good.map(g=>"✓ "+esc(g.text)).join("<br>")}</div>`;
-  if((r.fixes||[]).length) h+=`<div style="margin-top:6px">${r.fixes.map((f,i)=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="warn">${esc(f.text)}</span>${f.fix?`<button class="ibtn" style="height:28px" data-fx="${i}">${esc(f.fix.label)}</button>`:""}</div>`).join("")}</div>`;
+  if((r.good||[]).length) h+=`<div class="okc">${r.good.map(g=>"<div>✓ "+esc(g.text)+"</div>").join("")}</div>`;   /* one line each, spaced (round 3) */
+  if((r.fixes||[]).length) h+=`<div class="tr-fixes">${r.fixes.map((f,i)=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="warn">${esc(f.text)}</span>${f.fix?`<button class="ibtn" data-fx="${i}">${esc(f.fix.label)}</button>`:""}</div>`).join("")}</div>`;
   if(r.continuity) h+=`<div class="muted" style="margin-top:6px">${r.continuity.matches?"Matches take "+r.continuity.previous+".":"Continuity vs take "+r.continuity.previous+": "+esc(r.continuity.notes.join("; "))+"."}</div>`;
   if(t.claude) h+=`<div style="margin-top:6px;border-top:1px solid var(--line);padding-top:6px"><b>Claude:</b> ${t.claude.good.map(esc).join(" · ")}<br><span class="warn">${t.claude.fix.map(esc).join(" · ")}</span></div>`;
   if(t.sound) h+=soundHtml(t.sound);
-  if(t.kind==="video" && t.imported) h+=`<div class="row" style="margin-top:6px"><button class="ibtn" style="height:28px" id="trSound">${t.sound?"Check the sound again":"Check the sound"}</button></div>`;
+  if(t.kind==="video" && t.imported) h+=`<div class="row" style="margin-top:6px"><button class="ibtn" id="trSound">${t.sound?"Check the sound again":"Check the sound"}</button></div>`;
   if(t.kind==="video" && !t.imported) h+=`<div class="dimtxt" style="margin-top:6px">The clip is still on the card. Studio imports it by itself once the card is reachable.</div>`;
   $("#trBody").innerHTML=h||'<span class="muted">No notes.</span>';
   $$("#trBody [data-fx]").forEach(b=>b.onclick=()=>doFix(r.fixes[+b.dataset.fx].fix));
@@ -2054,13 +2268,13 @@ function showTakeReview(t,force){
     catch(e){ toast(keyMsg(e.message),4000); $("#trClaude").disabled=false; $("#trClaude").textContent="Review with Claude"; } };
   p.classList.add("on"); clearTimeout(S.trT); S.trT=setTimeout(()=>p.classList.remove("on"),30000);
 }
-$("#trClose").onclick=()=>$("#treview").classList.remove("on");
+$("#trvClose").onclick=()=>$("#treview").classList.remove("on");
 
 /* ================================================================ HAND-OFF (Resolve / Lightroom / Photoshop) */
 async function openHandoff(){
   $("#handoff").classList.add("on"); $("#hoMsg").innerHTML="";
   try{ const j=await api("/api/shoot"); S.shoot=j;
-    $("#hoName").textContent=j.shoot?j.shoot.name+"  ·  "+j.shoot.path:"No shoot yet (one is created with your first photo or export)";
+    $("#hoName").innerHTML=j.shoot?`${esc(j.shoot.name)}<small class="ho-path">${esc(j.shoot.path)}</small>`:"No shoot yet (one is created with your first photo or export)";
     $("#hoCounts").textContent=j.summary?`${j.summary["VIDEO"]} clips · ${j.summary["PHOTO RAW"]} RAW · ${j.summary["PHOTO JPEG"]} JPEG · ${j.summary["LUTS"]} LUTs`:"";
     $("#hoPs").disabled=!j.photoshop_installed||!S.lastPhoto;
     $("#hoResolve").textContent=j.resolve_installed?"Send to Resolve":"Prepare for Resolve";
@@ -2171,7 +2385,7 @@ $("#wifiFind").onclick=async()=>{
 setInterval(loadConn,4000);
 
 /* ------------------------------------------------------------ MY GEAR */
-async function loadGear(){ try{ const g=await api("/api/gear"); $("#gearText").value=g.gear||""; $("#gearState").textContent=g.gear?"· saved":"· not set"; }catch(e){} }
+async function loadGear(){ try{ const g=await api("/api/gear"); $("#gearText").value=g.gear||""; $("#gearState").textContent=g.gear?"Saved":"Not set"; }catch(e){} }
 $("#gearSave").onclick=async()=>{ try{ await post("/api/gear",{gear:$("#gearText").value}); toast("Gear saved. Lighting plans will use only this gear.",2500); loadGear(); }catch(e){ toast(e.message,3000); } };
 
 /* ------------------------------------------------------------ SAVED SETUPS */
@@ -2290,26 +2504,29 @@ async function loadFilm(){
 let viewing=null;
 function openViewer(f){
   viewing=f; $("#viewer").classList.add("on");
-  $("#baBefore").src=$("#baAfter").src="/captures/"+encodeURIComponent(f); $("#afterTag").textContent="ORIGINAL";
+  /* a plain viewer: one picture. The compare slider appears only when there is something to compare (RAW preview) */
+  $("#ba").dataset.cmp="0"; $("#ba").style.setProperty("--split","50%");
+  $("#baBefore").src=$("#baAfter").src="/captures/"+encodeURIComponent(f); $("#vwName").textContent=f;
   const im=new Image(); im.onload=()=>$("#ba").style.setProperty("--ar",im.naturalWidth/im.naturalHeight); im.src=$("#baBefore").src;
-  $("#effects").innerHTML='<button id="closeV">Close</button>';   /* looks live in More › Looks only */
-  $("#closeV").onclick=()=>$("#viewer").classList.remove("on");
+  $("#effects").innerHTML="";   /* looks live in More › Looks only */
+  let x=$("#closeV"); if(!x){ $("#viewer").insertAdjacentHTML("beforeend",`<button class="tbtn x vw-x" id="closeV" aria-label="Close"><svg width="14" height="14" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button>`); x=$("#closeV"); }
+  x.onclick=()=>$("#viewer").classList.remove("on");
   rawReview(f);
 }
 /* RAW in the review: real RAW development needs a decoder (not installed yet); until then the camera's
    embedded preview, labelled as such, with per-channel clipping next to the JPEG's */
 async function rawReview(f){
   try{ const r=await api("/api/rawreview/"+encodeURIComponent(f)); const ef=$("#effects");
-    const ps=document.createElement("button"); ps.textContent="Open in Photoshop"; ps.onclick=()=>post("/api/photoshop",{file:f}).then(x=>toast("Opening "+x.opened+" in Photoshop…",2500)).catch(e=>toast(e.message,3500));
+    const ps=document.createElement("button"); ps.className="tbtn"; ps.textContent="Open in Photoshop"; ps.onclick=()=>post("/api/photoshop",{file:f}).then(x=>toast("Opening "+x.opened+" in Photoshop…",2500)).catch(e=>toast(e.message,3500));
     ef.prepend(ps);
-    if(r.preview){ const b=document.createElement("button"); b.textContent="RAW preview"; b.title=r.label;
-      b.onclick=()=>{ $("#baAfter").src="/captures/"+r.preview; $("#afterTag").textContent=r.label.toUpperCase(); };
+    if(r.preview){ const b=document.createElement("button"); b.className="tbtn"; b.textContent="RAW preview"; b.title=r.label;
+      b.onclick=()=>{ $("#baAfter").src="/captures/"+r.preview; $("#beforeTag").textContent="CAMERA JPEG"; $("#afterTag").textContent=r.label.toUpperCase(); $("#ba").dataset.cmp="1"; };
       ef.prepend(b);
       const c=(x)=>x?x.map((v,i)=>"RGB"[i]+" "+v.toFixed(1)+"%").join(" "):"—";
       toast(`Clipping · JPEG: ${c(r.clip_jpeg)} · RAW preview: ${c(r.clip_preview)} (camera preview, not RAW data)`,6000); }
   }catch(e){}
 }
-$("#ba").addEventListener("pointermove",e=>{ if(e.buttons||e.pointerType==="mouse"){ const r=$("#ba").getBoundingClientRect();
+$("#ba").addEventListener("pointermove",e=>{ if($("#ba").dataset.cmp==="1"&&(e.buttons||e.pointerType==="mouse")){ const r=$("#ba").getBoundingClientRect();
   $("#ba").style.setProperty("--split",Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100))+"%"); }});
 $("#viewer").addEventListener("click",e=>{ if(e.target.id==="viewer") $("#viewer").classList.remove("on"); });
 
@@ -2327,7 +2544,7 @@ const AUTO_FORMS={
   sequence:`<div id="seqList" class="report" style="margin-bottom:6px"></div>
     <div class="row"><select id="seqType"><option value="preset">Apply preset</option><option value="wait">Wait</option><option value="shoot">Take photo</option>
       <option value="focus">Focus centre</option><option value="record_start">Start recording</option><option value="record_stop">Stop recording</option></select>
-      <input id="seqArg" placeholder="preset key / seconds" style="width:120px"><button id="seqAdd">Add</button></div>
+      <input id="seqArg" placeholder="Key or seconds" title="A preset key, or seconds to wait" style="flex:1 1 160px;min-width:160px"><button id="seqAdd">Add</button></div>
     <div class="row" style="margin-top:6px"><span class="muted" style="font-size:11px">Repeat</span><input id="seqRepeat" type="number" min="1" value="1" style="width:60px"><button id="seqClear">Clear</button></div>`
 };
 S.autoKind="timelapse"; S.seq=[];
@@ -2489,9 +2706,10 @@ function renderDz(){
     $("#dzBattT").textContent=b+"%"+(ml!=null?" · "+batFmt(ml):""); $("#dzCell").style.width=Math.max(6,Math.min(100,b))+"%";
     bt.title=ml==null?"Battery":`Battery: about ${batFmt(ml)} left (${BAT.measured?"measured in this session":"first estimate, "+(S.link==="USB"?"USB":"Wi-Fi")})`;
     bt.className="dz-batt"+(b<=10||(ml!=null&&ml<=8)?" crit":(b<=25||(ml!=null&&ml<=20))?" low":""); }
+  document.body.dataset.rec=S.rec?"1":"0";   /* while recording: no Analyse again, no suggestion buttons (all settings are held) */
   if(S.rec){ const s=Math.floor((Date.now()-(S.recStart||Date.now()))/1000); $("#dzRec").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
   // bottom: state label + one sentence + at most one amber note (space reserved: no jumps)
-  const a=S.op||{}, d=a.decision||{}, st=$("#dzState"); let label, cls, say="", note="";
+  const a=S.op||{}, d=a.decision||{}, st=$("#dzState"); let label, cls, say="", note="", keep="";
   if(typeof TR!=="undefined" && TR.k) drawTrayLive();
   const cr=(S.card&&S.card.rec)||{};
   if(cr.state==="starting"){ label="Starting…"; cls="is-busy"; say="The recording on the laptop is starting."; }
@@ -2509,7 +2727,8 @@ function renderDz(){
     else if(typeof clHolds==="function" && clHolds()){ label="Locked"; cls=""; say=S.claudeIntent.say; }
     else if(typeof yourSetting==="function" && yourSetting()){ const st=expoState(); say="Your setting."+(st==null?"":Math.abs(st)<=.4?" The picture is on target.":" The picture is "+stopsWords(st)+"."); note="Tap a number, then “Studio's choice”, to go back."; }
     else { const ex=((S.coach&&S.coach.checks)||[]).find(c=>c.key==="exposure");
-      const fmn=(S.format&&S.format.name)||"", shn=d.shot_name?d.shot_name.replace(/^./,c=>c.toUpperCase()):"";   /* the format in use, by name */
+      const fmn=((S.format&&S.format.name)||"").trim(), shn=d.shot_name?d.shot_name.replace(/^./,c=>c.toUpperCase()):"";   /* the format in use, by name */
+      keep=fmn;   /* "S-Log3 · 4K · 25p · 100 Mbps" stays on one line (span .nb below): no line ever ends in " ·" */
       const head=[shn,fmn].filter(Boolean).join(", ");
       say=[head?head+".":"", ex?ex.label.replace(/ · /," ·  ").split("·")[0].trim()+".":""].filter(Boolean).join(" ")||(a.state||""); } }
   if(S.recChecking) note="Checking the camera… (its recording light and the card time disagree for a moment)";
@@ -2521,7 +2740,10 @@ function renderDz(){
   if(!S.rec && !note && S.mode==="video" && S.log && S.log.active && S.log.kind!=="slog3") note="709 view is not available for this profile yet.";
   if(!S.rec && !note){ const w=((S.coach&&S.coach.checks)||[]).find(c=>c.status!=="ok"&&c.key!=="exposure"&&c.key!=="battery"&&c.key!=="focus"); note=w?w.label:""; }
   st.className="dz-state"+(cls?" "+cls:""); st.innerHTML=(label==="Locked"?LOCK_SVG:"")+esc(label);
-  $("#dzSay").textContent=say; $("#dzNote").textContent=note;
+  { const ds=$("#dzSay"), at=keep?say.indexOf(keep):-1;
+    const html=at<0?esc(say):esc(say.slice(0,at))+'<span class="nb">'+esc(keep)+'</span>'+esc(say.slice(at+keep.length));
+    if(ds.innerHTML!==html) ds.innerHTML=html; }
+  $("#dzNote").textContent=note;
   $("#dzNote").classList.toggle("neutral", (/^ND on the lens/.test(note) && !(S.nd&&S.nd.limit)) || /^JPEG only|^Look preview/.test(note));   /* a plain note, amber only at the ISO limit */
   // last take tile
   const lp=$("#sxLast"); const has=lp.style.display!=="none"&&lp.getAttribute("src"); $("#dzTileEmpty").style.display=has?"none":""; lp.style.display=has?"block":"none";
@@ -2666,17 +2888,21 @@ function openSub(title,sels){ let p=$("#mSub"); if(!p){ p=document.createElement
    "Make a copy with this look" (a NEW file; the original is never changed). */
 const LK={list:null, sel:null, file:null, strength:100, preview:null, tab:null, busy:false, say:"", poll:null};
 S.lookPreview=null;                                     /* never remembered: off at every start */
-async function lkLoad(){ try{ LK.list=await api("/api/looks"); }catch(e){ LK.list=null; } if(!LK.sel&&LK.list) LK.sel=LK.list.looks[0].key;
+async function lkLoad(){ try{ LK.list=await api("/api/looks"); }catch(e){ LK.list=null; }    /* round 3: no look is marked until one is tapped */
   if(!LK.file&&LK.list&&LK.list.files.length) LK.file=LK.list.files[0].file; lkDraw(); }
 async function lkPreview(key){ post("/api/claude/context",{look:key?lkName(key):null}).catch(()=>{});
   if(!key){ S.lookPreview=null; LK.tab=null; lkPill(); lkDraw(); return; }
   try{ const r=await fetch("/api/looks/table/"+key); LK.tab=new Uint8Array(await r.arrayBuffer()); S.lookPreview=key; }catch(e){ toast("The look could not be loaded.",2500); }
   lkPill(); lkDraw(); }
 const lkName=k=>((LK.list&&LK.list.looks.find(l=>l.key===k))||{}).name||k;
+/* the marker pills (look preview, double exposure) and the toast share one stack at the top centre: a gap between
+   them, never on top of each other */
+function topStack(){ let s=$("#topStack"); if(!s){ s=document.createElement("div"); s.id="topStack"; document.body.append(s); const t=$("#toast"); if(t) s.append(t); } return s; }
+topStack();
 function lkPill(){ let p=$("#lookPill"); if(!p){ p=document.createElement("button"); p.id="lookPill"; p.type="button"; p.className="pill glass";
     p.style.cssText="position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:12;height:30px;padding:0 14px;font:600 13px var(--ui);cursor:pointer;color:var(--text);border:1px solid rgba(255,255,255,.55)";
     p.onclick=e=>{ e.stopPropagation(); lkPreview(null); toast("Look preview off: the live picture is the camera's again.",2500); };
-    document.body.append(p); }
+    topStack().prepend(p); }
   p.style.display=S.lookPreview?"":"none"; p.textContent=S.lookPreview?`Look preview: ${lkName(S.lookPreview)} ×`:""; }
 /* the look on the monitor only: trilinear through the 33-point table (the frame Studio analyses is never touched) */
 function applyLook(d,t){ const n=33, m=n-1;
@@ -2691,25 +2917,25 @@ function lkDraw(){ let b=$("#lkBox"); if(!b){ b=document.createElement("div"); b
   const f=(L.files||[]).find(x=>x.file===LK.file), st=LK.strength;
   let h=`<p class="as-note" style="margin:0 2px 10px">Film-style looks, only when you choose one. Your camera files are never changed.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">${L.looks.map(l=>`<button class="card" data-lk="${l.key}" style="min-width:0;width:auto;text-align:left${LK.sel===l.key?";outline:2px solid var(--text)":""}"><img src="/api/looks/sample/${l.key}.jpg" alt="" style="width:100%;aspect-ratio:8/5;object-fit:cover;border-radius:10px"><b>${esc(l.name)}</b><span>${esc(l.for)}</span></button>`).join("")}</div>
-    <div class="as-grp" style="margin-top:12px"><div class="as-row"><span class="l">Show on the live picture<small>A preview on this screen only. The camera's file is not changed.</small></span>
+    <div class="as-grp" style="margin-top:12px"><div class="as-row"><span class="l">Show on the live picture<small>${LK.sel?"A preview on this screen only. The camera's file is not changed.":"Pick a look above first."}</small></span>
       <button class="as-sw" role="switch" id="lkSw" aria-checked="${!!S.lookPreview}" aria-label="Show the look on the live picture"></button></div></div>
     <h4 style="margin:16px 4px 6px;font-size:13px;font-weight:500;color:var(--dimw)">Make a copy with this look</h4>`;
   if(!(L.files||[]).length) h+=`<p class="as-note">No photos or clips in this shoot yet.</p>`;
   else{ h+=`<select id="lkFile" style="width:100%;margin-bottom:8px">${L.files.map(x=>`<option value="${esc(x.file)}" ${x.file===LK.file?"selected":""}>${x.kind==="clip"?"Clip":"Photo"} · ${esc(x.name)}</option>`).join("")}</select>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><figure style="margin:0"><img src="/api/looks/still?file=${encodeURIComponent(LK.file)}&key=original" alt="Before" style="width:100%;border-radius:10px"><figcaption class="as-note" style="margin:4px 2px 0">Before</figcaption></figure>
-        <figure style="margin:0"><img id="lkAfter" src="/api/looks/still?file=${encodeURIComponent(LK.file)}&key=${LK.sel}&strength=${st/100}" alt="After" style="width:100%;border-radius:10px"><figcaption class="as-note" style="margin:4px 2px 0">After: ${esc(lkName(LK.sel))}</figcaption></figure></div>
+        <figure style="margin:0">${LK.sel?`<img id="lkAfter" src="/api/looks/still?file=${encodeURIComponent(LK.file)}&key=${LK.sel}&strength=${st/100}" alt="After" style="width:100%;border-radius:10px">`:`<div style="aspect-ratio:3/2;border-radius:10px;background:rgba(255,255,255,.06)"></div>`}<figcaption class="as-note" style="margin:4px 2px 0">${LK.sel?"After: "+esc(lkName(LK.sel)):"After: pick a look first"}</figcaption></figure></div>
       <label class="row" style="gap:10px;margin-top:10px;align-items:center"><span>Strength</span><input type="range" id="lkStr" min="0" max="100" value="${st}" class="grow"><b id="lkStrV" style="width:44px;text-align:right">${st}%</b></label>
-      <div class="trayacts" style="margin-top:10px">${LK.busy?`<button class="tbtn" id="lkStop">Stop</button>`:`<button class="tbtn" id="lkMake" style="background:var(--text);color:#000">Make the copy</button>`}</div>
+      <div class="trayacts" style="margin-top:10px">${LK.busy?`<button class="tbtn" id="lkStop">Stop</button>`:(LK.sel?`<button class="tbtn" id="lkMake" style="background:var(--text);color:#000">Make the copy</button>`:`<button class="tbtn" id="lkMake">Pick a look first</button>`)}</div>
       ${f&&f.kind==="clip"&&!L.ffmpeg?`<p class="as-note" style="color:var(--warn)">Studio's video tool is missing, so clips can't get a look. Run "Install or repair camctl Studio" once.</p>`:""}
       <p class="as-note">Photos: from the camera's JPEG (the RAW file is left as it is). Clips: the sound is copied unchanged. Saved in your shoot under LOOKS.</p>`; }
   if(LK.say) h+=`<p class="as-note" style="margin-top:8px">${esc(LK.say)}</p>`;
   b.innerHTML=h;
   b.querySelectorAll("[data-lk]").forEach(x=>x.onclick=()=>{ LK.sel=x.dataset.lk; if(S.lookPreview) lkPreview(LK.sel); else lkDraw(); });
-  $("#lkSw").onclick=()=>lkPreview(S.lookPreview?null:LK.sel);
+  $("#lkSw").onclick=()=>{ if(!LK.sel&&!S.lookPreview) return; lkPreview(S.lookPreview?null:LK.sel); };   /* nothing until a look is picked */
   const fs=$("#lkFile"); if(fs) fs.onchange=()=>{ LK.file=fs.value; lkDraw(); };
   const sr=$("#lkStr"); if(sr){ sr.oninput=()=>{ LK.strength=+sr.value; $("#lkStrV").textContent=sr.value+"%"; };
-    sr.onchange=()=>{ const a=$("#lkAfter"); if(a) a.src=`/api/looks/still?file=${encodeURIComponent(LK.file)}&key=${LK.sel}&strength=${LK.strength/100}`; }; }
-  const mk=$("#lkMake"); if(mk) mk.onclick=async()=>{ mk.disabled=true; mk.textContent="Making the copy…";
+    sr.onchange=()=>{ const a=$("#lkAfter"); if(a&&LK.sel) a.src=`/api/looks/still?file=${encodeURIComponent(LK.file)}&key=${LK.sel}&strength=${LK.strength/100}`; }; }
+  const mk=$("#lkMake"); if(mk) mk.onclick=async()=>{ if(!LK.sel) return; mk.disabled=true; mk.textContent="Making the copy…";
     try{ const r=await post("/api/looks/copy",{file:LK.file,key:LK.sel,strength:LK.strength/100}); LK.say=r.say; if(r.busy){ LK.busy=true; lkWatch(); } }catch(e){ LK.say=e.message; } lkDraw(); };
   const sp=$("#lkStop"); if(sp) sp.onclick=()=>post("/api/looks/stop").catch(()=>{}); }
 async function lkWatch(){ clearTimeout(LK.poll); try{ const L=await api("/api/looks"); LK.list=L; LK.busy=L.job.busy; LK.say=L.job.message; }catch(e){}
@@ -2731,16 +2957,18 @@ function pgDot(){ const sh=$("#sxShutter"); if(!sh) return; let d=$("#sxReel");
   d.style.display=PG.reel&&PG.reel.on?"inline-flex":"none"; d.style.opacity=PG.reel&&PG.reel.paused?".5":"1"; }
 function pgDraw(){ let b=$("#pgBox"); if(!b){ b=document.createElement("div"); b.id="pgBox"; b.className="mbody"; b.style.display="none"; $("#mScroll").append(b); }
   const r=PG.reel||{}, j=r.job||{}, local=/^(127\.|localhost)/.test(location.hostname);
-  let h=`<p class="as-note" style="margin:0 2px 12px">Experiments. Each one is off until you switch it on, and may change.</p>
-    <div class="as-grp"><div class="as-row"><span class="l">Day reel: keep the moment before each photo<small>Studio keeps the last 3 seconds of the live picture and saves them as a small silent clip when you take a photo.</small></span>
+  let h=`<p class="as-note" style="margin:0 2px 4px">Experiments. Each one is off until you switch it on, and may change.</p>
+    <div class="as-grp pg-card"><div class="pg-head"><h5>Day reel</h5><p>A short clip of the moment before each photo, joined into one video of the day.</p></div>
+    <div class="as-row"><span class="l">Keep the moment before each photo<small>Studio keeps the last 3 seconds of the live picture and saves them as a small silent clip when you take a photo.</small></span>
       <button class="as-sw" role="switch" id="pgReelSw" aria-checked="${!!r.on}" aria-label="Keep the moment before each photo"></button></div>
     <div class="as-row"><span class="l">Today<small>${r.moments?`${r.moments} moment${r.moments===1?"":"s"} · ${r.size_mb} MB`:"No moments yet today."}${r.on&&r.paused?" Paused while recording or while the camera is not connected.":""}</small></span></div>`;
   if(j.busy) h+=`<div class="as-row"><span class="l">${esc(j.message||"Making today's reel…")}</span><button class="tbtn" id="pgStop">Stop</button></div>`;
   else if(j.message) h+=`<div class="as-row"><span class="l"><small>${esc(j.message)}</small></span>${j.out&&local?'<button class="tbtn" id="pgShow">Show in folder</button>':""}</div>`;
-  h+=`</div><div class="trayacts" style="margin-top:12px"><button class="tbtn" id="pgMake" style="background:var(--text);color:#000" ${j.busy||!r.moments?"disabled":""}>Make today's reel</button>
+  /* the reel's own button and notes belong inside its card */
+  h+=`<div class="as-blk"><div class="trayacts" style="margin:0"><button class="tbtn pri" id="pgMake" ${j.busy||!r.moments?"disabled":""}>Make today's reel</button>
       ${r.moments?`<button class="tbtn" id="pgDel">${PG.sure?`Delete ${r.moments} clip${r.moments===1?"":"s"}? Photos stay`:"Delete today's clips"}</button>`:""}</div>
-    <p class="as-note" style="margin:10px 2px 0">Clips are small and silent because they come from the live picture. The photos in the reel are full quality.</p>
-    <p class="as-note" style="margin:6px 2px 0">Everything stays in your shoot folder on this laptop.</p>`;
+    <p class="pg-note">Clips are small and silent because they come from the live picture. The photos in the reel are full quality.</p>
+    <p class="pg-note">Everything stays in your shoot folder on this laptop.</p></div></div>`;
   h+=pxHtml();
   b.innerHTML=h; pxWire();
   $("#pgReelSw").onclick=async()=>{ try{ PG.reel=await post("/api/reel",{on:!r.on}); }catch(e){ toast(e.message,3000); } pgDot(); pgDraw(); };
@@ -2751,14 +2979,14 @@ function pgDraw(){ let b=$("#pgBox"); if(!b){ b=document.createElement("div"); b
     PG.sure=false; try{ PG.reel=await post("/api/reel/delete",{count:r.moments}); toast(`Deleted ${PG.reel.deleted} clips. Your photos are kept.`,3500); }catch(e){ toast(e.message,4000); } pgDraw(); }; }
 /* ---------- the four experiments: same card style; each off until switched on; every photo is his press ---------- */
 const PX={st:null, ghost:40, longS:20, moodBusy:false, moodSay:"", pullS:2, pr:{ref:null,acc:null,until:0,run:false,secs:20}};
-const pxHow=(a,b,c)=>`<small>1. ${a}<br>2. ${b}<br>3. ${c}</small>`;
+const pxHow=(a,b,c)=>`<ol class="pg-steps"><li>${a}</li><li>${b}</li><li>${c}</li></ol>`;
 async function pxLoad(){ try{ PX.st=await api("/api/play"); }catch(e){} pxGhost(); }
-function pxCard(title,sentence,how,body){ return `<div class="as-grp" style="margin-top:12px"><div class="as-row"><span class="l"><b>${title}</b><small>${sentence}</small>${how}</span></div>${body}</div>`; }
+function pxCard(title,sentence,how,body){ return `<div class="as-grp pg-card"><div class="pg-head"><h5>${title}</h5><p>${sentence}</p>${how}</div>${body}</div>`; }
 function pxHtml(){ const s=PX.st||{double:{},long:{offered:[]},mood:{},pull:{}}, d=s.double, L=s.long, M=s.mood.proposal, P=s.pull;
   let h="";
   /* double exposure */
   h+=pxCard("Double exposure","Two of your photos become one, like film exposed twice.",pxHow("Switch it on and take photo 1.","Its picture lies over the live view: compose photo 2.","Studio blends both into a new photo."),
-    `<div class="as-row"><span class="l">Double exposure<small>Works best when photo 1 has a dark area for photo 2 to show through.</small></span><button class="as-sw" role="switch" id="pxDbl" aria-checked="${!!d.on}" aria-label="Double exposure"></button></div>`
+    `<div class="as-row"><span class="l">Take a double exposure<small>Works best when photo 1 has a dark area for photo 2 to show through.</small></span><button class="as-sw" role="switch" id="pxDbl" aria-checked="${!!d.on}" aria-label="Double exposure"></button></div>`
     +(d.on?`<div class="as-blk"><div class="l">Photo ${d.step||1} of 2<small>${d.first?"Ghost strength":"Take photo 1 with the shutter button."}</small></div>${d.first?`<div class="as-seg">${[25,40,60].map(v=>`<button data-gh="${v}" aria-pressed="${PX.ghost===v}">${v}%</button>`).join("")}</div>`:""}
       <div class="trayacts" style="margin-top:8px"><button class="tbtn" id="pxDblReset">Start over</button></div></div>`:"")
     +(d.result?`<div class="as-blk"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px"><img src="/api/play/image/first.jpg?t=${Date.now()}" alt="Photo 1" style="width:100%;border-radius:8px"><img src="/api/play/image/second.jpg?t=${Date.now()}" alt="Photo 2" style="width:100%;border-radius:8px"><img src="/api/play/image/result.jpg?t=${Date.now()}" alt="Together" style="width:100%;border-radius:8px"></div>
@@ -2766,7 +2994,7 @@ function pxHtml(){ const s=PX.st||{double:{},long:{offered:[]},mood:{},pull:{}},
   /* long exposure + practice */
   const lo=L.offered||[];
   h+=pxCard("Paint with light","Draw with a torch in a dark room: the camera keeps every light it sees.",pxHow("Put the camera on a tripod in a dark room.","Apply the setup, press the shutter and draw with a phone torch.","The camera makes one real full-size photo."),
-    `<div class="as-row"><span class="l">Long exposure<small>${lo.length?"A real photo with the shutter open for seconds.":"This camera does not offer long shutter times over the cable."} <span class="as-tag">not yet checked on your camera</span></small></span><button class="as-sw" role="switch" id="pxLong" aria-checked="${!!L.on}" aria-label="Long exposure" ${lo.length?"":"disabled"}></button></div>`
+    `<div class="as-row"><span class="l">Use a long exposure<small>${lo.length?"A real photo with the shutter open for seconds.":"This camera does not offer long shutter times over the cable."}</small><span class="note-tag">Not yet checked on your camera</span></span><button class="as-sw" role="switch" id="pxLong" aria-checked="${!!L.on}" aria-label="Long exposure" ${lo.length?"":"disabled"}></button></div>`
     +(L.on&&lo.length?`<div class="as-blk"><div class="l">Shutter open for<small>Studio suggests: lowest ISO, about f/8, focus and white balance locked. Nothing changes until you press Apply.</small></div>
       <div class="as-seg">${lo.map(v=>`<button data-ls="${v}" aria-pressed="${PX.longS===v}">${v} s</button>`).join("")}</div>
       <div class="trayacts" style="margin-top:8px">${L.applied?`<button class="tbtn" id="pxLongBack">Back to Studio's choice</button>`:`<button class="tbtn" id="pxLongApply" style="background:var(--text);color:#000">Apply</button><button class="tbtn" id="pxLongNo">Not now</button>`}</div>
@@ -2786,7 +3014,7 @@ function pxHtml(){ const s=PX.st||{double:{},long:{offered:[]},mood:{},pull:{}},
       <div class="trayacts">${(M.changes||[]).length?`<button class="tbtn" id="pxMoodApply" style="background:var(--text);color:#000">Apply</button>`:""}<button class="tbtn" id="pxMoodNo">Not now</button><button class="tbtn" id="pxMoodBack">Back to Studio's choice</button></div></div>`:""));
   /* focus pull */
   h+=pxCard("Focus pull","Focus glides from one point to another, by your press.",pxHow("Tap Set A, then tap that spot on the picture; the same for B.","Press record yourself if you want it filmed.","Press Pull: Studio moves the focus in small even steps."),
-    `<div class="as-blk"><span class="as-tag">Not yet checked on the real camera</span>
+    `<div class="as-blk"><span class="note-tag" style="margin-top:0">Not yet checked on the real camera</span>
       <div class="trayacts" style="margin-top:8px"><button class="tbtn" data-pick="a">${P.pick==="a"?"Tap the picture…":P.a?"A set ✓":"Set A"}</button><button class="tbtn" data-pick="b">${P.pick==="b"?"Tap the picture…":P.b?"B set ✓":"Set B"}</button></div>
       <div class="as-seg" style="margin-top:8px">${[1,2,4].map(v=>`<button data-ps="${v}" aria-pressed="${PX.pullS===v}">${v} s</button>`).join("")}</div>
       <div class="trayacts" style="margin-top:8px"><button class="tbtn" data-pull="ab" ${P.a&&P.b&&!P.busy?"":"disabled"}>Pull A to B</button><button class="tbtn" data-pull="ba" ${P.a&&P.b&&!P.busy?"":"disabled"}>Pull B to A</button></div>
@@ -2822,7 +3050,7 @@ function pxGhost(){ const d=(PX.st||{}).double||{}; let g=$("#pxGhost"), p=$("#p
       Object.assign(g.style,{left:(r.left-pr.left+ox)+"px",top:(r.top-pr.top+oy)+"px",width:w+"px",height:h+"px",opacity:(PX.ghost/100).toFixed(2)}); } else g.dataset.src=""; }
   if(!p){ p=document.createElement("button"); p.id="pxPill"; p.type="button"; p.className="pill glass";
     p.style.cssText="position:absolute;left:50%;top:calc(100px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:12;height:30px;padding:0 14px;font:600 13px var(--ui);cursor:pointer;color:var(--text);border:1px solid rgba(255,255,255,.55)";
-    p.onclick=e=>{ e.stopPropagation(); post("/api/play",{double:"off"}).then(r=>{ PX.st=r; pxGhost(); }); }; document.body.append(p); }
+    p.onclick=e=>{ e.stopPropagation(); post("/api/play",{double:"off"}).then(r=>{ PX.st=r; pxGhost(); }); }; const ts=topStack(), lp=$("#lookPill"); lp?lp.after(p):ts.prepend(p); }
   p.style.display=d.on?"":"none"; p.textContent=d.on?`Double exposure: photo ${d.first&&!d.result?2:1} of 2 ×`:""; }
 window.addEventListener("resize",pxGhost); setInterval(()=>{ if(document.visibilityState==="visible") pxLoad(); },4000); pxLoad();
 setInterval(()=>{ if(S.firing && PX.st && PX.st.long && PX.st.long.applied) pxLoad(); },1000);   /* the countdown while the shutter is open */
@@ -2998,13 +3226,12 @@ function atDraw(){ const c=SPECIAL.auto, st=S.auto||{};
   const tl=AT.mode==="timelapse", n=tl?AT.count:AT.frames, mins=Math.max(1,Math.round(atNeedS()/60));
   $("#trCap").textContent=tl?`One photo every ${AT.every} s, ${AT.count} photos: about ${mins} min. It starts 5 s after you press Start. Use a tripod.`
                             :`${AT.frames} photos with the shutter ${AT.ev} stop apart around the current one (Manual mode), to merge to HDR later. Use a tripod.`;
-  const stops=(name,vals,cur,fmt)=>`<div class="ends" style="padding:0 4px"><span>${name}</span></div><div class="ruler" style="padding-top:0">${vals.map(v=>`<button class="stop" data-at="${name}" data-v="${v}" aria-pressed="${v===cur}">${fmt?fmt(v):v}</button>`).join("")}</div>`;
-  let h=`<div class="cards" style="padding-top:6px"><div class="card spart" style="flex:0 0 150px;cursor:default"><svg viewBox="0 0 80 50">${c.art}</svg><b>${c.title}</b><span>${c.line}</span></div>
-    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+  const stops=(name,vals,cur,fmt)=>`<p class="sp-lab">${name}</p><div class="ruler" style="padding-top:0">${vals.map(v=>`<button class="stop" data-at="${name}" data-v="${v}" aria-pressed="${v===cur}">${fmt?fmt(v):v}</button>`).join("")}</div>`;
+  let h=`<div class="sp-body"><p class="sp-lab">Kind</p>
     <div class="ruler" style="padding-top:0">${[["timelapse","Timelapse"],["bracket","Bracket"]].map(([v,l])=>`<button class="stop" data-mode="${v}" aria-pressed="${v===AT.mode}">${l}</button>`).join("")}</div>`;
   h+=tl?stops("Every",[2,5,10,30,60],AT.every,v=>v+" s")+stops("Photos",[30,60,120,300],AT.count)
        :stops("Photos",[3,5,7],AT.frames)+stops("Step",[0.3,0.7,1,2],AT.ev,v=>v+" EV");
-  h+=`</div></div><div class="trayacts"><button class="tbtn" id="atStart" style="background:var(--text);color:#000">Start · ${n} photos</button></div>`;
+  h+=`</div><div class="trayacts"><button class="tbtn pri" id="atStart">Start · ${n} photos</button></div>`;
   $("#trBody2").innerHTML=h;
   $$("#trBody2 [data-mode]").forEach(b=>b.onclick=()=>{ AT.mode=b.dataset.mode; atDraw(); });
   $$("#trBody2 [data-at]").forEach(b=>b.onclick=()=>{ const v=+b.dataset.v, k=b.dataset.at;
@@ -3035,21 +3262,20 @@ function spDraw(){ const k=SP.kind, c=SPECIAL[k], st=S.series||{};
     $("#trBody2").innerHTML=`<div class="trayacts"><button class="tbtn" id="spCancel">Cancel (keeps what's shot)</button></div>`;
     $("#spCancel").onclick=()=>post("/api/series/cancel").catch(()=>{}); return; }
   $("#trCap").textContent=c.cap(SP.shots);
-  let h=`<div class="cards" style="padding-top:6px"><div class="card spart" style="flex:0 0 150px;cursor:default"><svg viewBox="0 0 80 50">${c.art}</svg><b>${c.title}</b><span>${c.line}</span></div>
-    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
-    <div class="ends" style="padding:0 4px"><span>Photos</span></div>
+  /* the sheet's own layout rules: a label above each group, a switch row, one footnote per line */
+  let h=`<div class="sp-body"><p class="sp-lab">Photos</p>
     <div class="ruler" style="padding-top:0">${c.frames.map(n=>`<button class="stop" data-sp="${n}" aria-pressed="${n===SP.shots}">${n}</button>`).join("")}</div>`;
-  if(k==="focusstack") h+=`<div class="ends" style="padding:0 4px"><span>Depth per step</span></div>
+  if(k==="focusstack") h+=`<p class="sp-lab">Depth per step</p>
     <div class="ruler" style="padding-top:0">${[[2,"Fine"],[3,"Medium"],[5,"Deep"]].map(([v,l])=>`<button class="stop" data-step="${v}" aria-pressed="${v===SP.step}">${l}</button>`).join("")}</div>
-    <label class="row" style="gap:8px;font-size:14px;color:var(--soft)"><input type="checkbox" id="spNear" ${SP.near?"checked":""}> start from the closest focus</label>
-    <div class="row" style="gap:10px;align-items:center"><button class="tbtn" id="spCheck" ${SP.checking?"disabled":""}>${SP.checking?"Checking…":"Check the object"}</button>
-      <span id="spVerdict" style="font-size:14px;color:${SP.plan&&!SP.plan.ok?"var(--warn)":"var(--soft)"}">${esc(SP.plan?SP.plan.verdict:"For still objects. Check first: Studio finds the near and far point without taking a photo.")}</span></div>`;
-  h+=`</div></div><div class="ends" style="padding:6px 4px 0"><span>About ${Math.round(SP.shots*c.sec)} s · ${SP.shots} RAW + JPEG kept in the shoot folder</span><span>Merged from the JPEGs (no RAW decoder installed)</span></div>
-    <div class="trayacts"><button class="tbtn" id="spStart" style="background:var(--text);color:#000">Start · ${SP.shots} photos</button></div>`;
+    <div class="sp-row"><span class="l">Start from the closest focus<small>The first photo is focused on the nearest point.</small></span><button class="as-sw" role="switch" id="spNear" aria-checked="${!!SP.near}" aria-label="Start from the closest focus"></button></div>
+    <div class="sp-check"><button class="tbtn" id="spCheck" ${SP.checking?"disabled":""}>${SP.checking?"Checking…":"Check the object"}</button>
+      <p id="spVerdict" class="sp-note${SP.plan&&!SP.plan.ok?" warn":""}">${esc(SP.plan?SP.plan.verdict:"For still objects. Check first: Studio finds the near and far point without taking a photo.")}</p></div>`;
+  h+=`<p class="sp-foot">About ${Math.round(SP.shots*c.sec)} s · ${SP.shots} RAW + JPEG kept in the shoot folder.</p><p class="sp-foot">Merged from the JPEGs (no RAW decoder installed).</p></div>
+    <div class="trayacts"><button class="tbtn pri" id="spStart">Start · ${SP.shots} photos</button></div>`;
   $("#trBody2").innerHTML=h;
   $$("#trBody2 [data-sp]").forEach(b=>b.onclick=()=>{ SP.shots=+b.dataset.sp; spDraw(); });
   $$("#trBody2 [data-step]").forEach(b=>b.onclick=()=>{ SP.step=+b.dataset.step; spDraw(); });
-  const nr=$("#spNear"); if(nr) nr.onchange=()=>{ SP.near=nr.checked; };
+  const nr=$("#spNear"); if(nr) nr.onclick=()=>{ SP.near=!SP.near; nr.setAttribute("aria-checked",String(SP.near)); };
   const ck=$("#spCheck"); if(ck) ck.onclick=async()=>{ SP.checking=true; spDraw();
     try{ SP.plan=await post("/api/series/plan",{}); }catch(e){ SP.plan={ok:false,verdict:e.message}; }
     SP.checking=false; spDraw(); };
@@ -3073,9 +3299,10 @@ async function spPoll(){ clearTimeout(SP.poll);
     if(s.result){ closeTray(); loadFilm(); spResult(s.result); S.dzFlash={label:"Saved",say:`${s.result.name} is in the shoot folder (16-bit TIFF + preview), next to the ${s.files.length} originals.`,until:Date.now()+5000}; }
     else if(s.error||/Stopped/.test(s.message||"")) toast((s.message||"Stopped.")+" Nothing was deleted.",6000);
   }catch(e){ SP.poll=setTimeout(spPoll,1500); } }
-function spResult(r){ /* before (one photo) and after (merged), side by side at full size */
+function spResult(r){ /* before (one photo) and after (merged), side by side at full size: the only two-pane review */
+  $("#rvCard").dataset.n="2"; $("#rvGP").hidden=false;
   $("#rvO").src="/captures/"+encodeURIComponent(r.first)+"?t="+Date.now(); $("#rvG").src="/captures/"+encodeURIComponent(r.preview)+"?t="+Date.now();
-  $("#rvGT").textContent=r.name+" (merged)"; const labs=$$("#review .muted"); if(labs[0]) labs[0].textContent="One photo of the series";
+  $("#rvGT").textContent=r.name+" (merged)"; $("#rvOT").textContent="One photo of the series";
   $("#rvMore").style.display="none";
   $("#rvInfo").textContent=[(r.partial?"Merged from the photos taken before it stopped. ":"")+"Original RAW and JPEG files are kept.",...(r.notes||[])].join(" ");
   $("#review").classList.add("on"); }
@@ -3174,7 +3401,7 @@ const AS_TABS=[["camera","Camera"],["light","Light"],["setups","Setups"],["studi
     h&&h.insertAdjacentHTML("afterend",'<p class="as-note" style="margin:0 0 10px;color:var(--warn)">Runs its steps by itself once you press Start. Timelapse and bracket are in More › Special shots.</p>'); }
   const lut=document.createElement("div"); lut.className="sec"; lut.innerHTML='<h3>LUT file</h3><div class="row"><a href="/api/lut/log709.cube?input=slog3cine" download><button>S-Log3 → Rec.709 technical LUT (.cube)</button></a></div><p class="as-note" style="margin:8px 0 0">For your editor: turns S-Log3 into a normal picture. It is not a look.</p>';
   const props=secOf("#allSettings"); if(props){ const h=props.querySelector("h3"); if(h) h.textContent="Camera properties"; const b=$("#allSettings"); if(b) b.textContent="Show every camera property"; }
-  const st=$("#autoStop"); if(st) st.classList.remove("btn-stop");   /* red is for recording only */
+  const st=$("#autoStop"); if(st) st.classList.remove("btn-stop","grow");   /* red is for recording only; Start and Stop both natural width, side by side */
   park("asSub-adv",[auto,lut,props,cc]);
   /* the same words everywhere: no shouting capitals, plain labels */
   const RN={"USB CABLE":"USB cable","WI-FI":"Wi-Fi","TIMELAPSE":"Timelapse","BRACKET":"Bracket","SEQUENCE":"Sequence","STOP":"Stop"};
@@ -3228,7 +3455,7 @@ function asCamera(){ const isV=S.mode==="video"; let h="";
   const cs=CD.st||{}, onCard=cs.source==="card";
   h+=`<h4>Saving</h4><div class="as-grp">${st.length?`<div class="as-blk"><div class="l">Save photos to<small>PC + card keeps a copy on the card too.</small></div>${asSeg("save_to",st)}</div>`:""}
     <div class="as-blk"><div class="l">Record video to<small>${onCard?"This laptop records the capture card's picture and sound into your shoot's VIDEO folder. The picture pauses for about a second when a recording on the laptop starts and stops.":"Recording on the laptop needs the capture card as the picture source."}</small></div>
-      <div class="as-seg"><button data-recto="card" aria-pressed="${cs.record_to!=="laptop"}">The camera's card</button><button data-recto="laptop" aria-pressed="${cs.record_to==="laptop"}" ${onCard?"":"disabled"}>This laptop (capture card)</button></div></div></div>`;
+      ${optList([{label:"The camera's card",on:cs.record_to!=="laptop",attr:'data-recto="card"'},{label:"This laptop (capture card)",on:cs.record_to==="laptop",attr:'data-recto="laptop"',dis:!onCard}])}</div></div>`;
   if(!isV){ const tv=($("#timer")||{}).value||"0";
     h+=`<h4>Drive</h4><div class="as-grp"><div class="as-blk"><div class="l">Shutter<small>Studio counts down, then takes one photo.</small></div><div class="as-seg">${[["0","Single"],["3","3 s timer"],["10","10 s timer"]].map(([v,l])=>`<button data-timer="${v}" aria-pressed="${tv===v}">${l}</button>`).join("")}</div></div></div>`; }
   $("#asCamera").innerHTML=h; fmtLoad(); cdLoad(true); }
@@ -3237,8 +3464,8 @@ const CD={st:null, v:null, a:null, poll:null};
 async function cdLoad(list){ try{ CD.st=list?await post("/api/card",{list:true}):await api("/api/card"); }catch(e){} const b=$("#asCard"); if(b) b.innerHTML=cdHtml(); cdPoll(); }
 function cdHtml(){ const s=CD.st; if(!s) return `<div class="as-grp"><div class="as-row"><span class="l">Looking for a capture card…</span></div></div>`;
   const d=s.devices||{video:[],audio:[]}, on=s.source==="card";
-  let h=`<div class="as-grp"><div class="as-blk"><div class="l">Live picture from<small>Camera control always stays on the cable or Wi-Fi. <span class="as-tag">Not yet tested on a real capture card</span></small></div>
-    <div class="as-seg"><button data-src="camera" aria-pressed="${!on}">Camera cable</button><button data-src="card" aria-pressed="${on}" ${d.video.length&&d.ffmpeg!==false?"":"disabled"}>Capture card (HDMI)</button></div></div>`;
+  let h=`<div class="as-grp"><div class="as-blk"><div class="l">Live picture from<small>Camera control always stays on the cable or Wi-Fi.</small><span class="note-tag">Not yet tested on a real capture card</span></div>
+    ${optList([{label:"Camera cable",on:!on,attr:'data-src="camera"'},{label:"Capture card (HDMI)",on:on,attr:'data-src="card"',dis:!(d.video.length&&d.ffmpeg!==false)}])}</div>`;
   if(d.ffmpeg===false) h+=`<div class="as-row"><span class="l"><small>The capture card needs Studio's video tool (ffmpeg). Run "Install or repair camctl Studio" once.</small></span></div>`;
   else if(!d.video.length) h+=`<div class="as-row"><span class="l"><small>No capture card found. Plug an HDMI capture card (for example a Cam Link) into the laptop, then open this page again.</small></span></div>`;
   else if(!on){ h+=`<div class="as-blk"><div class="l">Which device is the capture card?<small>Studio never guesses and never opens a webcam by itself. Nothing is opened until you press Use it.</small></div>
@@ -3247,7 +3474,8 @@ function cdHtml(){ const s=CD.st; if(!s) return `<div class="as-grp"><div class=
       <div class="trayacts" style="margin-top:8px"><button class="tbtn" id="cdUse" ${CD.v?"":"disabled"}>Use it</button></div></div>`; }
   else h+=`<div class="as-row"><span class="l">The capture card is the picture<small>${s.size?s.size[0]+" x "+s.size[1]+", shown as it arrives.":"Waiting for the first picture…"}</small></span><span class="v">${s.level_db==null?"no sound":"sound "+Math.round(s.level_db)+" dB"}</span></div>`;
   if(s.note) h+=`<div class="as-row"><span class="l"><small style="color:var(--warn)">${esc(s.note)}</small></span></div>`;
-  h+=`<div class="as-blk"><div class="l">How to connect it<small>1. An HDMI cable from the camera to the capture card.<br>2. The capture card into the laptop.<br>3. On the camera, switch the HDMI information display off so the picture is clean (Studio does not change the camera's menu).<br>Whether the ZV-E10 keeps sending HDMI while PC Remote is on is not known yet.</small></div></div></div>`;
+  h+=`<div class="as-blk"><div class="l">How to connect it</div><ol class="pg-steps"><li>An HDMI cable from the camera to the capture card.</li><li>The capture card into the laptop.</li><li>On the camera, switch the HDMI information display off so the picture is clean (Studio does not change the camera's menu).</li></ol>
+    <span class="note-tag">Whether the ZV-E10 keeps sending HDMI while PC Remote is on is not known yet.</span></div></div>`;
   return h; }
 async function cdPoll(){ clearTimeout(CD.poll); const s=CD.st||{};
   if(s.source==="card"||["starting","recording","finishing"].includes((s.rec||{}).state)){ CD.poll=setTimeout(async()=>{ try{ CD.st=await api("/api/card"); S.card=CD.st; }catch(e){} const b=$("#asCard"); if(b&&asIsOpen()&&AS.tab==="camera") b.innerHTML=cdHtml(); cdPoll(); },1000); } }
@@ -3275,7 +3503,13 @@ function fmtRow(r){ const id=r.mode+":"+r.key, mine=r.chosen!=null, busy=FMT.bus
   if(!r.settable) return `<div class="as-row" data-fmt="${id}"><span class="l">${esc(r.title)}${other}<small>${esc(help)}</small></span><span class="v">${esc(r.value_name)}</span></div>`;
   const cur=r.active?r.value:(mine?r.chosen:r.value), many=r.choices.length>3;
   return `<div class="as-blk" data-fmt="${id}"><div class="l">${esc(r.title)}${other}${mine?' <span class="as-tag" style="color:var(--soft)">your choice</span>':""}<small>${esc(busy?"Setting the camera…":help)}</small></div>
-    <div class="as-seg${many?" wrap":""}">${r.choices.map(c=>`<button data-fset="${id}" data-v="${c.value}" aria-pressed="${c.value===cur}" ${busy?"disabled":""} title="${esc(c.label)}">${esc(c.label)}</button>`).join("")}</div>${ours}</div>`; }
+    ${optList(r.choices.map(c=>({v:c.value,label:c.label,on:c.value===cur,attr:`data-fset="${id}" data-v="${c.value}"`})),busy)}${ours}</div>`; }
+/* choices: short words as segments; long names as a list, one per line with the explanation below (never cut) */
+function optSplit(l){ const s=String(l); let i=s.indexOf(" ("); if(i>0&&s.endsWith(")")) return [s.slice(0,i),s.slice(i+2,-1)];
+  i=s.indexOf(" · "); return i>0?[s.slice(0,i),s.slice(i+3)]:[s,""]; }
+function optList(opts,disabled){ const long=opts.length>4||opts.some(o=>String(o.label).length>12);
+  if(!long) return `<div class="as-seg">${opts.map(o=>`<button ${o.attr} aria-pressed="${o.on}" ${disabled||o.dis?"disabled":""}>${esc(o.label)}</button>`).join("")}</div>`;
+  return `<div class="as-opts">${opts.map(o=>{ const [a,b]=optSplit(o.label); return `<button ${o.attr} aria-pressed="${o.on}" ${disabled||o.dis?"disabled":""}><span>${esc(a)}${b?`<small>${esc(b)}</small>`:""}</span>${o.on?"<span aria-hidden=\"true\">✓</span>":""}</button>`; }).join("")}</div>`; }
 function fmtHtml(){ const d=FMT.d;
   if(!d) return `<div class="as-grp"><div class="as-row"><span class="l">Reading what the camera offers…</span></div></div>`;
   if(d.error) return `<div class="as-grp"><div class="as-row"><span class="l">Format<small>Studio can't read the camera's formats right now. Check that the camera is on, then open this page again.</small></span></div></div>`;
@@ -3334,7 +3568,7 @@ function asLight(s){ const box=$("#asLight"); if(!box) return;
 /* ---------- Setups gallery ---------- */
 function asSetLine(k){ k=k||{}; const ap=k.aperture?("f"+String(k.aperture).replace(/^F/i,"").replace(/\.0$/,"")):"";
   const iso=k.iso?("ISO "+String(k.iso).replace(/^ISO\s*/i,"")):"", ct=k.color_temp&&/K$/.test(k.color_temp)&&/kelvin|custom|temp/i.test(k.white_balance||"Kelvin")?k.color_temp:(k.white_balance||"");
-  return [ap,k.shutter_speed||"",iso,ct].filter(Boolean).join(" · "); }
+  return [ap,k.shutter_speed||"",iso,ct].filter(Boolean).join(" ·\u00a0"); }   /* no line ends in " ·" (round 3) */
 /* One picture card per setup. Opening it shows everything needed to pick the shoot up again, then the actions in use
    order: Recall, Line up, Undo. Delete sits apart. Saving: one button with the name beside it, details folded below. */
 const SU={open:null, d:null, rec:null, mark:false, busy:false, list:[]};
@@ -3344,14 +3578,14 @@ function suMeasure(){ const lights=[0,1,2].map(i=>{ const g=f=>suVal(`[data-li="
   return {subject_m:suVal("#suSubj"),height_m:suVal("#suH"),lights}; }
 async function asSetups(){ $("#asCards").className="su"; if(SU.open) return suView();
   const list=SU.list=await api("/api/setups").catch(()=>[]);
-  const save=`<div class="su-save"><div class="su-row"><input id="suName" placeholder="Name, e.g. Interview · desk · evening" maxlength="80"><button class="tbtn pri" data-su="save">${SU.busy?"Saving…":"Save this setup"}</button></div>
+  const save=`<div class="su-save"><div class="su-row"><input id="suName" placeholder="Name, e.g. Desk interview" title="Name, e.g. Interview · desk · evening" maxlength="80"><button class="tbtn pri" data-su="save">${SU.busy?"Saving…":"Save this setup"}</button></div>
     <details class="su-more"><summary>Notes, measurements, object size (optional)</summary>
       <textarea id="suNotes" placeholder="Notes for next time"></textarea>
       <div class="su-g2"><label>Camera to subject (m)<input id="suSubj" type="number" step="0.05" min="0"></label><label>Camera height (m)<input id="suH" type="number" step="0.05" min="0"></label></div>
       ${[0,1,2].map(i=>`<div class="su-g3"><input data-li="${i}" data-f="name" placeholder="Light ${i+1}"><input data-li="${i}" data-f="dist_m" type="number" step="0.05" min="0" placeholder="distance m"><input data-li="${i}" data-f="height_m" type="number" step="0.05" min="0" placeholder="height m"></div>`).join("")}
       <label>Object width (cm), for the distance estimate<input id="suObj" type="number" min="1" step="0.5"></label>
       <p class="as-note">After saving, mark the object on the saved picture.</p></details></div>`;
-  const cards=list.map(s=>`<button class="su-card" data-sid="${s.id}">${s.thumb?`<img src="data:image/jpeg;base64,${s.thumb}" alt="">`:'<div class="ph"></div>'}<b>${esc(s.name)}</b><span>${esc([fmtDate(s.created),s.zoom_mm?s.zoom_mm+" mm":"",asSetLine(s.key)].filter(Boolean).join(" · "))}</span></button>`).join("");
+  const cards=list.map(s=>`<button class="su-card" data-sid="${s.id}">${s.thumb?`<img src="data:image/jpeg;base64,${s.thumb}" alt="">`:'<div class="ph"></div>'}<b>${esc(s.name)}</b><span>${esc([fmtDate(s.created),s.zoom_mm?s.zoom_mm+" mm":"",asSetLine(s.key)].filter(Boolean).join(" ·\u00a0"))}</span></button>`).join("");
   $("#asCards").innerHTML=save+(list.length?`<div class="su-cards">${cards}</div>`:`<p class="as-note">No saved setups yet. A setup keeps every value, the zoom, the light, a clean picture of the frame and your notes.</p>`)
     +`<div class="su-acts"><button class="tbtn" data-su="lutake">Line up with the last take</button></div>`+(LU.on&&LU.src==="take"?luBlock():"");
   const n=$("#suName"); if(n) n.onkeydown=e=>{ if(e.key==="Enter") asSetupAct("save"); }; }
@@ -3368,7 +3602,7 @@ async function suView(){ const id=SU.open; let d=SU.d; if(!d||d.id!==id){ d=SU.d
   const p=d.plan, lm=d.light_measure||{}, rec=SU.rec&&SU.rec.id===id?SU.rec:null;
   let x=`<button class="as-back" data-su="back">‹ Setups</button>
     <div class="su-pic${SU.mark?" marking":""}" id="suPic">${d.frame||d.thumb?`<img id="suImg" src="data:image/jpeg;base64,${d.frame||d.thumb}" alt="Saved picture">`:'<div class="ph"></div>'}${d.object&&d.object.box?suBox(d.object.box):""}</div>
-    <h3 class="su-title">${esc(d.name)}</h3><p class="as-note">${esc([fmtDate(d.created),d.shot_name||"",d.shoot&&d.shoot.name?"shoot "+d.shoot.name:""].filter(Boolean).join(" · "))}</p>
+    <h3 class="su-title">${esc(d.name)}</h3><p class="as-note">${esc([fmtDate(d.created),d.shot_name||"",d.shoot&&d.shoot.name?"shoot "+d.shoot.name:""].filter(Boolean).join(" ·\u00a0"))}</p>
     <div class="as-grp">${vals.map(([k,v])=>`<div class="as-row"><span class="l">${k}</span><span class="v">${esc(v)}</span></div>`).join("")}</div>`;
   if(p) x+=`<h4>Light</h4><div class="su-diag">${diagramSvg(p)}</div><div class="as-grp">${(p.lights||[]).map(L=>`<div class="as-row"><span class="l">${esc(L.role||"light")}<small>${esc([L.fixture,L.modifier].filter(Boolean).join(" · "))}</small></span><span class="v">${L.distance_m!=null?(+L.distance_m).toFixed(1)+" m":""}${L.height_m!=null?" · h "+(+L.height_m).toFixed(1)+" m":""}</span></div>`).join("")}</div>`;
   else if(suLm(lm)) x+=`<h4>Light</h4><div class="as-grp"><div class="as-row"><span class="l">Measured when saved</span><span class="v">${esc(suLm(lm))}</span></div></div>`;
@@ -3455,7 +3689,10 @@ function asStudio(){ const box=$("#asStudio");
     put("#asConnBox",AS.nodes.conn); put("#asClaudeBox",AS.nodes.claude); put("#asOpBox",AS.nodes.op); put("#asMonBox",AS.nodes.mon); AS.words(); }
   asStudioLive(); }
 async function asNeeds(){ try{ const l=(await api("/api/ready")).libs||{}; const all=[l.text,...(l.optional||[])].filter(Boolean);
-    const s=$("#asNeedsS"), v=$("#asNeedsV"); if(!s) return; s.textContent=all.length?all.join(" "):"Everything Studio needs is installed."; v.textContent=all.length?"incomplete":"complete"; }catch(e){} }
+    const s=$("#asNeedsS"), v=$("#asNeedsV"); if(!s) return; v.textContent=all.length?"incomplete":"complete";
+    s.innerHTML=all.length?libLines(all):"Everything Studio needs is installed."; }catch(e){} }
+function libLines(list){ const one=t=>String(t).replace(/\s*\(run[^)]*\)\.?/ig,"").replace(/\s*Run "Install or repair camctl Studio"[^.]*\.?/ig,"").trim().replace(/\.?$/,".");
+  return list.map(t=>`<span class="lib-line">${esc(one(t))}</span>`).join("")+`<span class="lib-line lib-fix">To fix it, run "Install or repair camctl Studio" once.</span>`; }
 async function asStudioLive(){ asNeeds(); $("#asBatt").textContent=(($("#dzBattT")||{}).textContent||"").trim()||"—";
   const pr=S.profile||{}; $("#asModel").textContent=(pr.model||"—")+(pr.model?(pr.tested?" · tested":" · untested model"):"");
   $("#asModelSub").textContent=pr.model?(pr.tested?(pr.log_confirmed?"Log profile known.":"Log profile not confirmed on this model."):"Not checked yet: run “Check this camera”."):"";
@@ -3532,7 +3769,7 @@ setInterval(()=>{ const k=(S.mode||"")+"|"+(clTool()||""); if(k!==S._clKey){ S._
   const bottom=$(".dz-bottom"); if(!bottom) return;
   bottom.insertAdjacentHTML("afterbegin",`<button class="cl-btn glass" id="clBtn" aria-label="Claude" title="Claude (C)"><span class="cl-spark" id="clBtnSpark">${SPARK(20)}</span><b>Claude</b></button>`);
   $("#dzTray").insertAdjacentHTML("afterend",`<section class="dz-tray glass cl-tray" id="clPanel" aria-label="Claude">
-    <header><div><h2><span class="cl-spark" id="clHeadSpark">${SPARK(20)}</span>Claude</h2><p class="cap" style="min-height:0">Your director. Tell it what you want, or pick one.</p></div>
+    <header><div><h2><span class="cl-spark" id="clHeadSpark">${SPARK(20)}</span>Claude</h2><p class="cap" id="clCap" style="min-height:0">Your director. Tell it what you want, or pick one.</p></div>
       <div class="acts"><button class="tbtn x" id="clClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l10 10M14 4L4 14"/></svg></button></div></header>
     <div id="clBody"></div></section>`);
   $("#clBtn").onclick=clToggle; $("#clClose").onclick=clClose;
@@ -3541,7 +3778,8 @@ setInterval(()=>{ const k=(S.mode||"")+"|"+(clTool()||""); if(k!==S._clKey){ S._
 })();
 const clIsOpen=()=>document.body.dataset.cl==="1";
 function clBlocked(){ return S.rec||S.firing||S.modeBusy||(S.series&&S.series.running); }
-function clOpen(){ if(clBlocked()){ toast("Claude waits until the take is finished.",2500); return; } if(typeof RD!=="undefined"&&RD.open) rdClose();
+function clWaitMsg(){ return S.modeBusy?"Claude waits until the setup is finished.":"Claude waits until the take is finished."; }
+function clOpen(){ if(clBlocked()){ toast(clWaitMsg(),2500); return; } if(typeof RD!=="undefined"&&RD.open) rdClose();
   closeTray(); $("#moreSheet").classList.remove("on"); document.body.dataset.cl="1"; clState(); clDraw(); setTimeout(()=>{ const i=$("#clIn"); if(i&&!("ontouchstart" in window)) i.focus(); },300); }
 function clClose(){ document.body.dataset.cl="0"; const i=$("#clIn"); if(i) i.blur(); }
 function clToggle(){ clIsOpen()?clClose():clOpen(); }
@@ -3549,6 +3787,7 @@ async function clState(){ try{ CL.state=await api("/api/claude/state"); }catch(e
 function clFoot(){ const n=CL.state.calls||0; return `<p class="cl-foot">Claude looks only when you ask. ${n} call${n===1?"":"s"} today.</p>`; }
 function clDraw(){ const b=$("#clBody"); if(!b) return;
   const ready=CL.state.has_key!==false;
+  { const cp=$("#clCap"); if(cp) cp.style.display=(ready&&(CL.busy||CL.ans))?"none":""; }   /* round 3: no "tell it or pick one" over an answer or while it thinks */
   if(!ready){ b.innerHTML=keyBlock("cl"); return; }
   const ask=`<form class="cl-ask" id="clForm" autocomplete="off"><input id="clIn" placeholder="Tell Claude what you want" maxlength="600" value="${esc(CL.busy?CL.last:"")}" ${CL.busy?"disabled":""}><button type="submit" aria-label="Send" ${CL.busy?"disabled":""}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>`;
   let h="";
@@ -3573,7 +3812,7 @@ const CL_WORK={direct:"Claude is looking at your picture…",review:"Claude is l
 async function clRun(kind,text){ if(CL.busy) return;
   if(kind==="plan" && !text){   /* one home for the light plan: All settings › Light */
     clClose(); asOpen("light"); setTimeout(()=>{ const g=$("#litGo"); const s=g&&(g.closest(".sec")||g); if(s) s.scrollIntoView({block:"start",behavior:"smooth"}); },500); return; }
-if(clBlocked()){ toast("Claude waits until the take is finished.",2500); return; }
+if(clBlocked()){ toast(clWaitMsg(),2500); return; }
   CL.busy=CL_WORK[kind]; CL.err=null; CL.ans=null; CL.last=text||""; CL.kind=kind; CL.title=text||(CL_CARDS.find(c=>c.k===kind)||{}).t||""; clDraw();
   const run=CL.run=(CL.run||0)+1;   /* "Stop waiting" moves CL.run on: a late answer is then ignored */
   try{ let a;
@@ -3590,7 +3829,7 @@ function clStatus(a){ const first=String(a.say||"").replace(/^\(Simulator[^)]*\)
   const what=CL.kind==="direct"&&CL.title&&CL.title!=="Direct this shot"?CL.title.replace(/[.?!]$/,"").toLowerCase():"";
   return (what?`Claude set “${CL.title.replace(/[.?!]$/,"")}”. `:"Claude changed the settings. ")+first; }
 async function clApply(){ const a=CL.ans; if(!a||!(a.changes||[]).length) return;
-  if(clBlocked()){ toast("Claude waits until the take is finished.",2500); return; }
+  if(clBlocked()){ toast(clWaitMsg(),2500); return; }
   CL.busy="Applying and checking on the camera…"; CL.applying=true; clDraw();
   const say=clStatus(a);
   try{ const r=await post("/api/claude/apply",{changes:a.changes.map(c=>({name:c.name,value:c.value})),say});
@@ -3765,10 +4004,31 @@ function rdDraw(){ const c=RD.r.camera, k=RD.r.claude;
   const lb=RD.r.libs||{}, lib=$("#rdLib"); lib.hidden=!(lb.missing&&lb.missing.length);
   if(!lib.hidden) lib.innerHTML=`<span class="rd-ic">!</span><div style="min-width:0"><b>Studio</b><p class="warn">${esc(lb.text)}</p></div>`;
   let on=$("#rdOpt"); if(!on){ on=document.createElement("p"); on.id="rdOpt"; on.className="rd-note"; lib.after(on); }
-  on.hidden=!(lb.optional&&lb.optional.length); on.textContent=(lb.optional||[]).join(" ");   /* a small secondary note, not a check */
+  on.hidden=!(lb.optional&&lb.optional.length); on.innerHTML=(lb.optional&&lb.optional.length)?libLines(lb.optional):"";   /* a small secondary note, not a check */
   const noCl=st!=="ok"; $("#rdNoCl").hidden=!noCl; $("#rdNote").hidden=!noCl;
   $("#rdGo").hidden=noCl; $("#rdGo").textContent=c.ok?"Continue":"Continue without the camera"; }
 $("#rdGo").onclick=rdClose; $("#rdNoCl").onclick=rdClose;
 setTimeout(()=>rdCheck(),800);
+
+/* ================= ONE SURFACE AT A TIME (UI pass round 2): no two surfaces ever overlap =================
+   A tray, a sheet (More, All settings), the Claude panel or a dialog opening closes the take card; a dialog
+   also takes the floating toast (its messages go on the dialog's own note line, see toast()). */
+(function(){
+  const dlg=()=>document.querySelector(".result.on,.modal.on");
+  const busy=()=>document.body.dataset.tray==="1"||document.body.dataset.cl==="1"||document.body.dataset.as==="1"||$("#moreSheet").classList.contains("on")||!!dlg();
+  const check=()=>{ const t=$("#treview"); if(busy()&&t.classList.contains("on")){ t.classList.remove("on"); clearTimeout(S.trT); }
+    if(dlg()) $("#toast").style.display="none"; };
+  const mo=new MutationObserver(recs=>{
+    for(const r of recs){ const t=r.target;
+      if(t.matches&&t.matches(".result.on,.modal.on")){          /* a dialog opened: it is the only surface */
+        document.querySelectorAll(".result.on,.modal.on").forEach(d=>{ if(d!==t) d.classList.remove("on"); });
+        if(TR.k) closeTray(); if(clIsOpen()) clClose(); if(asIsOpen()) asClose(); $("#moreSheet").classList.remove("on"); }
+      else if(t.id==="moreSheet"&&t.classList.contains("on")){ if(clIsOpen()) clClose(); if(asIsOpen()) asClose(); }
+      else if(t===document.body&&r.attributeName==="data-cl"&&clIsOpen()&&asIsOpen()) asClose();
+      else if(t===document.body&&r.attributeName==="data-as"&&asIsOpen()&&clIsOpen()) clClose(); }
+    check(); });
+  mo.observe(document.body,{attributes:true,attributeFilter:["data-tray","data-cl","data-as"]});
+  for(const el of [$("#moreSheet"),...document.querySelectorAll(".result,.modal")]) mo.observe(el,{attributes:true,attributeFilter:["class"]});
+})();
 </script>
 </body></html>

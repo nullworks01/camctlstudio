@@ -41,6 +41,9 @@ def _fake_claude() -> None:
     from camctl import assistant, bestpick, shotplan
     note = "(Simulator: a made-up answer, no Claude call.) "
     assistant.has_key = lambda: True
+    # the panel shows Claude "with a key" (cards, answers): a pretend key in memory only. No key file exists, the
+    # real key is never read, and every request is stopped by _no_network below.
+    assistant.key_source = lambda: "app"
 
     def _steps(settings, wants):
         by = {s["name"]: s for s in settings}
@@ -114,6 +117,11 @@ def main() -> None:
     measure._faces_cv = lambda im: cam.face_box_px(im.width, im.height)
     webui.assistant.has_key = lambda: False             # the simulator never spends Claude tokens
     webui.assistant._key = lambda: ""                     # ...not even through a path that reads the key itself
+    webui.assistant._env_key = lambda: ""                 # ...nor the Windows key setting (not even to see if one exists)
+
+    def _no_network(body, key):                           # the one place a Claude request leaves Studio: never here
+        raise webui.assistant.AskError("Simulator: Studio makes no Claude request here.")
+    webui.assistant._send = _no_network
     tmp = Path(tempfile.mkdtemp(prefix="camctl_sim_"))      # never touch his real prefs, takes or captures
     from camctl import keystore
     keystore.BASE, keystore.PATH = tmp, tmp / "claude_key.bin"   # a key typed in the simulator stays in its temp folder
@@ -138,6 +146,7 @@ def main() -> None:
     setups.SETUP_DIR = tmp / "setups"                       # never his real setups / gear
     setups.GEAR_FILE = tmp / "gear.json"
     webui.CAPTURE_DIR = tmp / "captures"
+    webui.CAMCHECK_AUDIT = tmp / "AUDIT.md"                 # a simulated camera check never writes into the project's AUDIT.md
     webui.handoff.SHOOTS = tmp / "shoots"                    # simulated shoot folders, not his Pictures
     webui.handoff.STATE = tmp / "shoot.json"
     st = webui.Studio("usb")

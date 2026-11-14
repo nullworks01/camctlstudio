@@ -169,7 +169,7 @@ def movie_setting_name(raw: str) -> str:
     m = re.match(r"(4K\s+)?(\d+p)\s+(\d+)M", raw or "")
     if not m:
         return raw or "—"
-    return f"{'4K' if m.group(1) else 'HD'} · {m.group(2)} · {m.group(3)} Mbps"
+    return f"{'4K' if m.group(1) else 'HD'} · {m.group(2)} · {m.group(3)} Mbps"     # number and unit stay together
 
 
 def value_name(key: str, v, profile: dict, label_fn=None) -> str:

@@ -39,6 +39,7 @@ from .drivers.sony import PROPS, SonyCamera, format_value
 from .ptpip import PTPError
 
 CAPTURE_DIR = Path(__file__).resolve().parent.parent / "captures"
+CAMCHECK_AUDIT = Path(__file__).resolve().parent.parent / "AUDIT.md"    # the camera check's result (the simulator sends it elsewhere)
 _real_sleep = time.sleep      # background loops keep sleeping even when a test patches time.sleep
 
 WB = {2: "Auto", 4: "Daylight", 32785: "Shade", 32784: "Cloudy", 6: "Incandescent",
@@ -202,7 +203,7 @@ class Studio:
                 self._fails += 1
                 self._retry_at = time.time() + min(2.0 ** self._fails, self.RETRY_MAX_S)
                 self._mark_fail()
-                self.last_error = f"Camera not reachable on Wi-Fi ({self.host})"
+                self.last_error = "Camera not reachable on Wi-Fi" + (f" ({self.host})" if self.host else "")
                 raise PTPError(self.last_error)
             # 1) plain connect  2) reset a camera stuck mid-transfer  3) re-enumerate USB
             for step in ("plain", "ptp_reset", "usb_reset"):
@@ -327,7 +328,7 @@ class Studio:
             return {"state": "absent", "down_s": round(down, 1),
                     "message": "Camera not found on USB: switch it on and check the cable (USB Connection: PC Remote)."
                     if self.host == "usb" else
-                    f"Camera not reachable on Wi-Fi ({self.host}): is it on, on your home Wi-Fi, with "
+                    "Camera not reachable on Wi-Fi" + (f" ({self.host})" if self.host else "") + ": is it on, on your home Wi-Fi, with "
                     "PC Remote (Access Point) enabled? Studio keeps looking for it."}
         return {"state": "unresponsive", "down_s": round(down, 1),
                 "message": "Camera not answering: switch it off and on. Studio reconnects by itself.",
@@ -2052,8 +2053,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         camcheck["done"] = time.time()
         camcheck["ok"] = ok_all
         try:
-            audit = Path(__file__).resolve().parents[1] / "AUDIT.md"
-            with audit.open("a", encoding="utf-8") as fh:
+            with CAMCHECK_AUDIT.open("a", encoding="utf-8") as fh:
                 sim = " (SIMULATED camera)" if "simulated" in str(getattr(studio.cam, "name", "")) else ""
                 fh.write(f"\n\n## Camera check {time.strftime('%Y-%m-%d %H:%M')}{sim} ({'all OK' if ok_all else 'problems found'})\n\n"
                          + "\n".join(L) + "\n")
@@ -4353,7 +4353,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         try:
             why, now = studio.run(apply)
         except Exception as exc:  # noqa: BLE001
-            return JSONResponse({"error": f"The camera did not answer in time ({exc}). Tap again."}, status_code=502)
+            return JSONResponse({"error": "The camera did not answer in time. Tap again.", "detail": str(exc)[:300]}, status_code=502)
         if why:
             return JSONResponse({"error": why, "value": now}, status_code=409)
         return JSONResponse({"ok": True, "value": now})
@@ -4474,7 +4474,10 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             return err(exc, 400)
 
     def focus_view(_: Request):
-        props = studio.props(max_age=2)                         # the real mode, read back (shared, at most every 2 s)
+        try:
+            props = studio.props(max_age=2)                     # the real mode, read back (shared, at most every 2 s)
+        except Exception as exc:  # noqa: BLE001               # camera not reachable: the same answer as /api/settings
+            return err(exc)
         fm = props.get(PROPS["focus_mode"])
         mode = {1: "MF (locked)", 2: "AF-S", 32772: "AF-C", 32773: "AF-A", 32774: "DMF"}.get(fm.value if fm else None, "")
         st = dict(focus_state)

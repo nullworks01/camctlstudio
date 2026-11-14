@@ -62,7 +62,7 @@ def test_studio_choice_is_unchanged_raw_jpeg_and_slog3_4k25(studio):
     assert v["picture_profile"]["value"] == 8 and v["movie_setting"]["value"] == 0x21   # S-Log3, 4K 25p 100M
     assert v["shutter_speed"]["label"] == "1/50s"
     s = c.get("/api/settings").json()["format"]
-    assert s["name"].startswith("S-Log3") and "4K · 25p · 100 Mbps" in s["name"]
+    assert s["name"].startswith("S-Log3") and "4K · 25p · 100\u00a0Mbps" in s["name"]
 
 
 def test_rows_offer_what_the_camera_reports_with_names(studio):
@@ -131,8 +131,8 @@ def test_frame_rate_choice_sets_the_shutter(studio):
     assert r["ok"]
     d = r
     rates = {x["label"]: x["value"] for x in _row(d, "video", "movie_setting")["choices"]}
-    assert "HD · 50p · 50 Mbps" in rates and "HD · 100p · 100 Mbps" in rates
-    r = c.post("/api/formats", json={"mode": "video", "key": "movie_setting", "value": rates["HD · 50p · 50 Mbps"]}).json()
+    assert "HD · 50p · 50\u00a0Mbps" in rates and "HD · 100p · 100\u00a0Mbps" in rates
+    r = c.post("/api/formats", json={"mode": "video", "key": "movie_setting", "value": rates["HD · 50p · 50\u00a0Mbps"]}).json()
     assert r["ok"]
     assert _vals(c)["shutter_speed"]["label"] == "1/100s"               # 50p under 50 Hz mains
     # the rule itself, for every rate
@@ -249,7 +249,7 @@ def test_other_camera_offers_its_own_formats(sim_c):
     d = c.get("/api/formats").json()
     assert [x["label"] for x in _row(d, "video", "movie_format")["choices"]] == ["HD video (XAVC S)"]
     rates = [x["label"] for x in _row(d, "video", "movie_setting")["choices"]]
-    assert "HD · 60p · 50 Mbps" in rates and not any("4K" in x for x in rates)
+    assert "HD · 60p · 50\u00a0Mbps" in rates and not any("4K" in x for x in rates)
 
 
 # ---------------------------------------------------------------- tidy: one home, order, his JPEG quality / size kept

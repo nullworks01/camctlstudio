@@ -382,6 +382,8 @@ def shape(body: dict, model: str | None = None) -> dict:
 
 
 def _send(body: dict, key: str) -> dict:
+    if not key:                                  # never a request without a key: it could only fail as "wrong key"
+        raise AskError("NO_KEY")
     req = urllib.request.Request(
         API_URL, data=json.dumps(body).encode(), method="POST",
         headers={"content-type": "application/json", "x-api-key": key,
