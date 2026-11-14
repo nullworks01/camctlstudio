@@ -26,9 +26,19 @@ INCLUDE = [
     "tools/publish.py", "tools/sim_studio.py", "tools/start_server.pyw", "tools/studio_app.pyw",
     "README.md", "LICENSE", "CONTRIBUTING.md", "requirements.txt", "requirements-optional.txt", "pyproject.toml", "start_studio.ps1",
     "Install or repair camctl Studio.cmd", ".gitignore", ".github/ISSUE_TEMPLATE/*.md",
+    "docs/guide.md", "docs/img/*.jpg",
 ]
 NEVER = re.compile(r"(\.bak$|\.r\d+\.bak$|__pycache__|\.pyc$|/logs/|/captures/|AUDIT\.md|publish_list\.txt|\.log$)", re.I)
 IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico"}     # a generated picture and the app icon
+# the visual guide's pictures (docs/img): screenshots of the SIMULATOR only (the drawn test card, never a camera frame),
+# each one named here so that no other picture can slip in
+GUIDE_PICS = (
+    "claude", "claude-answer", "focus-stack", "getting-ready", "ipad", "iso", "looks", "main", "main-numbered",
+    "more", "photo-review", "photo-viewer", "playground", "recording", "settings-camera", "settings-format",
+    "settings-light", "settings-setups", "shoot-handoff", "shot", "sound-check", "special-shots", "teleprompter",
+    "video", "white-balance",
+)
+IMAGES_OK |= {f"docs/img/{n}.jpg" for n in GUIDE_PICS}
 # written WITHOUT a UTF-8 byte-order mark: GitHub reads the issue template's header only without one
 NO_BOM = re.compile(r"^(\.gitignore|\.github/.*)$")
 BOM = b"\xef\xbb\xbf"
