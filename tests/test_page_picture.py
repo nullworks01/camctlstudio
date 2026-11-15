@@ -1,5 +1,5 @@
 """The picture in Studio is the camera's own picture, in every format; the recorded shape is shown, never stretched;
-every address the page calls exists; every new control has exactly one home. Real page in headless Edge on the
+every address the page calls exists; every new control has exactly one home. Real page in headless Chrome (else Edge) on the
 simulator (no real camera)."""
 import asyncio
 import json
@@ -15,10 +15,11 @@ from pathlib import Path
 
 import pytest
 
+from camctl import browser
+
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "camctl" / "studio_pro.html"
-EDGE = next((p for p in (r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe") if os.path.exists(p)), None)
+EDGE = browser.find()          # Chrome, else Edge, else Chromium (camctl/browser.py)
 
 
 def _port():
@@ -49,7 +50,7 @@ def _post(port, path, body):
 async def _page(port, steps):
     import websockets
     dport = _port()
-    proc = subprocess.Popen([EDGE, "--headless=new", "--disable-gpu", f"--remote-debugging-port={dport}",
+    proc = subprocess.Popen([EDGE, "--headless=new", *browser.HEADLESS, "--disable-gpu", f"--remote-debugging-port={dport}",
                              f"--user-data-dir={tempfile.mkdtemp()}", "about:blank"])
     out = []
     try:
@@ -99,7 +100,7 @@ SAME = """(async()=>{ await loadSettings(); S.overlays=new Set(VIEW); await slee
   return {worst, log:!!(S.log&&S.log.active), kind:(S.format||{}).pp_kind, w:cv.width, h:cv.height}; })()"""
 
 
-@pytest.mark.skipif(EDGE is None, reason="Edge not installed")
+@pytest.mark.skipif(EDGE is None, reason="no Chrome or Edge installed")
 def test_the_picture_is_the_cameras_own_in_every_profile(sim):
     def pp(v):
         return lambda: _post(sim, "/api/set", {"name": "picture_profile", "value": v})
@@ -116,7 +117,7 @@ ASPECT = """(async()=>{ await loadSettings(); await sleep(1200); const R=recRect
   return {ratio:R.w/R.h, frame:cv.width/cv.height, box:p.w/p.h, masked:R.x>0||R.y>0}; })()"""
 
 
-@pytest.mark.skipif(EDGE is None, reason="Edge not installed")
+@pytest.mark.skipif(EDGE is None, reason="no Chrome or Edge installed")
 def test_the_picture_has_the_recorded_shape_and_is_never_stretched(sim):
     def asp(v):
         return lambda: _post(sim, "/api/formats", {"mode": "photo", "key": "aspect", "value": v})

@@ -9,9 +9,10 @@ from pathlib import Path
 
 import pytest
 
+from camctl import browser
+
 PAGE = Path(__file__).resolve().parents[1] / "camctl" / "studio_pro.html"
-EDGES = [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]
+EDGES = [p for p in [browser.find()] if p]          # Chrome, else Edge, else Chromium (camctl/browser.py)
 
 
 def _sc_source() -> str:
@@ -21,7 +22,7 @@ def _sc_source() -> str:
 
 
 def _run_js(src: str, expr: str):
-    """Evaluate expr after src in a real JavaScript engine (node, else headless Edge); returns the JSON value."""
+    """Evaluate expr after src in a real JavaScript engine (node, else headless Chrome or Edge); returns the JSON value."""
     node = shutil.which("node")
     if node:
         r = subprocess.run([node, "-e", src + f"\nconsole.log(JSON.stringify({expr}));"], capture_output=True, timeout=30)
@@ -33,7 +34,7 @@ def _run_js(src: str, expr: str):
         f = Path(d) / "t.html"
         f.write_text("<html><body><pre id=r></pre><script>" + src + "\ndocument.getElementById('r').textContent="
                      f"JSON.stringify({expr});</script></body></html>", encoding="utf-8")
-        r = subprocess.run([edge, "--headless=new", "--disable-gpu", f"--user-data-dir={d}\\p", "--dump-dom", f.as_uri()],
+        r = subprocess.run([edge, "--headless=new", *browser.HEADLESS, "--disable-gpu", f"--user-data-dir={d}\\p", "--dump-dom", f.as_uri()],
                            capture_output=True, timeout=60)
         m = re.search(r'<pre id="r">(.*?)</pre>', r.stdout.decode("utf-8", "replace"), re.S)
         import html

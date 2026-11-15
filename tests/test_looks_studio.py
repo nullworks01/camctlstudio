@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from camctl import browser
+
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / "camctl" / "studio_pro.html"
 
@@ -85,8 +87,7 @@ def test_looks_have_one_home():
     assert "The camera's file is not changed." in page
 
 
-EDGE = next((p for p in (r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe") if Path(p).exists()), None)
+EDGE = browser.find()          # Chrome, else Edge, else Chromium (camctl/browser.py)
 
 PIX = """(async()=>{ await loadSettings(); const r=await fetch('/api/liveview.jpg?after=-1&t='+Date.now());
   const bmp=await createImageBitmap(await r.blob()); const c=document.createElement('canvas'); c.width=bmp.width; c.height=bmp.height;
@@ -102,7 +103,7 @@ PIX = """(async()=>{ await loadSettings(); const r=await fetch('/api/liveview.jp
 from test_page_picture import sim, _page  # noqa: E402,F401  (the simulator fixture and the page driver)
 
 
-@pytest.mark.skipif(EDGE is None, reason="Edge not installed")
+@pytest.mark.skipif(EDGE is None, reason="no Chrome or Edge installed")
 def test_the_preview_only_reaches_the_picture_when_switched_on(sim):
     start, r = asyncio.run(_page(sim, ["S.lookPreview", PIX]))
     assert isinstance(r, dict), r

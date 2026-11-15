@@ -8,9 +8,10 @@ from pathlib import Path
 
 import pytest
 
+from camctl import browser
+
 PAGE = Path(__file__).resolve().parents[1] / "camctl" / "studio_pro.html"
-EDGES = [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]
+EDGES = [p for p in [browser.find()] if p]          # Chrome, else Edge, else Chromium (camctl/browser.py)
 
 
 def _scripts():
@@ -29,13 +30,13 @@ def _parse_errors(scripts):
         return out
     edge = next((e for e in EDGES if Path(e).exists()), None)
     if not edge:
-        pytest.skip("no JavaScript engine (node / Edge) to check the page")
+        pytest.skip("no JavaScript engine (node / Chrome / Edge) to check the page")
     with tempfile.TemporaryDirectory() as d:
         f = Path(d) / "check.html"
         f.write_text("<html><body><pre id=r></pre><script>const S=" + json.dumps(scripts) + ";"
                      "document.getElementById('r').textContent=S.map(s=>{try{new Function(s);return 'OK'}"
                      "catch(e){return 'ERR '+e.message}}).join('|');</script></body></html>", encoding="utf-8")
-        r = subprocess.run([edge, "--headless=new", "--disable-gpu", f"--user-data-dir={d}\\p", "--dump-dom",
+        r = subprocess.run([edge, "--headless=new", *browser.HEADLESS, "--disable-gpu", f"--user-data-dir={d}\\p", "--dump-dom",
                             f.as_uri()], capture_output=True, timeout=60)
         dom = r.stdout.decode("utf-8", "replace")
         m = re.search(r'<pre id="r">(.*?)</pre>', dom, re.S)
@@ -62,12 +63,12 @@ def test_offline_guide_does_not_depend_on_the_camera():
 def _run_js(src: str) -> str:
     edge = next((e for e in EDGES if Path(e).exists()), None)
     if not edge:
-        pytest.skip("no Edge to run the page logic")
+        pytest.skip("no Chrome or Edge to run the page logic")
     with tempfile.TemporaryDirectory() as d:
         f = Path(d) / "run.html"
         f.write_text("<html><body><pre id=r></pre><script>try{document.getElementById('r').textContent=(function(){" + src +
                      "})();}catch(e){document.getElementById('r').textContent='ERR '+e.message}</script></body></html>", encoding="utf-8")
-        r = subprocess.run([edge, "--headless=new", "--disable-gpu", f"--user-data-dir={d}\\p", "--dump-dom", f.as_uri()],
+        r = subprocess.run([edge, "--headless=new", *browser.HEADLESS, "--disable-gpu", f"--user-data-dir={d}\\p", "--dump-dom", f.as_uri()],
                            capture_output=True, timeout=60)
         m = re.search(r'<pre id="r">(.*?)</pre>', r.stdout.decode("utf-8", "replace"), re.S)
         return m.group(1) if m else ""

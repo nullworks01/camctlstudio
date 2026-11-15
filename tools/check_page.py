@@ -1,4 +1,4 @@
-"""Release gate: load the running Studio page headless in Edge, fail on any page error, open the main controls.
+"""Release gate: load the running Studio page headless in Chrome (else Edge), fail on any page error, open the main controls.
 
     python tools/check_page.py [--port 8770]
 
@@ -15,9 +15,12 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
+from pathlib import Path
 
-EDGE = next((p for p in (r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe") if os.path.exists(p)), None)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from camctl import browser  # noqa: E402
+
+EDGE = browser.find()          # Chrome, else Edge, else Chromium (camctl/browser.py)
 
 STEPS = [
     ("More", "document.querySelector('#moreSheet').classList.add('on'); renderMore(); true",
@@ -59,7 +62,7 @@ async def run(port: int, press_again: bool = False, size: tuple[int, int] = (136
     import websockets
     import socket
     s = socket.socket(); s.bind(("127.0.0.1", 0)); dport = s.getsockname()[1]; s.close()     # a free port per run
-    proc = subprocess.Popen([EDGE, "--headless=new", "--disable-gpu", f"--remote-debugging-port={dport}",
+    proc = subprocess.Popen([EDGE, "--headless=new", *browser.HEADLESS, "--disable-gpu", f"--remote-debugging-port={dport}",
                              f"--user-data-dir={tempfile.mkdtemp()}", "about:blank"])
     problems: list[str] = []
     try:
@@ -129,7 +132,7 @@ def main() -> int:
     ap.add_argument("--size", help="one size only, e.g. 1366x768 (default: 1366x768, 1180x820 and 820x1180)")
     a = ap.parse_args()
     if not EDGE:
-        print("Edge was not found: the page check cannot run.")
+        print("Neither Chrome nor Edge was found: the page check cannot run.")
         return 1
     problems = []
     for i, size in enumerate(SIZES if not a.size else [tuple(int(x) for x in a.size.lower().split("x"))]):

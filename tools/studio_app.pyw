@@ -3,8 +3,9 @@
 Started from the "camctl Studio" desktop / Start menu shortcut with pythonw.exe:
   1. if Studio's server is not answering on 127.0.0.1:8770, start it hidden (no console window);
   2. if the Studio window is already open, bring it to the front instead of opening a second one;
-  3. open Studio in its own window (Microsoft Edge in app mode, with its own profile in %APPDATA%\\camctl\\app-window
-     so it remembers size and position and never mixes with normal browsing);
+  3. open Studio in its own window (Google Chrome in app mode, else Microsoft Edge, with its own profile in
+     %APPDATA%\\camctl\\app-window-chrome or app-window so it remembers size and position and never mixes with
+     normal browsing);
   4. when the window is closed: release the camera cleanly (closes the PTP session, so the camera does not refuse
      the next connection) and stop the server this launcher started.
 Nothing is installed; no .exe is built (Smart App Control).
@@ -21,6 +22,9 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from camctl import browser  # noqa: E402
+
 URL = "http://127.0.0.1:8770/"
 BASE = Path(os.environ.get("APPDATA") or Path.home()) / "camctl"
 PROFILE = BASE / "app-window"
@@ -47,11 +51,8 @@ def server_up() -> bool:
 
 
 def edge() -> str | None:
-    for p in (os.environ.get("ProgramFiles(x86)", ""), os.environ.get("ProgramFiles", ""), os.environ.get("LOCALAPPDATA", "")):
-        c = Path(p) / "Microsoft" / "Edge" / "Application" / "msedge.exe"
-        if p and c.exists():
-            return str(c)
-    return None
+    """The browser for the window: Chrome, else Edge (camctl/browser.py; CAMCTL_BROWSER picks one by hand)."""
+    return browser.find()
 
 
 def window_open() -> bool:
@@ -135,13 +136,15 @@ def main() -> None:
     if not ed:
         import webbrowser
         webbrowser.open(URL)
-        log("Edge not found: opened the default browser instead")
+        log("Neither Chrome nor Edge found: opened the default browser instead")
         return
-    PROFILE.mkdir(parents=True, exist_ok=True)
-    win = subprocess.Popen([ed, f"--app={URL}", f"--user-data-dir={PROFILE}", "--no-first-run",
+    prof = PROFILE if browser.name(ed) == "Edge" else BASE / "app-window-chrome"   # a profile per browser: they cannot share one
+    prof.mkdir(parents=True, exist_ok=True)
+    log(f"opening the window with {browser.name(ed)}")
+    win = subprocess.Popen([ed, f"--app={URL}", f"--user-data-dir={prof}", "--no-first-run",
                             "--no-default-browser-check", "--disable-features=Translate", "--start-maximized"])
     log(f"opened the Studio window (pid {win.pid})")
-    # Edge often hands the window to an already running Edge process and this one exits at once, and the
+    # The browser often hands the window to an already running process of itself and this one exits at once, and the
     # window's title only becomes "camctl Studio" once the page has loaded: first wait until the window is
     # really there, then until it is really gone (never stop the server 5 s after opening it).
     for _ in range(60):

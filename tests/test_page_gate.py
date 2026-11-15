@@ -11,9 +11,10 @@ from pathlib import Path
 
 import pytest
 
+from camctl import browser
+
 ROOT = Path(__file__).resolve().parents[1]
-EDGE = next((p for p in (r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe") if os.path.exists(p)), None)
+EDGE = browser.find()          # Chrome, else Edge, else Chromium (camctl/browser.py)
 
 
 def _port():
@@ -36,7 +37,7 @@ def sim(tmp_path):
     proc.terminate(); proc.wait(10)
 
 
-@pytest.mark.skipif(EDGE is None, reason="Edge not installed")
+@pytest.mark.skipif(EDGE is None, reason="no Chrome or Edge installed")
 def test_page_gate_on_the_simulator(sim):
     r = subprocess.run([sys.executable, str(ROOT / "tools" / "check_page.py"), "--port", str(sim), "--press-again"],
                        capture_output=True, text=True, timeout=240)

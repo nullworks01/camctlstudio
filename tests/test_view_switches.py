@@ -12,8 +12,9 @@ from pathlib import Path
 
 import pytest
 
-EDGES = [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]
+from camctl import browser
+
+EDGES = [p for p in [browser.find()] if p]          # Chrome, else Edge, else Chromium (camctl/browser.py)
 websockets = pytest.importorskip("websockets")
 
 
@@ -29,7 +30,7 @@ def _port():
 def page(tmp_path_factory):
     edge = next((e for e in EDGES if Path(e).exists()), None)
     if not edge:
-        pytest.skip("no Edge to drive the page")
+        pytest.skip("no Chrome or Edge to drive the page")
     import uvicorn
     from camctl import handoff, webui
     from zve10_sim import ZVE10
@@ -52,7 +53,7 @@ def page(tmp_path_factory):
             time.sleep(0.1)
     dport = _port()
     prof = tempfile.mkdtemp()
-    proc = subprocess.Popen([edge, "--headless=new", "--disable-gpu", f"--remote-debugging-port={dport}", f"--user-data-dir={prof}", "about:blank"])
+    proc = subprocess.Popen([edge, "--headless=new", *browser.HEADLESS, "--disable-gpu", f"--remote-debugging-port={dport}", f"--user-data-dir={prof}", "about:blank"])
     for _ in range(80):
         try:
             tabs = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{dport}/json", timeout=1).read())
