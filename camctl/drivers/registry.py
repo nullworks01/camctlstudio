@@ -200,3 +200,34 @@ def make_wifi_driver(brand: str | None, host: str, sony=None, guid: bytes | None
     if getattr(drv, "brand", "Camera") in ("Camera", ""):
         drv.brand = brand
     return drv
+
+
+# -- the start screen: choose your camera ----------------------------------------------------------------------------
+def model_names(brand: str) -> list[str]:
+    """Every model name of this maker Studio knows (the tested ones first), for the "Your camera" list."""
+    tested = [m["model"] for m in data()["models"] if m["brand"] == brand]
+    seen = list(dict.fromkeys(tested))
+    for rows in _usb_models().values():
+        for r in rows:
+            n = _clean(r["model"])
+            if r["brand"] == brand and n and n.upper() != "PTP" and n not in seen:
+                seen.append(n)
+    return seen[:1] + sorted(seen[1:], key=str.lower) if tested else sorted(seen, key=str.lower)
+
+
+def camera_choices() -> list[dict]:
+    """Per maker: how it can connect (USB control, Wi-Fi, its webcam mode, an HDMI capture card), what is tested,
+    and the setup steps. Makers Studio cannot control at all are left out."""
+    from ..liveroute import WEBCAM_HOWTO
+    live_drivers = {"sony", "canon", "nikon"}
+    out = []
+    for b, v in data()["brands"].items():
+        if not v.get("driver"):
+            continue
+        out.append({"brand": b, "tested": b == "Sony", "status": v.get("status", ""),
+                    "usb": bool(v.get("usb")), "usb_live": v.get("driver") in live_drivers,
+                    "wifi": bool(v.get("wifi") and v.get("wifi_driver")), "wifi_ip": v.get("wifi_ip"),
+                    "webcam": WEBCAM_HOWTO.get(b, ""), "camera_setup": v.get("camera_setup") or [],
+                    "wifi_setup": v.get("wifi_setup") or [], "notes": v.get("notes", ""),
+                    "windows": v.get("windows", ""), "models": model_names(b)})
+    return out

@@ -740,6 +740,30 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
 .note-tag{display:block;margin-top:var(--s2);font-size:13px;line-height:1.35;color:var(--warn);font-weight:500}
 .lib-line{display:block;margin-top:var(--s1)}.lib-fix{margin-top:var(--s2);color:var(--soft)}
 .rd-line[hidden]{display:none!important}
+/* YOUR CAMERA: the start screen where he picks the camera and how it connects */
+.cp-card{grid-template-columns:1fr !important;width:min(720px,94%) !important;gap:14px !important}
+.cp-cols{display:grid;grid-template-columns:1fr;gap:14px}.cp-col{display:grid;gap:12px;align-content:start;min-width:0}
+@media (min-width:1000px){ .cp-card{width:min(1180px,96%) !important} .cp-cols{grid-template-columns:1fr 1fr;gap:20px} }
+.cp-card h2{margin:2px 4px 0;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.cp-sub{margin:0 4px;color:var(--soft);font-size:14.5px;line-height:1.4}
+.cp-h{margin:4px 4px -4px;font-size:13px;font-weight:600;color:var(--dimw);letter-spacing:.02em}
+.cp-found{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.06);border-radius:18px;padding:10px 14px;font-size:15px}
+.cp-found[hidden]{display:none}
+.cp-makers{display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:6px}
+.cp-card .rd-acts{position:sticky;bottom:-18px;margin:0 -18px -18px;padding:12px 18px 18px;background:rgba(22,25,31,.96);border-radius:0 0 30px 30px}
+.cp-makers button,.cp-routes button{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--text);border-radius:16px;
+  padding:8px 12px;font:15px var(--ui);text-align:left;cursor:pointer;min-height:44px;transition:background .15s,border-color .15s}
+.cp-makers button small,.cp-routes button small{display:block;color:var(--dimw);font-size:12.5px;margin-top:2px;line-height:1.3}
+.cp-makers button.on,.cp-routes button.on{background:rgba(255,255,255,.92);color:#000;border-color:transparent}
+.cp-makers button.on small,.cp-routes button.on small{color:rgba(0,0,0,.6)}
+.cp-routes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+.cp-routes button:disabled{opacity:.38;cursor:default}
+.cp-model{display:flex;gap:8px;align-items:center}
+.cp-model input,.cp-wifi input{flex:1;min-width:0;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:var(--text);padding:0 12px;font:15px var(--ui)}
+.cp-how{background:rgba(255,255,255,.06);border-radius:18px;padding:12px 14px;font-size:14.5px;line-height:1.45;color:var(--soft)}
+.cp-how b{color:var(--text)}.cp-how ol{margin:6px 0 0;padding-left:20px}.cp-how .warn{color:var(--warn)}
+.cp-wifi{display:flex;gap:8px;margin-top:10px}.cp-wifi[hidden]{display:none}
+.cp-list{margin-top:6px;font-size:14px}.cp-list .row{justify-content:space-between;flex-wrap:nowrap;border-top:1px solid rgba(255,255,255,.08);padding:6px 0;gap:8px}
 .pg-card{margin-top:var(--s3)}
 .pg-head{padding:14px 14px 12px}
 .pg-head h5{margin:0;font:600 17px/1.25 var(--ui);color:var(--text);display:flex;align-items:center;gap:8px}
@@ -1013,7 +1037,7 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
           </ol>
           <div class="offstat"><span class="spin"></span><span id="offStat">Trying…</span></div>
           <div class="row" style="justify-content:center;margin-top:14px;gap:8px">
-            <button class="ibtn" id="offFind">Search my network</button><button class="ibtn" id="offUsb">Use USB cable</button><button class="ibtn" id="offWifi">Use Wi-Fi</button></div>
+            <button class="ibtn" id="offPick">Choose my camera</button><button class="ibtn" id="offFind">Search my network</button><button class="ibtn" id="offUsb">Use USB cable</button><button class="ibtn" id="offWifi">Use Wi-Fi</button></div>
         </div>
       </div>
       <div class="result" id="handoff"><div class="rcard glass ho-card" role="dialog" aria-label="Shoot and hand-off">
@@ -1031,6 +1055,22 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
         <p class="dlg-note" data-toast hidden></p>
         <div id="hoMsg" class="report"></div>
       </div></div>
+      <div class="result" id="camPick"><div class="rcard glass cp-card" role="dialog" aria-label="Your camera">
+        <h2>Your camera</h2>
+        <p class="cp-sub">Choose your camera and how it connects. Studio remembers it, and you can change it any time in All settings › Studio › Connection.</p>
+        <div class="cp-found" id="cpFound" hidden></div>
+        <div class="cp-cols"><div class="cp-col">
+        <p class="cp-h">1 · Maker and model</p>
+        <div class="cp-makers" id="cpMakers"></div>
+        <div class="cp-model"><input id="cpModel" list="cpModels" placeholder="Model (optional), e.g. ZV-E10" autocomplete="off"><datalist id="cpModels"></datalist></div>
+        </div><div class="cp-col">
+        <p class="cp-h">2 · How it connects</p>
+        <div class="cp-routes" id="cpRoutes"></div>
+        <div class="cp-how" id="cpHow"></div>
+        </div></div>
+        <p class="dlg-note" data-toast hidden></p>
+        <div class="rd-acts"><button class="tbtn" id="cpLater">Later</button><button class="tbtn pri" id="cpGo">Connect</button></div>
+      </div></div>
       <div class="result" id="ready"><div class="rcard glass rd-card" role="dialog" aria-label="Getting ready">
         <h2>Getting ready</h2>
         <div class="rd-line" id="rdCam"></div>
@@ -1038,7 +1078,7 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
         <div class="rd-line" id="rdLib" hidden></div>
         <p class="rd-note" id="rdNote" hidden>Without Claude you still have: Studio's own setup, focus, zoom, shooting and special shots. Claude is needed for the Claude panel, its shot direction, the light plan, picking the best take and comparing with a reference.</p>
         <p class="dlg-note" data-toast hidden></p>
-        <div class="rd-acts"><button class="tbtn" id="rdNoCl" hidden>Continue without Claude</button><button class="tbtn pri" id="rdGo">Continue</button></div>
+        <div class="rd-acts"><button class="tbtn" id="rdPick">Choose my camera</button><button class="tbtn" id="rdNoCl" hidden>Continue without Claude</button><button class="tbtn pri" id="rdGo">Continue</button></div>
       </div></div>
       <div class="result" id="review"><div class="rcard glass rv-card" id="rvCard" data-n="1" role="dialog" aria-label="Photo review">
         <figure class="rv-pane"><div class="rv-pic"><img id="rvO" alt=""></div><figcaption class="rv-cap" id="rvOT">Original, untouched</figcaption></figure>
@@ -1145,6 +1185,7 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
     <!-- TOOLS -->
     <div class="pane" id="p-tools">
       <div class="sec"><h3>CONNECTION <small id="connNow"></small></h3>
+        <div class="row" style="justify-content:space-between;flex-wrap:nowrap;margin-bottom:8px"><span class="muted" id="connCam" style="min-width:0">Your camera</span><button id="connPick" style="flex:none">Choose camera…</button></div>
         <div class="seg" id="connSeg" style="margin-bottom:8px"><button data-c="auto">Automatic</button><button data-c="usb">USB cable</button><button data-c="wifi">Wi-Fi</button></div>
         <div id="wifiBox" style="display:none">
           <div class="row" style="flex-wrap:nowrap;margin-bottom:6px"><span class="muted" style="flex:none">Camera maker</span><select id="wifiBrand" class="grow" style="min-width:0"><option value="Sony">Sony</option></select></div>
@@ -2358,7 +2399,8 @@ document.addEventListener("click",e=>{ const el=e.target.closest("button,select,
 /* ------------------------------------------------------------ CONNECTION (USB / Wi-Fi) */
 let connView="usb";
 function renderConn(c){
-  fillBrands(c); connView=c.mode; const pick=c.choice||"auto"; $$("#connSeg button").forEach(b=>b.classList.toggle("on",b.dataset.c===pick));
+  fillBrands(c); const cc=$("#connCam"); if(cc) cc.textContent=c.camera?"Your camera: "+c.camera:(c.pick&&c.pick.brand?"Your camera: "+(c.pick.brand==="other"?"another maker":c.pick.brand)+(c.pick.model?" "+c.pick.model:""):"Your camera: not chosen yet");
+  connView=c.mode; const pick=c.choice||"auto"; $$("#connSeg button").forEach(b=>b.classList.toggle("on",b.dataset.c===pick));
   $("#wifiBox").style.display=pick==="wifi"?"block":"none";
   /* Automatic found the camera on the other route: say it once, in one sentence */
   if(c.route_at && c.route_at!==S.routeAt){ if(S.routeAt!==undefined) S.dzFlash={label:"Connected",say:`Connected by ${c.mode==="usb"?"USB cable":"Wi-Fi"}.`,until:Date.now()+5000}; S.routeAt=c.route_at; }
@@ -4001,6 +4043,7 @@ async function rdCheck(force){ clearTimeout(RD.timer); let r;
   RD.r=r;
   if(!RD.open){                                   /* at start: give the automatic connection a few seconds first */
     let seen=false; try{ seen=sessionStorage.getItem("camctl.ready")==="1"; }catch(e){}
+    if(!r.picked && !CP.shown){ cpOpen(true); return; }        /* first start: choose the camera first */
     if(seen||!r.show) return;
     const clOk=r.claude.saved&&!r.claude.problem;
     if(clOk&&!r.camera.ok&&Date.now()-RD.t0<5000){ RD.timer=setTimeout(rdCheck,1000); return; }
@@ -4027,6 +4070,72 @@ function rdDraw(){ const c=RD.r.camera, k=RD.r.claude;
   const noCl=st!=="ok"; $("#rdNoCl").hidden=!noCl; $("#rdNote").hidden=!noCl;
   $("#rdGo").hidden=noCl; $("#rdGo").textContent=c.ok?"Continue":"Continue without the camera"; }
 $("#rdGo").onclick=rdClose; $("#rdNoCl").onclick=rdClose;
+$("#rdPick").onclick=()=>{ rdClose(); cpOpen(); };
+
+/* ================= YOUR CAMERA: maker, model and how it connects (USB, Wi-Fi, webcam mode, HDMI capture card) ========= */
+const CP={shown:(()=>{ try{ return sessionStorage.getItem("camctl.cp")==="1"; }catch(e){ return false; } })(), d:null, brand:null, route:null, start:false, found:[]};
+const CP_ROUTES=[["auto","Automatic","Studio uses whatever answers: the cable or Wi-Fi"],["usb","USB cable","Control, settings and the shutter over the cable"],
+  ["wifi","Wi-Fi","No cable: over your Wi-Fi or the camera's own"],["webcam","Webcam mode","The camera's own webcam mode gives the live picture"],
+  ["card","HDMI capture card","The picture through a capture card on the camera's HDMI"]];
+async function cpOpen(start){ CP.shown=true; CP.start=!!start; try{ sessionStorage.setItem("camctl.cp","1"); }catch(e){}
+  $("#camPick").classList.add("on"); try{ CP.d=await api("/api/camera/choices"); }catch(e){ toast(e.message,3000); return; }
+  const d=CP.d, c=d.connected||{}, p=d.pick||{};
+  CP.brand=p.brand||(c.ok?c.brand:null)||null; CP.route=p.route||"auto";
+  if(c.ok && !p.brand) CP.route="auto";
+  $("#cpModel").value=p.model||(c.ok&&c.name&&c.brand?c.name.replace(c.brand,"").trim():"");
+  const f=$("#cpFound"); f.hidden=!c.ok;
+  if(c.ok) f.innerHTML=`<span class="rd-ic ok">✓</span><span>Studio found <b>${esc(c.name)}</b> on ${c.route==="usb"?"the USB cable":"Wi-Fi"}. Check it below and press Connect.</span>`;
+  cpDraw(); }
+function cpClose(){ $("#camPick").classList.remove("on"); if(CP.start){ CP.start=false; RD.t0=Date.now(); setTimeout(()=>rdCheck(),300); } }
+function cpInfo(){ return ((CP.d||{}).brands||[]).find(b=>b.brand===CP.brand)||null; }
+function cpAllowed(r,i){ if(!i) return r==="auto"||r==="usb"||r==="card";
+  return r==="auto"||r==="card"||(r==="usb"&&i.usb)||(r==="wifi"&&i.wifi)||(r==="webcam"&&!!i.webcam); }
+function cpDraw(){ const d=CP.d; if(!d) return; const i=cpInfo();
+  $("#cpMakers").innerHTML=d.brands.map(b=>`<button data-b="${esc(b.brand)}" class="${b.brand===CP.brand?"on":""}">${esc(b.brand)}<small>${b.tested?"Tested (ZV-E10)":"Untested"}</small></button>`).join("")
+    +`<button data-b="other" class="${CP.brand==="other"?"on":""}">Another maker<small>Plain USB control only</small></button>`;
+  $("#cpModels").innerHTML=(i?i.models:[]).map(m=>`<option value="${esc(m)}">`).join("");
+  const EX={"Sony":"ZV-E10","Canon":"EOS R50","Nikon":"Z 50","Fujifilm":"X-T4","Panasonic":"DC-GH5","OM System / Olympus":"OM-1","Ricoh / Pentax":"GR III","Leica":"M11"};
+  $("#cpModel").placeholder=i&&EX[i.brand]?"Model (optional), e.g. "+EX[i.brand]:"Model (optional)";
+  if(CP.brand && !cpAllowed(CP.route,i)) CP.route="auto";
+  $("#cpRoutes").innerHTML=CP_ROUTES.map(([k,l,t])=>{ const ok=CP.brand?cpAllowed(k,i):k==="auto";
+    let sub=t; if(i&&k==="usb"&&!i.usb_live) sub="Settings and shutter; no live picture over the cable"; if(i&&!ok) sub=k==="wifi"?"Not for this maker":"Not on this maker";
+    return `<button data-r="${k}" class="${k===CP.route&&ok?"on":""}"${ok?"":" disabled"}>${l}<small>${esc(sub)}</small></button>`; }).join("");
+  $$("#cpMakers [data-b]").forEach(b=>b.onclick=()=>{ CP.brand=b.dataset.b; $("#cpModel").value=""; CP.found=[]; cpDraw(); });
+  $$("#cpRoutes [data-r]").forEach(b=>b.onclick=()=>{ CP.route=b.dataset.r; cpDraw(); });
+  cpHow(); }
+function cpHow(){ const i=cpInfo(), r=CP.route, b=CP.brand; let h="";
+  const ol=a=>a&&a.length?`<ol>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"";
+  const unt=i&&!i.tested?`<p class="warn" style="margin:0 0 6px">Untested: Studio's ${esc(i.brand)} route was written from public protocol notes and tried on a simulated camera only.</p>`:"";
+  if(!b) h="<b>Choose your camera's maker first.</b> If your camera is already connected, Studio has picked it for you.";
+  else if(b==="other") h=`<b>Another maker</b><br>Studio tries plain PTP over the USB cable (settings the camera lists, the shutter). For a live picture use an HDMI capture card.`;
+  else if(r==="auto") h=unt+`<b>Automatic</b>: Studio looks on the USB cable and on Wi-Fi and uses whichever answers.`+ol(i.camera_setup);
+  else if(r==="usb") h=unt+`<b>USB cable</b>`+ol(i.camera_setup)+(i.windows?`<p style="margin:6px 0 0">${esc(i.windows)}</p>`:"")+(i.usb_live?"":`<p style="margin:6px 0 0">This maker gives no live picture over the cable: add its webcam mode or a capture card for the picture.</p>`);
+  else if(r==="wifi") h=(b==="Sony"?`<b>Wi-Fi</b><ol><li>MENU › Network › PC Remote Function › PC Remote: On, connection method Access Point (camera on your home Wi-Fi).</li><li>First time: choose Pairing on the camera, press Connect here, then confirm on the camera.</li></ol>`:unt+`<b>Wi-Fi</b>`+ol(i.wifi_setup))
+    +(i.wifi_ip?`<p style="margin:6px 0 0">The camera is its own Wi-Fi network: join it from this PC. Its address is <b style="font-family:var(--mono)">${esc(i.wifi_ip)}</b>.</p>`:"")
+    +`<div class="cp-wifi"><input id="cpHost" placeholder="Camera address, e.g. 10.0.0.38" value="${esc(i.wifi_ip||"")}"><button class="tbtn" id="cpFind">Find camera</button></div><div class="cp-list" id="cpList"></div>`;
+  else if(r==="webcam") h=unt+`<b>Webcam mode</b><br>${esc(i.webcam)}<p style="margin:6px 0 0">The picture comes from the camera's webcam mode; the settings and the shutter still need the USB cable or Wi-Fi where the camera allows both at once. Studio uses it by itself once it sees it.</p>`;
+  else if(r==="card") h=`<b>HDMI capture card</b><br>Connect the camera's HDMI output to a capture card (Cam Link and similar) on this PC, and turn the camera's HDMI info display off for a clean picture. After Connect, choose the card in More › Capture card. Control still goes over the cable or Wi-Fi.`;
+  $("#cpHow").innerHTML=h;
+  $("#cpGo").textContent=r==="card"?"Continue":"Connect";
+  const fb=$("#cpFind"); if(fb) fb.onclick=cpFind; cpList(); }
+async function cpFind(){ const fb=$("#cpFind"); fb.disabled=true; $("#cpList").innerHTML='<span class="muted">Searching your network (~6 s)…</span>';
+  try{ const l=await post("/api/wifi/discover"); CP.found=l.filter(c=>(c.usable||c.ptpip)&&(!c.brand||c.brand===CP.brand)); cpList(true); }
+  catch(e){ $("#cpList").innerHTML=`<span class="warn">${esc(e.message)}</span>`; } fb.disabled=false; }
+function cpList(searched){ const el=$("#cpList"); if(!el) return;
+  if(!CP.found.length){ if(searched) el.innerHTML='<span class="warn">No camera of this maker found. Is it on, and on the same Wi-Fi as this PC (or this PC on the camera’s own Wi-Fi)?</span>'; return; }
+  el.innerHTML=CP.found.map(c=>`<div class="row"><span style="flex:1;min-width:0"><b style="font-family:var(--mono)">${esc(c.ip)}</b> <span class="muted">${esc(c.name||c.model||"camera")}${c.brand?"":" · maker unknown"}</span></span><button class="tbtn" style="flex:none" data-h="${esc(c.host||c.ip)}">Use</button></div>`).join("");
+  $$("#cpList [data-h]").forEach(b=>b.onclick=()=>{ $("#cpHost").value=b.dataset.h; cpGo(); }); }
+async function cpGo(){ if(!CP.brand){ toast("Choose your camera's maker first.",2500); return; }
+  const body={brand:CP.brand, model:$("#cpModel").value.trim(), route:CP.brand==="other"&&CP.route==="wifi"?"auto":CP.route};
+  if(CP.route==="wifi"){ const h=($("#cpHost")||{}).value||""; if(!h.trim()){ toast("Type the camera's address or press Find camera.",3000); return; } body.host=h.trim(); }
+  $("#cpGo").disabled=true;
+  try{ await post("/api/camera/choices",body); frameSeq=-1; S.released=false; loadConn();
+    toast(CP.route==="wifi"?"Connecting over Wi-Fi… if the camera asks, confirm the connection on it.":CP.route==="card"?"Saved. Choose the capture card in More › Capture card.":"Saved. Studio connects to your camera.",4000);
+    cpClose(); }
+  catch(e){ toast(e.message,4000); }
+  $("#cpGo").disabled=false; }
+$("#cpGo").onclick=cpGo; $("#cpLater").onclick=cpClose;
+$("#offPick").onclick=()=>cpOpen(); $("#connPick").onclick=()=>cpOpen();
 setTimeout(()=>rdCheck(),800);
 
 /* ================= ONE SURFACE AT A TIME (UI pass round 2): no two surfaces ever overlap =================

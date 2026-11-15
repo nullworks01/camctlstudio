@@ -2924,8 +2924,57 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
             "libs": {"missing": MISSING,                      # required: core features break, so the card says it
                      "text": " ".join(_needs.sentence(e_) for e_ in NEEDS["missing_required"]),
                      "optional": [_needs.sentence(e_) for e_ in NEEDS["missing_optional"]]},   # never brings the card up
+            "picked": bool(wifi.load().get("pick")),            # he chose his camera on the start screen once
             "show": (not cam_ok or not saved or prob is not None or bool(MISSING)
                      or (cam_ok and g.get("kind") == "untested"))})
+
+    async def camera_choices(request: Request):
+        """GET: the makers and how each connects, his saved choice, and what is connected now.
+        POST {brand, model?, route: auto|usb|wifi|webcam|card, host?}: remember it and connect that way."""
+        from .drivers import registry as _reg
+        if request.method == "POST":
+            b = await request.json()
+            brands = {c["brand"]: c for c in _reg.camera_choices()}
+            brand, route = b.get("brand") or "", b.get("route") or "auto"
+            if brand not in brands and brand != "other":
+                return JSONResponse({"error": "Choose your camera's maker first."}, status_code=400)
+            if route not in ("auto", "usb", "wifi", "webcam", "card"):
+                return JSONResponse({"error": "Choose how the camera connects."}, status_code=400)
+            info = brands.get(brand, {})
+            if route == "wifi" and not info.get("wifi"):
+                return JSONResponse({"error": f"Studio has no Wi-Fi route for {brand} cameras: use the USB cable."},
+                                    status_code=400)
+            pick = {"brand": brand, "model": (b.get("model") or "").strip()[:80], "route": route}
+            try:
+                if route == "wifi":
+                    host = (b.get("host") or "").strip() or info.get("wifi_ip") or ""
+                    if not host:
+                        return JSONResponse({"error": "Type the camera's address or press Find camera."}, status_code=400)
+                    same = (studio.cam is not None and wifi.split(studio.host)[0] == wifi.split(host)[0]
+                            and (wifi.brand_for(studio.host) or "Sony") == brand)
+                    if same:                            # already connected that way: no reconnect
+                        studio.choice = "wifi"
+                        wifi.save(choice="wifi")
+                    else:
+                        await anyio.to_thread.run_sync(lambda: studio.set_connection("wifi", host, brand))
+                elif route == "usb":
+                    if studio.host == "usb" and studio.cam is not None:    # already on the cable: keep the session
+                        studio.choice = "usb"
+                        wifi.save(choice="usb")
+                    else:
+                        await anyio.to_thread.run_sync(lambda: studio.set_connection("usb"))
+                else:                                   # automatic; webcam mode and capture card only bring the picture
+                    studio.set_choice("auto")
+            except ValueError as exc:
+                return JSONResponse({"error": str(exc)}, status_code=400)
+            wifi.save(pick=pick)
+            autof._event(f"You chose your camera: {brand} {pick['model']}".strip() + f" ({route})", kind="you")
+        cam = studio.cam
+        return JSONResponse({"brands": _reg.camera_choices(), "pick": wifi.load().get("pick"),
+                             "connected": {"ok": cam is not None and studio.health().get("state") == "ok",
+                                           "name": cam.name if cam is not None else "",
+                                           "brand": (getattr(cam, "brand", None) or "Sony") if cam is not None else None,
+                                           "route": "usb" if studio.host == "usb" else "wifi", "host": studio.host}})
 
     async def claude_key(request: Request):
         """The Claude key, entered in Studio: only from the laptop itself; never sent back, never logged."""
@@ -4866,6 +4915,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                              "camera": studio.cam.name if studio.cam else "", "health": studio.health(),
                              "saved_host": cfg.get("host"), "saved_name": cfg.get("name", ""),
                              "brand": wifi.brand_for(studio.host) or ("Sony" if studio.host != "usb" else None),
+                             "pick": cfg.get("pick"),
                              "wifi_brands": _wifi_brand_help(),
                              "client_name": wifi.client_name()})
 
@@ -4913,6 +4963,7 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         Route("/api/zoom", zoom_view, methods=["GET", "POST"]),
         Route("/api/claude/state", claude_state),
         Route("/api/ready", ready_view),
+        Route("/api/camera/choices", camera_choices, methods=["GET", "POST"]),
         Route("/api/camera/report", camera_report, methods=["POST"]),
         Route("/api/camera/report/open", camera_report_open, methods=["POST"]),
         Route("/api/camera/report/notnow", camera_report_notnow, methods=["POST"]),

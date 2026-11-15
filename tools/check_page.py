@@ -96,7 +96,7 @@ async def run(port: int, press_again: bool = False, size: tuple[int, int] = (136
             await cmd("Emulation.setDeviceMetricsOverride", width=size[0], height=size[1], deviceScaleFactor=1, mobile=False)
             await cmd("Page.navigate", url=f"http://127.0.0.1:{port}/")
             await asyncio.sleep(5)
-            await js("try{ sessionStorage.setItem('camctl.ready','1'); rdClose && rdClose(); }catch(e){} true")
+            await js("try{ sessionStorage.setItem('camctl.ready','1'); sessionStorage.setItem('camctl.cp','1'); rdClose && rdClose(); if(typeof cpClose==='function'){ CP.start=false; cpClose(); } }catch(e){} true")
             cam_on = await js("fetch('/api/ready').then(r=>r.json()).then(j=>!!(j.camera&&j.camera.ok))")
             for name, do, ok in STEPS + ([PRESS_AGAIN] if press_again else []):
                 if name == "ISO numbers" and cam_on is not True:
