@@ -84,6 +84,7 @@ def page(tmp_path_factory):
     loop.run_until_complete(_cmd("Page.navigate", url=f"http://127.0.0.1:{port}/"))
     time.sleep(6)
     js("typeof rdClose==='function' && rdClose(); true")      # the Getting ready card (no key in tests) is not under test here
+    js("if(typeof cpClose==='function'){ CP.start=false; cpClose(); } true")   # nor the "Your camera" start screen
     js(HELPERS)
     yield js, errors, cam
     loop.run_until_complete(ws.close())
