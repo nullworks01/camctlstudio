@@ -96,8 +96,11 @@ class SmartPhoto:
         except Exception as exc:  # noqa: BLE001
             st["reason"] = f"Stopped: {exc}"
         finally:
+            try:
+                self._pick()                                  # picks first: "armed: False" means the result is ready
+            except Exception as exc:  # noqa: BLE001
+                st["reason"] = f"Stopped: {exc}"
             st["armed"] = False
-            self._pick()
 
     def _pick(self) -> None:
         best = sorted(self.status["scores"], key=lambda s: -s["score"])[:3]
