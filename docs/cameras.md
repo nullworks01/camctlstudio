@@ -24,7 +24,7 @@ only when you press Submit on the issue page yourself.
 Not supported: GoPro and Blackmagic cameras (they are controlled through their own apps / APIs, not PTP), Canon
 PowerShots without EOS remote mode, Leica over Wi-Fi, Canon's CCAPI (needs a key from Canon).
 
-Wi-Fi: All settings › Studio › Connection › Wi-Fi. Pick the camera maker, then Find camera (it looks for every maker
+Wi-Fi: on the **Your camera** start screen, or All settings › Studio › Connection › Wi-Fi. Pick the camera maker, then Find camera (it looks for every maker
 above: SSDP, the cameras' own network addresses, and the PTP/IP and Fujifilm ports on your network) or type the
 address. Sony is the default, and a Sony works exactly as before.
 
@@ -62,7 +62,8 @@ Recognised is not tested: every model but the ZV-E10 is untested.
 
 On Windows, Studio opens a camera on the USB cable through libusb. The camera then needs the WinUSB driver (for example
 with Zadig). **Studio never installs or changes a driver itself**: it says so on screen when a camera is on the cable
-but cannot be opened. Sony cameras can use Wi-Fi instead, which needs no driver.
+but cannot be opened. Wi-Fi needs no driver (Sony, Canon, Nikon, Fujifilm, Panasonic, OM System / Olympus,
+Ricoh / Pentax).
 
 ## Where the codes come from
 

@@ -21,10 +21,23 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
 LABEL = ""            # the simulator sets it: frames then show a simple scene with this label
+PHOTO = ""            # or a photo file (the simulator's --photo): every frame is that photo, 800 x 450
 _scene: dict = {}
 
 
 def tiny_jpeg(shade: int = 128) -> bytes:
+    if PHOTO:
+        if PHOTO not in _scene:
+            from PIL import Image
+            im = Image.open(PHOTO).convert("RGB")
+            w, h = im.size
+            th = int(w * 9 / 16)
+            if th < h:
+                im = im.crop((0, (h - th) // 2, w, (h - th) // 2 + th))
+            b = io.BytesIO()
+            im.resize((800, 450)).save(b, "JPEG", quality=78)
+            _scene[PHOTO] = b.getvalue()
+        return _scene[PHOTO]
     if LABEL:
         if LABEL not in _scene:
             from PIL import Image, ImageDraw

@@ -42,6 +42,7 @@ GUIDE_PICS = (
     "more", "photo-review", "photo-viewer", "playground", "recording", "settings-camera", "settings-format",
     "settings-light", "settings-setups", "shoot-handoff", "shot", "sound-check", "special-shots", "teleprompter",
     "video", "white-balance",
+    "your-camera", "your-camera-wifi", "wifi-other-makers", "other-maker-live",     # 15 Nov 2026: simulated other makers
 )
 IMAGES_OK |= {f"docs/img/{n}.jpg" for n in GUIDE_PICS}
 # written WITHOUT a UTF-8 byte-order mark: GitHub reads the issue template's header only without one

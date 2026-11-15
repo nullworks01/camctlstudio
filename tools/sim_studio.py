@@ -113,6 +113,7 @@ def main() -> None:
     ap.add_argument("--wifi", choices=["lumix", "olympus", "ricoh", "fuji"], help="a SIMULATED Wi-Fi camera of another "
                     "maker through Studio's real (untested) Wi-Fi driver (tests/fake_wifi_brands.py); the network search "
                     "lists made-up example cameras")
+    ap.add_argument("--photo", help="with --wifi: a photo file the simulated camera sends as its picture (for guide pictures)")
     ap.add_argument("--split", type=float, default=0.0, help="stops darker on the shadow half of the face (key light from the side)")
     a = ap.parse_args()
     cam = ZVE10(ev=a.ev, mode="video" if a.video else "photo", battery=a.battery, model=a.model)
@@ -176,13 +177,16 @@ def main() -> None:
     if a.wifi:                                             # another maker's Wi-Fi route, on a simulated camera
         import fake_wifi_brands as fw
         from camctl import wifi
+        from camctl.drivers import registry
         fake, brand = {"lumix": (fw.FakeLumix, "Panasonic"), "olympus": (fw.FakeOlympus, "OM System / Olympus"),
                        "ricoh": (fw.FakeRicoh, "Ricoh / Pentax"), "fuji": (fw.FakeFuji, "Fujifilm")}[a.wifi]
-        fw.LABEL = f"{brand} over Wi-Fi (simulated)"
+        fw.LABEL = "" if a.photo else f"{brand} over Wi-Fi (simulated)"
+        fw.PHOTO = a.photo or ""
         fake = fake()
-        measure._faces_cv = lambda im: []
+        measure._faces_cv = (lambda im: []) if not a.photo else \
+            (lambda im: [(int(im.width * 0.39), int(im.height * 0.18), int(im.width * 0.24), int(im.height * 0.5))])
         wifi.discover = lambda scan_lan=True: [           # made-up example answers (simulator only, no network search)
-            {"ip": "127.0.0.1", "host": fake.host, "name": "simulated camera", "model": "", "via": "camera network",
+            {"ip": registry.wifi_brands()[brand].get("ip") or "10.0.0.40", "host": fake.host, "name": "simulated camera", "model": "", "via": "camera network",
              "brand": brand, "usable": True, "ptpip": False, "remembered": True},
             {"ip": "10.0.0.38", "host": "10.0.0.38", "name": "ZV-E10 (example)", "model": "", "via": "ssdp",
              "brand": "Sony", "usable": True, "ptpip": True, "remembered": False},

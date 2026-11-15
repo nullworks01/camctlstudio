@@ -18,7 +18,7 @@ import urllib.request
 
 from ..ptpip import PTPError
 from .ptpstd import (ISO_AUTO, S_APERTURE, S_BATTERY, S_DRIVE, S_EV, S_EXPOSURE_MODE, S_FOCUS_MODE, S_ISO,
-                     S_SHUTTER, S_WB, Unsupported, f_to_studio, iso_to_studio, seconds_to_studio)
+                     S_SHUTTER, S_WB, Unsupported, f_to_studio, iso_to_studio)
 from .sony import PROPS, PropInfo, format_value
 
 __all__ = ["HTTPCamera", "FrameStream", "Unsupported", "S_APERTURE", "S_SHUTTER", "S_ISO", "S_EV", "S_WB",

@@ -5,7 +5,7 @@ Studio and its guide use free stock photos from [Unsplash](https://unsplash.com)
 
 | Where | Photo | Photographer |
 |---|---|---|
-| Guide screenshots and README cover (the person in front of the camera) | [Young man with glasses smiles at the camera](https://unsplash.com/photos/young-man-with-glasses-smiles-at-the-camera-xhQUcSQpotU) | Vitaly Gariev |
+| Guide screenshots, README cover and the other-maker pictures (the person in front of the camera) | [Young man with glasses smiles at the camera](https://unsplash.com/photos/young-man-with-glasses-smiles-at-the-camera-xhQUcSQpotU) | Vitaly Gariev |
 | Looks: the sample picture (`camctl/assets/looks_sample.jpg`) | the same photo | Vitaly Gariev |
 | Shot card: Portrait | [A man with a beard looks directly forward](https://unsplash.com/photos/a-man-with-a-beard-looks-directly-forward-tixe_fCjSIc) | Vitaly Gariev |
 | Shot card: Interview | [A man wearing headphones sitting in front of a microphone](https://unsplash.com/photos/a-man-wearing-headphones-sitting-in-front-of-a-microphone-E8JXH2PNahs) | Tim Mossholder |

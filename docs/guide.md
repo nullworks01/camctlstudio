@@ -30,7 +30,28 @@ How to use Studio, screen by screen. For installing it, see the [README](../READ
 ## 1. Start and connect
 
 Switch the camera on, connect it by USB cable or Wi-Fi, and start Studio (`tools\studio_app.pyw` or
-`start_studio.ps1`). Studio opens in its own window and shows **Getting ready**.
+`start_studio.ps1`). Studio opens in its own window.
+
+The first time, Studio asks for **Your camera**: the maker and (optionally) the model, then how it connects.
+A camera that is already connected is picked for you; press **Connect**.
+
+![Your camera: maker and model on the left, how it connects on the right](img/your-camera.jpg)
+
+- **Automatic** looks on the USB cable and on Wi-Fi and uses whichever answers.
+- **USB cable** controls the camera over the cable. Canon EOS, Nikon and Sony also send the live picture this way;
+  the other makers send settings and the shutter only.
+- **Wi-Fi** works without a cable: over your home Wi-Fi (Sony, Canon, Nikon, Fujifilm) or over the camera's own
+  network (Panasonic, OM System / Olympus, Ricoh / Pentax). Studio shows the steps for that maker and can search for
+  the camera.
+- **Webcam mode** and **HDMI capture card** bring the live picture when the control cable cannot.
+
+Only the ways that maker allows can be chosen. Everything except the Sony ZV-E10 is **untested on real cameras** and
+is marked as such on the screen.
+
+![Your camera with Canon over Wi-Fi: the steps for that maker and the camera's address](img/your-camera-wifi.jpg)
+
+You can open it again any time: **Choose my camera** on Getting ready and on the "no camera" screen, or
+All settings › Studio › Connection › **Choose camera…**. Then Studio shows **Getting ready**.
 
 ![Getting ready: the camera is connected, the Claude key is optional](img/getting-ready.jpg)
 
@@ -228,6 +249,16 @@ notes) and come back to it another day. **Line up with the last take** helps you
 
 **Studio:** the connection (automatic, USB cable or Wi-Fi), the iPad, your camera model and battery, **Check this
 camera**, the history of what Studio changed with **Undo**, the Claude model and key, and shortcuts.
+
+For Wi-Fi choose the **camera maker**, then **Find camera** (it looks for every maker Studio knows) or type the
+address. The steps for that maker are shown underneath; a camera that is its own Wi-Fi network shows its address.
+
+![All settings, Studio, Connection: Wi-Fi with the camera maker and the cameras found](img/wifi-other-makers.jpg)
+
+Another maker's camera works the same way as the Sony on the main screen: its settings, the live picture and the
+shutter. What it cannot do (for example a photo that stays on a Panasonic's card) is said in words.
+
+![A Ricoh GR III over Wi-Fi on the main screen (simulated, untested on a real camera)](img/other-maker-live.jpg)
 
 ## 12. Shoot folder and hand-off
 

@@ -65,9 +65,21 @@ tell us whether it works through the usual issue form (All settings › Studio �
 - Other Sony cameras are **untested**. "Check this camera" (All settings › Studio) tests, without taking a photo, what
   works on yours and what to change.
 - **Canon EOS, Nikon and other makers: new and untested.** Studio has drivers for Canon EOS / EOS R and Nikon
-  (settings, live picture, photo, video, focus over the USB cable) and plain PTP for other makers (settings and the
-  shutter, no live picture). They were written from the public PTP codes and tested only against simulated cameras.
+  (settings, live picture, photo, video, focus over the USB cable or Wi-Fi), Wi-Fi drivers for Fujifilm, Panasonic
+  LUMIX, OM System / Olympus and Ricoh / Pentax, and plain PTP over USB for other makers (settings and the shutter).
+  They were written from public protocol notes and tested only against simulated cameras.
   Details, and what each route can do: [docs/cameras.md](docs/cameras.md).
+
+## Your camera, any maker
+
+The first time Studio starts it asks for **your camera**: the maker, the model if you like, and how it connects
+(automatic, USB cable, Wi-Fi, the camera's webcam mode or an HDMI capture card). It shows only the ways that maker
+allows, with its setup steps, and marks everything untested that is untested. You can change it later in
+All settings › Studio › Connection.
+
+![Your camera: choose the maker and how it connects](docs/img/your-camera.jpg)
+
+![Another maker's camera over Wi-Fi on the main screen (simulated, untested on a real camera)](docs/img/other-maker-live.jpg)
 
 ## Help add your camera
 
@@ -111,8 +123,8 @@ is added to this table when it works.
 
 USB note: on Windows the camera's USB connection may need a driver that Studio never installs itself. Wi-Fi needs none.
 
-Other makers over Wi-Fi (Canon, Nikon, Fujifilm, Panasonic, OM System / Olympus, Ricoh / Pentax): All settings ›
-Studio › Connection › Wi-Fi, pick the maker. These routes are **untested on real cameras** (written from public
+Other makers over Wi-Fi (Canon, Nikon, Fujifilm, Panasonic, OM System / Olympus, Ricoh / Pentax): choose the maker
+and Wi-Fi on the **Your camera** screen (or All settings › Studio › Connection › Wi-Fi). These routes are **untested on real cameras** (written from public
 protocol notes, tried on simulated cameras only); see [docs/cameras.md](docs/cameras.md).
 
 ## Recommended setup
