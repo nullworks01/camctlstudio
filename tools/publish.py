@@ -23,10 +23,10 @@ INCLUDE = [
     "camctl/**/*.py", "camctl/studio_pro.html", "camctl/presets.json", "camctl/assets/*.ico", "camctl/assets/looks_sample.jpg", "camctl/assets/cards/*.jpg",
     "tests/*.py", "tests/data/*.json", "tests/data/lineup_ref.jpg",
     "tools/battery_guard.py", "tools/check_page.py", "tools/leave_as_set_up.py",
-    "tools/publish.py", "tools/sim_studio.py", "tools/start_server.pyw", "tools/studio_app.pyw",
+    "tools/models_doc.py", "tools/publish.py", "tools/sim_studio.py", "tools/start_server.pyw", "tools/studio_app.pyw",
     "README.md", "LICENSE", "CONTRIBUTING.md", "requirements.txt", "requirements-optional.txt", "pyproject.toml", "start_studio.ps1",
     "Install or repair camctl Studio.cmd", ".gitignore", ".github/ISSUE_TEMPLATE/*.md",
-    "docs/guide.md", "docs/photo-credits.md", "docs/cameras.md", "docs/img/*.jpg", "camctl/drivers/cameras.json", "camctl/drivers/usb_models.json",
+    "docs/guide.md", "docs/photo-credits.md", "docs/cameras.md", "docs/models.md", "docs/img/*.jpg", "camctl/drivers/cameras.json", "camctl/drivers/usb_models.json",
 ]
 NEVER = re.compile(r"(\.bak$|\.r\d+\.bak$|__pycache__|\.pyc$|/logs/|/captures/|AUDIT\.md|publish_list\.txt|\.log$)", re.I)
 IMAGES_OK = {"tests/data/lineup_ref.jpg", "camctl/assets/studio.ico",     # a generated picture and the app icon

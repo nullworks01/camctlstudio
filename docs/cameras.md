@@ -52,6 +52,9 @@ PC Remote). It lists 51 remote-controllable Sony models (ZV-E10, ZV-1, a6100 / a
 IV, a7C / a7C II, a7R III-V, a7S III, a1, a9 III, FX3 and others), all driven by the same Sony driver as the ZV-E10.
 Recognised is not tested: every model but the ZV-E10 is untested.
 
+The full list, maker by maker and level by level, with each maker's Wi-Fi route: [models.md](models.md)
+(written from these data files by `tools/models_doc.py`).
+
 ## What stays on the camera
 
 - **Canon**: the mode dial and the AF / MF switch on the lens. Set the dial to M.

@@ -69,13 +69,16 @@ tell us whether it works through the usual issue form (All settings › Studio �
   LUMIX, OM System / Olympus and Ricoh / Pentax, and plain PTP over USB for other makers (settings and the shutter).
   They were written from public protocol notes and tested only against simulated cameras.
   Details, and what each route can do: [docs/cameras.md](docs/cameras.md).
+- **Which models should work:** [docs/models.md](docs/models.md) lists every camera Studio knows (766 models from
+  libgphoto2's list), by maker and level (full, settings and photo, recognised only) with each maker's Wi-Fi route.
+  All untested except the ZV-E10.
 
 ## Your camera, any maker
 
 The first time Studio starts it asks for **your camera**: the maker, the model if you like, and how it connects
 (automatic, USB cable, Wi-Fi, the camera's webcam mode or an HDMI capture card). It shows only the ways that maker
 allows, with its setup steps, and marks everything untested that is untested. You can change it later in
-All settings › Studio › Connection.
+All settings › Studio › Connection. Which models should work, maker by maker: [docs/models.md](docs/models.md).
 
 ![Your camera: choose the maker and how it connects](docs/img/your-camera.jpg)
 
