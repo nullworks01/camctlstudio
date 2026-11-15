@@ -11,11 +11,13 @@ raises Unsupported with a plain sentence.
 """
 from __future__ import annotations
 
+
 import struct
 import time
 
 from ..ptpip import PTPError
 from ..report import parse_device_info
+from .replies import record_ptp
 from .sony import PROPS, PropInfo, format_value  # noqa: F401  (format_value: same display rules for every brand)
 
 # -- standard operations -------------------------------------------------------------------------------------------
@@ -184,6 +186,7 @@ class PTPCamera:
             ip, _, p = host.partition(":")
             self.client = PTPIPClient(ip, port or (int(p) if p.isdigit() else PTPIP_PORT), name=name, guid=guid,
                                       timeout=60.0)
+        record_ptp(self, self.client)                 # the last operations and answer codes, for the camera report
         self.info: dict = {}
         self._native: dict[int, PropInfo] = {}       # native code -> PropInfo as the camera reports it
         self._prop_cache: dict[int, PropInfo] = {}    # Studio id -> PropInfo in Studio's units

@@ -76,3 +76,10 @@ def test_page_has_the_start_screen_and_the_ways_back_to_it():
     assert re.search(r"if\(!r\.picked && !CP\.shown\)\{ cpOpen\(true\)", PAGE)    # first start: the chooser first
     for k in ("auto", "usb", "wifi", "webcam", "card"):
         assert f'["{k}",' in PAGE
+
+
+def test_check_and_report_are_offered_wherever_something_fails():
+    for el in ("cpCheck", "offReport", "failChip"):
+        assert f'id="{el}"' in PAGE, el
+    assert "function ccOpen()" in PAGE and PAGE.count("offerReport();") >= 3           # failed photo (2 ways), recording
+    assert "data-ccopen" in PAGE                                                       # a camera that sends no picture

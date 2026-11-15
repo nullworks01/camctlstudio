@@ -8,6 +8,7 @@ PropInfo objects the PTP drivers give, so nothing else in Studio needs to know t
 """
 from __future__ import annotations
 
+import collections
 import re
 import socket
 import threading
@@ -144,6 +145,8 @@ class HTTPCamera:
         self._raw: dict[str, tuple[str, list[str], bool]] = {}
         self.stream: FrameStream | None = None
         self.recording = False
+        # the last answers of the camera, cleaned at once (camctl/report.py): for the "Check this camera" report
+        self.replies: collections.deque = collections.deque(maxlen=40)
 
     # -- HTTP ----------------------------------------------------------------------------------------------------------
     def url(self, path: str, **params) -> str:
@@ -156,13 +159,28 @@ class HTTPCamera:
         req = urllib.request.Request(self.url(path, **params), data=body, method=method, headers=dict(self.headers))
         if ctype:
             req.add_header("Content-Type", ctype)
+        from ..report import scrub_params, scrub_reply
+        ask = f"{method} /{path.lstrip('/')}" + (f"?{scrub_params(params)}" if params else "")
         try:
             with urllib.request.urlopen(req, timeout=timeout or self.timeout) as r:
-                return r.read()
+                data = r.read()
+            self._note(ask, scrub_reply(data))
+            return data
         except urllib.error.HTTPError as exc:
+            self._note(ask, f"HTTP {exc.code}")
             raise PTPError(f"The {self.brand} camera answered {exc.code} to {path}.") from exc
         except (urllib.error.URLError, socket.timeout, OSError) as exc:
+            self._note(ask, f"no answer ({type(exc).__name__})")
             raise PTPError(f"The {self.brand} camera at {self.ip} does not answer over Wi-Fi ({exc}).") from exc
+
+    def _note(self, ask: str, answer: str) -> None:
+        from .replies import note
+        note(self, ask, answer)
+
+    def device_info(self) -> dict:
+        """What the report says about the camera: maker, model, protocol, and its last answers (cleaned)."""
+        return {"manufacturer": self.brand, "model": self.model, "firmware": getattr(self, "firmware", "") or "",
+                "protocol": f"{self.kind} ({type(self).__name__})", "camera_replies": list(self.replies)}
 
     # -- the driver methods Studio calls -------------------------------------------------------------------------------
     @property

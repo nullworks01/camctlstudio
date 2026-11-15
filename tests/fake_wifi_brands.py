@@ -37,7 +37,7 @@ def tiny_jpeg(shade: int = 128) -> bytes:
             b = io.BytesIO()
             im.resize((800, 450)).save(b, "JPEG", quality=78)
             _scene[PHOTO] = b.getvalue()
-        return _scene[PHOTO]
+        return _scene[PHOTO] + bytes([shade & 0xFF])     # one byte after the picture: each frame is new, like a real camera
     if LABEL:
         if LABEL not in _scene:
             from PIL import Image, ImageDraw
@@ -47,7 +47,7 @@ def tiny_jpeg(shade: int = 128) -> bytes:
             b = io.BytesIO()
             im.save(b, "JPEG", quality=80)
             _scene[LABEL] = b.getvalue()
-        return _scene[LABEL]
+        return _scene[LABEL] + bytes([shade & 0xFF])     # one byte after the picture: each frame is new, like a real camera
     from PIL import Image
     buf = io.BytesIO()
     Image.new("RGB", (64, 48), (shade, shade // 2, 200 - shade // 2)).save(buf, "JPEG", quality=70)

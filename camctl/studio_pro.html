@@ -760,6 +760,10 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
 .cp-routes button:disabled{opacity:.38;cursor:default}
 .cp-model{display:flex;gap:8px;align-items:center}
 .cp-model input,.cp-wifi input{flex:1;min-width:0;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:var(--text);padding:0 12px;font:15px var(--ui)}
+.cp-check{display:flex;gap:12px;align-items:center;justify-content:space-between;background:rgba(255,255,255,.06);border-radius:18px;padding:10px 14px;font-size:14px;line-height:1.4;color:var(--soft)}
+.cp-check button{flex:none}
+#failChip{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:60;display:none;border:0;border-radius:999px;padding:10px 18px;font:600 14px var(--sans,system-ui);color:#fff;background:rgba(40,36,30,.86);backdrop-filter:blur(14px);box-shadow:0 6px 24px rgba(0,0,0,.35);cursor:pointer}
+#failChip.on{display:block}
 .cp-how{background:rgba(255,255,255,.06);border-radius:18px;padding:12px 14px;font-size:14.5px;line-height:1.45;color:var(--soft)}
 .cp-how b{color:var(--text)}.cp-how ol{margin:6px 0 0;padding-left:20px}.cp-how .warn{color:var(--warn)}
 .cp-wifi{display:flex;gap:8px;margin-top:10px}.cp-wifi[hidden]{display:none}
@@ -937,6 +941,7 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
     <div class="stage"><canvas id="cv"></canvas><canvas id="ov"></canvas></div>
     <div class="scopes"><canvas id="hist" width="256" height="100"></canvas><canvas id="wave" width="256" height="100" style="display:none"></canvas></div>
     <div id="lostBanner"></div>
+    <button id="failChip" type="button">Didn’t work? Check this camera and report it</button>
     <div class="recbadge" id="recBadge"><i></i><span id="recTime">00:00</span></div>
     <div class="toast" id="toast"></div>
     <div class="dirbadge" id="dirBadge"></div>
@@ -1037,7 +1042,7 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
           </ol>
           <div class="offstat"><span class="spin"></span><span id="offStat">Trying…</span></div>
           <div class="row" style="justify-content:center;margin-top:14px;gap:8px">
-            <button class="ibtn" id="offPick">Choose my camera</button><button class="ibtn" id="offFind">Search my network</button><button class="ibtn" id="offUsb">Use USB cable</button><button class="ibtn" id="offWifi">Use Wi-Fi</button></div>
+            <button class="ibtn" id="offPick">Choose my camera</button><button class="ibtn" id="offReport">Report the problem</button><button class="ibtn" id="offFind">Search my network</button><button class="ibtn" id="offUsb">Use USB cable</button><button class="ibtn" id="offWifi">Use Wi-Fi</button></div>
         </div>
       </div>
       <div class="result" id="handoff"><div class="rcard glass ho-card" role="dialog" aria-label="Shoot and hand-off">
@@ -1068,6 +1073,8 @@ body.more-open .dz-right,body[data-as="1"] .dz-right{opacity:0;pointer-events:no
         <div class="cp-routes" id="cpRoutes"></div>
         <div class="cp-how" id="cpHow"></div>
         </div></div>
+        <p class="cp-h">3 · If something does not work</p>
+        <div class="cp-check" id="cpCheck"></div>
         <p class="dlg-note" data-toast hidden></p>
         <div class="rd-acts"><button class="tbtn" id="cpLater">Later</button><button class="tbtn pri" id="cpGo">Connect</button></div>
       </div></div>
@@ -1536,7 +1543,8 @@ async function pollHealth(){
     const show=["unresponsive","absent"].includes(h.state) || (h.state==="recovering" && (S.fails||0)>=2);
     const np=h.state==="ok" && h.no_picture;   /* connected, but this camera sends no live picture: said in words */
     const b=$("#lostBanner"); b.style.display=(show||np)&&!S.released&&!$("#offline").classList.contains("on")?"block":"none";
-    if(np) b.innerHTML=`<div style="font-size:14px">${esc(h.no_picture)}</div>`;
+    if(np) b.innerHTML=`<div style="font-size:14px">${esc(h.no_picture)} <a href="#" data-ccopen style="color:inherit;text-decoration:underline">Check this camera</a></div>`;
+    const lk=b.querySelector("[data-ccopen]"); if(lk) lk.onclick=e=>{ e.preventDefault(); ccOpen(); };
     else if(show) b.innerHTML=`<div style="font-size:14px">${esc(h.message)}</div>${h.down_s?`<div style="font-weight:400;font-size:11px;margin-top:4px;color:var(--muted)">no answer for ${Math.round(h.down_s)} s · retrying automatically</div>`:""}`;
   }catch(e){ const b=$("#lostBanner"); b.style.display="block"; b.textContent="Studio is not running. Start it again with the camctl Studio shortcut."; }
 }
@@ -2498,8 +2506,8 @@ $("#shutter").onclick=async()=>{
   try{ const j=await post("/api/shoot");
     if(j.saved.length){ S.dzFlash={label:"Saved",say:j.note||"RAW and JPEG are in today’s shoot folder.",until:Date.now()+(j.note?7000:3500)}; if(j.note) toast(j.note,7000); loadFilm(); photoReview(j.saved.find(f=>/\.jpg$/i.test(f))); }
     else if(j.on_card){ S.dzFlash={label:"On the card",say:j.note,until:Date.now()+6000}; toast(j.note,6000); }
-    else toast(j.note||"The camera did not take the picture.",6000); }
-  catch(e){ toast("Failed: "+e.message,5000); }
+    else { toast(j.note||"The camera did not take the picture.",6000); offerReport(); } }
+  catch(e){ toast("Failed: "+e.message,5000); offerReport(); }
   S.firing=false; sh.classList.remove("firing"); sh.style.removeProperty("--p");
   S.busy=false; $("#shutter").disabled=false;
 };
@@ -2508,7 +2516,7 @@ async function toggleRecord(){
   if(S.recChecking && !S.rec){ toast("Checking the camera… press record again in a moment.",3000); $("#shutter").disabled=false; return; }
   try{ const wasRec=S.rec, len=S.recStart?Math.round((Date.now()-S.recStart)/1000):0; const j=await post("/api/record",{action:S.rec?"stop":"start"}); S.rec=j.recording; S.recStart=Date.now()-(j.elapsed||0)*1000; if(j.note) toast(j.note,5000);
     if(wasRec && !j.recording) S.dzFlash={label:"Saved",say:`The take is on the card, ${Math.floor(len/60)}:${String(len%60).padStart(2,"0")} long. Nothing changed during the take.`,until:Date.now()+4000}; }
-  catch(e){ toast("Record failed: "+e.message,4000); }
+  catch(e){ toast("Record failed: "+e.message,4000); offerReport(); }
   $("#shutter").disabled=false; renderRec();
 }
 setInterval(async()=>{ if(S.mode!=="video" || S.busy) return; try{ const r=await api("/api/record/state"); S.recChecking=!!r.checking;
@@ -4019,7 +4027,7 @@ function ccDraw(c){ const box=$("#ccBox"); if(!box) return; const pr=c.profile||
   if(!c.running&&c.done&&c.ask_share&&!S.ccShareShown){ h+=`<div class="as-blk" style="margin-top:10px"><div class="l">Your camera is not in the tested list yet. Share this report so it can be added?<small>Studio sends nothing itself: the GitHub page opens and you press Submit there. Removed: serial number, names, network details.</small></div>
       <pre class="cc-rep" id="ccRepText">${esc(S.ccRep?S.ccRep.summary:"…")}</pre>
       <div class="cl-acts" style="margin:8px 0 0"><button class="tbtn pri" id="ccShare">Share</button><button class="tbtn" id="ccNotNow">Not now</button></div></div>`; }
-  else if(!c.running&&c.done){ h+=`<div class="cl-acts" style="margin:10px 0 0"><button class="tbtn" id="ccSave">Save report</button>${S.ccRep&&S.ccRep.issue_url?'<button class="tbtn" id="ccShare">Share report</button>':""}</div>${S.ccRep?`<p class="as-note">${esc(S.ccRep.removed)} Saved as ${esc(S.ccRep.file_name)}. <a href="#" id="ccOpen">Show the file</a></p>`:""}`; }
+  else if(!c.running){ h+=`<div class="cl-acts" style="margin:10px 0 0"><button class="tbtn" id="ccSave">Save report</button>${S.ccRep&&S.ccRep.issue_url?'<button class="tbtn" id="ccShare">Share report</button>':""}</div>${S.ccRep?`<p class="as-note">${esc(S.ccRep.removed)} Saved as ${esc(S.ccRep.file_name)}. <a href="#" id="ccOpen">Show the file</a></p>`:""}`; }
   h+=`<div class="cl-acts" style="margin:12px 0 0"><button class="tbtn pri" id="ccStart" ${c.running?"disabled":""}>${c.running?"Checking…":(c.steps&&c.steps.length?"Check again":"Check this camera")}</button></div>
     <p class="as-note">No photo, no recording. Each setting is changed to a neighbouring value and back; the zoom moves a little and back; picture profiles are tried and the original one is set again.</p>`;
   box.innerHTML=h;
@@ -4102,6 +4110,10 @@ function cpDraw(){ const d=CP.d; if(!d) return; const i=cpInfo();
     return `<button data-r="${k}" class="${k===CP.route&&ok?"on":""}"${ok?"":" disabled"}>${l}<small>${esc(sub)}</small></button>`; }).join("");
   $$("#cpMakers [data-b]").forEach(b=>b.onclick=()=>{ CP.brand=b.dataset.b; $("#cpModel").value=""; CP.found=[]; cpDraw(); });
   $$("#cpRoutes [data-r]").forEach(b=>b.onclick=()=>{ CP.route=b.dataset.r; cpDraw(); });
+  const con=d.connected||{};
+  $("#cpCheck").innerHTML=`<span>${con.ok?`<b>Check this camera</b> tests every control on your ${esc(con.name||"camera")} without taking a photo or recording. If something fails, save or share the report (no serial number, names or network details) so it can be fixed.`
+    :`If your camera does not connect or something fails, <b>Report the problem</b> saves what Studio saw (USB or Wi-Fi, what the camera answered; nothing personal) to share so it can be fixed.`}</span><button class="tbtn" id="cpCheckGo">${con.ok?"Check this camera":"Report the problem"}</button>`;
+  $("#cpCheckGo").onclick=ccOpen;
   cpHow(); }
 function cpHow(){ const i=cpInfo(), r=CP.route, b=CP.brand; let h="";
   const ol=a=>a&&a.length?`<ol>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"";
@@ -4136,6 +4148,12 @@ async function cpGo(){ if(!CP.brand){ toast("Choose your camera's maker first.",
   $("#cpGo").disabled=false; }
 $("#cpGo").onclick=cpGo; $("#cpLater").onclick=cpClose;
 $("#offPick").onclick=()=>cpOpen(); $("#connPick").onclick=()=>cpOpen();
+/* "Check this camera" from wherever something did not work: the start screen, the offline card, a failed photo or
+   recording, a camera that sends no picture. The check sends nothing: the report is shared only when he presses Share. */
+function ccOpen(){ $("#failChip").classList.remove("on"); if($("#camPick").classList.contains("on")){ CP.start=false; cpClose(); }
+  $("#offline").classList.remove("on"); asOpen("studio"); asSub("asSub-camcheck","Check this camera"); }
+function offerReport(){ const c=$("#failChip"); c.classList.add("on"); clearTimeout(offerReport.t); offerReport.t=setTimeout(()=>c.classList.remove("on"),15000); }
+$("#failChip").onclick=ccOpen; $("#offReport").onclick=ccOpen;
 setTimeout(()=>rdCheck(),800);
 
 /* ================= ONE SURFACE AT A TIME (UI pass round 2): no two surfaces ever overlap =================

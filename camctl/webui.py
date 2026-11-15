@@ -244,6 +244,7 @@ class Studio:
                 except Exception as exc:  # noqa: BLE001
                     last_exc = exc
                     self.last_error = str(exc)
+                    self.last_replies = list(getattr(cam, "replies", None) or [])   # what the camera answered, for the report
             self._fails += 1
             self._retry_at = time.time() + min(2.0 ** self._fails, self.RETRY_MAX_S)
             self._mark_fail()
@@ -3287,8 +3288,9 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
         try:
             props = studio.props(max_age=0)
             step("Connected", True, studio.cam.name if studio.cam else "")
+            studio.last_view_req = time.time()                  # ask for pictures even while no page is watching
             seq = studio.frame_seq
-            f, s2 = studio.latest_frame(seq, timeout=4)
+            f, s2 = studio.latest_frame(seq, timeout=6)
             step("Live picture", f is not None and s2 > seq, f"{studio.fps:.0f} frames per second" if f else "no picture")
             for name in ("aperture", "shutter_speed", "iso", "white_balance", "focus_mode"):
                 code = code_of(name)
@@ -3318,7 +3320,8 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 studio.run(lambda c: c.autofocus(hold=0.6))        # a half press only, never the shutter
                 step("Half-press (focus)", True, "answered", "Control 0xD2C1 press/release")
             except Exception as exc:  # noqa: BLE001
-                step("Half-press (focus)", False, str(exc)[:120])
+                unsup = type(exc).__name__ == "Unsupported"          # the driver has no autofocus for this maker yet
+                step("Half-press (focus)", None if unsup else False, str(exc)[:120])
             if fm is not None and studio.props(max_age=0)[PROPS["focus_mode"]].value != fm.value:
                 studio.run(lambda c: c.set(PROPS["focus_mode"], fm.value))
             zp = studio.props(max_age=0).get(SP_ZOOM_POSITION)
@@ -3385,6 +3388,9 @@ def build_app(studio: Studio, start_auto: bool = False) -> Starlette:
                 di = studio.run(lambda c: c.device_info()) if hasattr(studio.cam, "device_info") else None
             except Exception:  # noqa: BLE001
                 di = None
+            replies = list(getattr(studio.cam, "replies", None) or getattr(studio, "last_replies", None) or [])
+            if replies and "camera_replies" not in (di or {}):
+                di = {**(di or {}), "camera_replies": replies}
             props = studio.props(max_age=0) if studio.cam else {}
             other = (ready_cache.get("usb") or [None])[0] if studio.cam is None else None
             from .drivers import base as drvbase

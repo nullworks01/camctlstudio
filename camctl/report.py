@@ -11,6 +11,7 @@ no paths, no pictures, no key. Studio never sends a report itself: the user shar
 from __future__ import annotations
 
 import json
+import re
 import struct
 import urllib.parse
 from pathlib import Path
@@ -18,7 +19,8 @@ from pathlib import Path
 APP_VERSION = "2026.11.12"
 ISSUE_URL = "https://github.com/nullworks01/camctlstudio/issues/new"     # empty = only "Save report"
 REMOVED = "<text removed>"
-KEEP_TEXT = {"model", "firmware", "lens_model", "manufacturer", "standard_version", "vendor_extension"}
+KEEP_TEXT = {"model", "firmware", "lens_model", "manufacturer", "standard_version", "vendor_extension", "note",
+             "protocol", "brand", "connection", "app_version"}          # the last ones are Studio's own words
 MAX_URL = 7000
 
 
@@ -56,6 +58,68 @@ def parse_device_info(d: bytes) -> dict:
             "manufacturer": manufacturer, "model": model, "firmware": version, "serial_number": serial}
 
 
+# -- what a Wi-Fi camera answered (HTTP cameras): kept so a failing camera can be fixed, with nothing personal in it --
+# A value is kept only when it looks like a setting (a number, "1/250", "5.6", "-0.3", "auto", "ON", "f_number") AND its
+# key is not one that can hold something personal. Everything else becomes "<text removed>".
+_PERSONAL_KEY = re.compile(r"name|ssid|serial|mac|uuid|guid|owner|artist|copyright|author|pass|key|addr|ip$|^ip|"
+                           r"date|time|gps|lat|lon|wlan|wifi|bd|host|user|mail|phone|path|dir|file|folder|token", re.I)
+_SAFE_VALUE = re.compile(r"-?\d{1,6}(?:[./:,x]\d{1,6})*(?:%|EV|K|s|\\\"|\")?|[+-]?\d{0,3}\.\d{1,4}|0x[0-9A-Fa-f]{1,8}|[a-z][a-z0-9_-]{0,23}|[A-Z][A-Z0-9_-]{0,11}")
+MAX_REPLY = 1500
+_SETTING_KEYS = {"propname", "cmdname", "typename"}   # keys that name a setting, not a person
+
+
+def _safe(key: str, value) -> str:
+    v = str(value).strip()
+    if key in _SETTING_KEYS:
+        key = ""
+    if " " in v and len(v) < 400:                             # a list of values in one text: "60 125 250"
+        return " ".join(_safe(key, x) for x in v.split())
+    if not v:
+        return v
+    if v.startswith("<") and v.endswith("removed>"):
+        return v
+    ok = not _PERSONAL_KEY.search(key or "") and _SAFE_VALUE.fullmatch(v) and (v.startswith("0x") or sum(c.isdigit() for c in v) <= 8) \
+        and not (v.isupper() and sum(c.isdigit() for c in v) > 4)          # long codes and numbers look like serials
+    return v if ok else REMOVED
+
+
+def scrub_reply(raw: bytes | str, max_len: int = MAX_REPLY) -> str:
+    """One camera answer, cleaned: XML element and attribute values, JSON values and plain comma / line separated
+    words go through _safe(); binary data becomes its size only."""
+    if isinstance(raw, bytes):
+        if raw[:2] == b"\xff\xd8" or b"\0" in raw[:200]:
+            return f"<{len(raw)} bytes of binary data>"
+        raw = raw.decode("utf-8", "replace")
+    t = re.sub(r"\b\d{1,3}(?:\.\d{1,3}){3}\b", "<address removed>", raw.strip())          # IP addresses
+    t = re.sub(r"\b[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}\b", "<address removed>", t)       # MAC addresses
+    if t[:1] in "{[":
+        try:
+            def walk(k, v):
+                if isinstance(v, dict):
+                    return {kk: (REMOVED if _PERSONAL_KEY.search(kk) and kk not in _SETTING_KEYS else walk(kk, vv))
+                            for kk, vv in v.items()}
+                if isinstance(v, list):
+                    return [walk(k, x) for x in v]
+                if isinstance(v, (int, float, bool)) or v is None:
+                    return v
+                return _safe(k, v)
+            out = json.dumps(walk("", json.loads(t)), ensure_ascii=False)
+            return out if len(out) <= max_len else out[:max_len] + " …"
+        except ValueError:
+            pass
+    if t.startswith("<"):
+        t = re.sub(r'(\w[\w:-]*)="([^"]*)"', lambda m: f'{m.group(1)}="{_safe(m.group(1), m.group(2))}"', t)
+        t = re.sub(r"<(\w[\w:-]*)([^>]*)>([^<]*)</\1>", lambda m: f"<{m.group(1)}{m.group(2)}>{_safe(m.group(1), m.group(3))}</{m.group(1)}>", t)
+        t = re.sub(r"<!--.*?-->", "", t, flags=re.S)
+    else:
+        t = re.sub(r"<[a-z ]+removed>|[^,;\n\r\t ]+", lambda m: _safe("", m.group(0)), t)
+    return t if len(t) <= max_len else t[:max_len] + " …"
+
+
+def scrub_params(params: dict) -> str:
+    return "&".join(f"{k}={_safe(k, v)}" for k, v in params.items())
+
+
 def _clean_value(key: str, v):
     """The allow-list filter for one value. Hex codes are not personal and stay."""
     import re
@@ -82,7 +146,9 @@ def clean(full: dict) -> dict:
         elif k in ("checks", "formats"):
             out[k] = v                                          # Studio's own words and codes, nothing from the owner
         elif k == "device_info":
-            out[k] = {kk: _clean_value(kk, vv) for kk, vv in v.items() if kk not in drop}
+            out[k] = {kk: ([{"ask": str(r.get("ask", "")), "answer": scrub_reply(str(r.get("answer", "")))}
+                            for r in vv if isinstance(r, dict)] if kk == "camera_replies" else _clean_value(kk, vv))
+                      for kk, vv in v.items() if kk not in drop}
         else:
             out[k] = _clean_value(k, v)
     return out

@@ -109,3 +109,41 @@ def test_another_brand_report_has_only_what_could_be_read(monkeypatch, tmp_path)
     assert saved["brand"] == "Nikon" and saved["usb"] == {"vendor_id": "0x04B0", "product_id": "0x0442", "class": "<text removed>"} or \
         saved["usb"]["vendor_id"] == "0x04B0"
     assert "owner's camera" not in json.dumps(saved) and "could not open the Nikon camera" in json.dumps(saved["checks"])
+
+
+# -- what the camera answered: kept for fixing a failing camera, with nothing personal in it --------------------------
+def test_camera_answers_keep_settings_and_drop_anything_personal():
+    from camctl.report import scrub_params, scrub_reply
+    xml = scrub_reply(b'<camrply><result>ok</result><state><batt>3/3</batt><ssid>FRANZ-GH5</ssid></state>'
+                      b'<owner>Ana Lopez</owner><settingvalue shtrspeed="2560/256" devname="Ana GH5"/></camrply>')
+    assert "2560/256" in xml and "3/3" in xml and "ok" in xml
+    assert "FRANZ" not in xml and "Ana" not in xml
+    js = scrub_reply('{"errCode":200,"av":"5.6","avList":["2.8","4.0"],"serialNo":"12345","cameraName":"Mi GR",'
+                     '"storages":[{"path":"/DCIM/100RICOH"}],"ip":"10.0.0.4"}')
+    assert '"5.6"' in js and '"2.8"' in js and "12345" not in js and "Mi GR" not in js and "DCIM" not in js and "10.0.0.4" not in js
+    mac = ":".join(["AA", "BB", "CC", "DD", "EE", "FF"])               # made up, built here so no address is written
+    csv = scrub_reply(f"ok,192.168.54.1,Ana Phone,{mac},1234567890,X12345678,AUTO,1/250,-0.3")
+    for gone in ("192.168", "Ana", "AA:BB", "1234567890", "X12345678"):
+        assert gone not in csv
+    assert "AUTO" in csv and "1/250" in csv and "-0.3" in csv
+    assert scrub_reply(b"\xff\xd8\xff\xe0" + b"\0" * 50) == "<54 bytes of binary data>"
+    assert scrub_params({"mode": "getinfo", "DIR": "/DCIM/100OLYMP", "propname": "shutspeedvalue"}) == \
+        "mode=getinfo&DIR=<text removed>&propname=shutspeedvalue"
+
+
+def test_the_report_carries_the_cameras_last_answers(monkeypatch, tmp_path):
+    from camctl import report
+    from camctl.drivers.replies import note
+    class Cam:
+        pass
+    cam = Cam()
+    for _ in range(3):
+        note(cam, "0x1014 0x5007", "0x2001 34 bytes")                 # the same answer is kept once
+    note(cam, "GET /cam.cgi?mode=getstate", "<state><ssid>Home-Net</ssid><batt>2/3</batt></state>")
+    full, _ = report.build("Panasonic", {"model": "DC-GH5", "camera_replies": list(cam.replies)}, {}, [], "Wi-Fi")
+    assert full["brand"] == "Panasonic" and full["connection"] == "Wi-Fi" and full["model"] == "DC-GH5"
+    rep = full["device_info"]["camera_replies"]
+    assert len(rep) == 2 and rep[0] == {"ask": "0x1014 0x5007", "answer": "0x2001 34 bytes"}
+    assert "Home-Net" not in json.dumps(full) and "2/3" in rep[1]["answer"]
+    assert full["device_info"].get("note") is None and report.build("X", None, {}, [], "USB")[0]["device_info"] == \
+        {"note": "could not be read"}

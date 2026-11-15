@@ -212,6 +212,8 @@ class SonyCamera:
         else:
             self.client = PTPIPClient(host, port, name=name, guid=guid, timeout=timeout)
         self._prop_cache: dict[int, PropInfo] = {}
+        from .replies import record_ptp
+        record_ptp(self, self.client)                 # only notes operation and answer codes for the camera report
 
     @property
     def name(self) -> str:
